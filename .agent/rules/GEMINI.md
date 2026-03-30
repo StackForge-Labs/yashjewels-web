@@ -2,9 +2,19 @@
 trigger: always_on
 ---
 
-# GEMINI.md - Antigravity Kit
+# GEMINI.md - Antigravity Kit & Superpowers
 
 > This file defines how the AI behaves in this workspace.
+
+---
+
+## ⚡ SUPERPOWERS PROTOCOL (CRITICAL)
+
+> **MANDATORY:** Before ANY response or action, you MUST check if a skill applies. Even a 1% chance a skill might apply means you MUST invoke it.
+
+1. **Invoke `using-superpowers` first** to establish discipline.
+2. **Follow Skill Flow**: User Request → Skill Match → Load SKILL.md → Announce → Execute.
+3. **Evidence Before Claims**: Never claim success without running verification (use `verification-before-completion`).
 
 ---
 
