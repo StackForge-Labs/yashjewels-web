@@ -103,7 +103,7 @@ export default function DiamondGuidePage() {
                                     {activeCriteria.grades.map((grade, i) => (
                                         <div key={grade} className="flex items-center gap-3">
                                             <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-white/5">
-                                                <div className="h-full rounded-full bg-gradient-to-r from-gold to-amber-300" style={{ width: `${100 - i * 20}%` }} />
+                                                <div className="h-full rounded-full bg-linear-to-r from-gold to-amber-300" style={{ width: `${100 - i * 20}%` }} />
                                             </div>
                                             <span className="w-32 text-right text-xs font-medium text-gray-700 dark:text-gray-300">{grade}</span>
                                         </div>

@@ -93,7 +93,7 @@ export default function GoldPricePage() {
                                     <div key={i} className="flex flex-1 flex-col items-center gap-2">
                                         <span className="text-[10px] font-bold text-gray-500">{h.price}M</span>
                                         <div
-                                            className="w-full rounded-t-lg bg-gradient-to-t from-gold to-amber-300 transition-all hover:brightness-110"
+                                            className="w-full rounded-t-lg bg-linear-to-t from-gold to-amber-300 transition-all hover:brightness-110"
                                             style={{ height: `${((h.price - minPrice) / range) * 100 + 20}%` }}
                                         />
                                         <span className="text-[9px] font-bold text-gray-400">{h.date}</span>
