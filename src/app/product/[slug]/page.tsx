@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import ProductCard from "@/app/(home)/_components/ProductCard";
 
 // Mock Data for the selected product
 const MOCK_PRODUCT = {
@@ -44,6 +45,7 @@ const MOCK_PRODUCT = {
     stone: "Natural Diamond",
     weight: "0.364 chỉ",
     gender: "Female",
+    watermark: "diamond-star",
     specifications: [
         { label: "Product Code", value: "ERFNJ2504921" },
         { label: "Material", value: "14K White Gold" },
@@ -68,6 +70,52 @@ const MOCK_PRODUCT = {
     ],
 };
 
+// Mock Data for related products
+const RELATED_PRODUCTS = [
+    {
+        sku: "NNU1544",
+        name: "Mia Natural Diamond Ring in 14K White Gold",
+        category: "Rings",
+        original: "25.500.000 đ",
+        sale: "21.675.000 đ",
+        discount: "-15%",
+        image1: "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg",
+        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        badge: "NEW ARRIVAL",
+    },
+    {
+        sku: "NNU1545",
+        name: "Artisan Solitaire Diamond Necklace",
+        category: "Necklaces",
+        original: "45.000.000 đ",
+        sale: "38.250.000 đ",
+        discount: "-15%",
+        image1: "https://images.pexels.com/photos/1733604/pexels-photo-1733604.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    },
+    {
+        sku: "NNU1546",
+        name: "Classic Tennis Bracelet with Natural Diamonds",
+        category: "Bracelets",
+        original: "89.000.000 đ",
+        sale: "75.650.000 đ",
+        discount: "-15%",
+        image1: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        badge: "MAISON BEST",
+    },
+    {
+        sku: "NNU1547",
+        name: "Floral Halo Diamond Earrings",
+        category: "Earrings",
+        original: "18.000.000 đ",
+        sale: "15.300.000 đ",
+        discount: "-15%",
+        image1: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        image2: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    },
+];
+
 const ProductDetailPage = () => {
     const { slug } = useParams();
     const [mainImage, setMainImage] = useState(MOCK_PRODUCT.images[0]);
@@ -76,7 +124,7 @@ const ProductDetailPage = () => {
     const [openFaq, setOpenFaq] = useState<number | null>(0);
 
     return (
-        <main className="relative overflow-hidden bg-white pt-10 pb-32 transition-colors dark:bg-[#050505]">
+        <main className="dark:bg-dark-bg relative overflow-hidden bg-white pt-10 pb-32 transition-colors">
             {/* Background Texture/Patterns */}
             <div className="pointer-events-none absolute top-0 right-0 -z-10 opacity-5 dark:opacity-10">
                 <svg width="600" height="600" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,7 +143,9 @@ const ProductDetailPage = () => {
                         Collections
                     </Link>
                     <ChevronRight size={10} />
-                    <span className="line-clamp-1 text-gray-900 dark:text-white">{MOCK_PRODUCT.name}</span>
+                    <span className="line-clamp-1 tracking-widest text-gray-900 uppercase dark:text-white">
+                        {MOCK_PRODUCT.name}
+                    </span>
                 </nav>
 
                 <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
@@ -125,7 +175,7 @@ const ProductDetailPage = () => {
                             </div>
 
                             {/* Main Display - Right */}
-                            <div className="relative aspect-[4/5] grow overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 shadow-2xl shadow-black/5 dark:border-white/5 dark:bg-[#111] dark:shadow-black/40">
+                            <div className="relative aspect-4/5 grow overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 text-gray-900 shadow-2xl shadow-black/5 dark:border-white/5 dark:bg-[#111] dark:text-white dark:shadow-black/40">
                                 <img
                                     src={mainImage}
                                     alt={MOCK_PRODUCT.name}
@@ -202,7 +252,7 @@ const ProductDetailPage = () => {
                             </div>
 
                             {/* Options Selection HUD */}
-                            <div className="grid grid-cols-2 gap-6 rounded-2xl border border-gray-100 bg-gray-50/50 p-6 shadow-inner dark:border-white/5 dark:bg-white/[0.02]">
+                            <div className="grid grid-cols-2 gap-6 rounded-2xl border border-gray-100 bg-gray-50/50 p-6 shadow-inner dark:border-white/5 dark:bg-white/2">
                                 <div className="space-y-4">
                                     <h3 className="flex items-center gap-2 text-[11px] font-bold tracking-widest text-gray-400 uppercase">
                                         <span className="bg-gold h-1.5 w-1.5 rounded-full" /> Metal Purity:
@@ -313,7 +363,7 @@ const ProductDetailPage = () => {
                                     ))}
                                 </div>
                                 {activeTab === "specifications" && (
-                                    <div className="grid grid-cols-2 gap-x-12 gap-y-4 rounded-2xl border border-gray-100 bg-gray-50/50 p-6 dark:border-white/5 dark:bg-white/[0.01]">
+                                    <div className="grid grid-cols-2 gap-x-12 gap-y-4 rounded-2xl border border-gray-100 bg-gray-50/50 p-6 dark:border-white/5 dark:bg-white/1">
                                         {MOCK_PRODUCT.specifications.map((spec, i) => (
                                             <div
                                                 key={i}
@@ -435,6 +485,33 @@ const ProductDetailPage = () => {
                             Explore Our Maison Heritage{" "}
                             <ArrowRight size={14} className="transition-transform group-hover:translate-x-2" />
                         </Link>
+                    </div>
+                </div>
+
+                {/* Similar Products Section */}
+                <div className="mt-32 border-t border-gray-100 pt-24 dark:border-white/5">
+                    <div className="mb-16 space-y-4">
+                        <h2 className="font-serif text-4xl tracking-tight text-gray-900 uppercase dark:text-white">
+                            <span className="text-gold italic">Related</span> products
+                        </h2>
+                        <div className="flex items-end justify-between gap-4">
+                            <p className="text-[12px] font-bold tracking-[0.3em] text-gray-400 uppercase">
+                                Hand-selected suggestions by our master designers
+                            </p>
+                            <Link
+                                href="/collections"
+                                className="hover:text-gold group flex items-center gap-3 text-[11px] font-bold tracking-[0.4em] text-gray-900 uppercase transition-all dark:text-white"
+                            >
+                                Discover All{" "}
+                                <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:gap-10">
+                        {RELATED_PRODUCTS.map((product, i) => (
+                            <ProductCard key={i} {...product} />
+                        ))}
                     </div>
                 </div>
             </div>
