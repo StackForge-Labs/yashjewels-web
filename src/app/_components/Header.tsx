@@ -4,6 +4,7 @@ import { Instagram } from "./icon/Instagram";
 import { Facebook } from "./icon/Facebook";
 import ThemeToggle from "../(home)/_components/ThemeToggle";
 import SearchModal from "../(home)/_components/SearchModal";
+import Link from "next/link";
 
 export const Header = () => {
     return (
@@ -89,12 +90,12 @@ export const Header = () => {
                     <nav className="hidden h-full items-center gap-8 xl:flex">
                         {/* 1. Active Home Item */}
                         <div className="flex h-full items-center">
-                            <a
-                                href="#"
+                            <Link
+                                href="/"
                                 className="text-gold after:bg-gold relative py-8 text-xs font-bold tracking-[0.15em] uppercase transition-all after:absolute after:right-0 after:bottom-6 after:left-0 after:h-[2px] after:w-full after:content-['']"
                             >
                                 Home
-                            </a>
+                            </Link>
                         </div>
 
                         {/* 2. Mega Menu Item (Submenu To) */}
