@@ -3,6 +3,7 @@
 import ProductCard from "./ProductCard";
 import { ArrowRight, MapPin, Clock, Flame } from "lucide-react";
 import { Hero } from "./Hero";
+import { ScrollDiamond } from "./ScrollDiamond";
 
 interface DiamondData {
     sku: string;
@@ -15,6 +16,9 @@ interface DiamondData {
 export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
     return (
         <>
+            {/* Scroll-driven floating diamond */}
+            <ScrollDiamond />
+
             {/* SECTION 1: HERO / BANNER */}
             <Hero />
 

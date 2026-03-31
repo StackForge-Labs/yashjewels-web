@@ -1,10 +1,28 @@
-import { ArrowRight, Flame } from "lucide-react";
+import { ArrowRight, Flame, Diamond, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import styles from "./Hero.module.css";
+import Link from "next/link";
 
 const GOLD_PRICE = { "18K": "$55.70/g", "22K": "$69.23/g", "24K": "$75.10/g", PT950: "$42.30/g" };
+
+/* Deterministic sparkle positions (avoid hydration mismatch) */
+const SPARKLES_DATA = Array.from({ length: 30 }, (_, i) => ({
+    top: `${(i * 37 + 13) % 97}%`,
+    left: `${(i * 53 + 7) % 93}%`,
+    size: 1 + (i % 3),
+    duration: `${2 + (i % 4)}s`,
+    delay: `${(i * 0.4) % 5}s`,
+}));
+
+const BOKEH = Array.from({ length: 7 }, (_, i) => ({
+    width: `${180 + i * 80}px`,
+    height: `${180 + i * 80}px`,
+    top: `${(i * 41 + 5) % 80}%`,
+    left: `${(i * 53 + 10) % 85}%`,
+    delay: `${i * -2.5}s`,
+}));
+
 export const Hero = () => {
-    // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState({ hours: 12, minutes: 45, seconds: 30 });
 
     useEffect(() => {
@@ -25,132 +43,169 @@ export const Hero = () => {
         }, 1000);
         return () => clearInterval(timer);
     }, []);
+
     return (
-        <section className="relative flex h-[90vh] min-h-[750px] w-full items-center overflow-hidden bg-black">
+        <section className="relative flex min-h-[700px] w-full items-center overflow-hidden bg-black sm:min-h-[800px] lg:h-screen">
+            {/* ═══ BACKGROUND LAYER ═══ */}
             <div className="absolute inset-0 z-0 overflow-hidden">
-                <div className="absolute inset-0 z-10 bg-linear-to-r" />
                 <img
                     src="https://images.pexels.com/photos/266621/pexels-photo-266621.jpeg?auto=compress&cs=tinysrgb&w=1600"
                     alt="Hero Jewelry Background"
-                    className={`h-full w-full object-cover object-center opacity-90 ${styles["bg-animate"]}`}
+                    className={`h-full w-full object-cover object-center brightness-110 ${styles["bg-animate"]}`}
                 />
 
-                {/* Cinematic Bokeh Atmosphere */}
-                {[...Array(5)].map((_, i) => (
+                {/* Gradient overlays — luminous, not dark */}
+                <div className="absolute inset-0 bg-linear-to-r from-black/55 via-black/15 to-black/35" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/5" />
+
+                {/* Gold-tinted bottom edge */}
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-black/90 to-transparent" />
+
+                {/* Light leak */}
+                <div className={styles["light-leak"]} />
+
+                {/* Bokeh */}
+                {BOKEH.map((b, i) => (
                     <div
                         key={i}
                         className={styles["bokeh"]}
-                        style={{
-                            width: `${200 + i * 100}px`,
-                            height: `${200 + i * 100}px`,
-                            top: `${Math.random() * 80}%`,
-                            left: `${Math.random() * 80}%`,
-                            animationDelay: `${i * -3}s`,
-                        }}
+                        style={{ width: b.width, height: b.height, top: b.top, left: b.left, animationDelay: b.delay }}
                     />
                 ))}
             </div>
 
-            <div className="relative z-20 container mx-auto flex h-full w-full flex-col items-center px-4 pt-20 lg:flex-row lg:px-12">
-                {/* Hero Left Content */}
-                <div
-                    className="flex w-full flex-col justify-center lg:w-1/2"
-                    data-aos="fade-up"
-                    data-aos-duration="1200"
-                >
-                    <div className="text-gold mb-6 flex items-center gap-4">
-                        <span className="bg-gold h-px w-12"></span>
-                        <span className="text-xs font-bold tracking-[0.4em] text-white uppercase">
-                            The 2026 Edition
+            {/* ═══ DECORATIVE CORNER ACCENTS ═══ */}
+            <div className="border-gold/30 pointer-events-none absolute top-8 left-8 z-30 hidden h-20 w-20 border-t-2 border-l-2 lg:block" />
+            <div className="border-gold/30 pointer-events-none absolute top-8 right-8 z-30 hidden h-20 w-20 border-t-2 border-r-2 lg:block" />
+
+            {/* ═══ MAIN CONTENT ═══ */}
+            <div className="relative z-20 container mx-auto flex h-full w-full flex-col px-5 py-24 sm:px-8 lg:flex-row lg:items-center lg:px-12 lg:py-0">
+                {/* ── LEFT: Text & CTA ── */}
+                <div className="flex w-full flex-col justify-center lg:w-[55%]">
+                    {/* Edition badge */}
+                    <div className={`mb-5 flex items-center gap-3 sm:mb-6 ${styles["rise-1"]}`}>
+                        <span className="bg-gold h-px w-8 sm:w-12" />
+                        <span className="border-gold/30 bg-gold/10 text-gold rounded-full border px-4 py-1.5 text-[9px] font-bold tracking-[0.4em] uppercase backdrop-blur-sm sm:text-[10px]">
+                            ✦ The 2026 Collection
                         </span>
+                        <span className="bg-gold h-px w-8 sm:w-12" />
                     </div>
-                    <h2
-                        className={`mb-6 font-serif text-5xl leading-[1.15] text-white drop-shadow-md md:text-7xl ${styles["shimmer-text"]}`}
+
+                    {/* Main heading */}
+                    <h1
+                        className={`mb-5 font-serif text-[2.5rem] leading-[1.1] font-light text-white drop-shadow-lg sm:mb-6 sm:text-6xl md:text-7xl lg:text-[5.5rem] 2xl:text-8xl ${styles["rise-2"]}`}
                     >
-                        Brilliance <span className="text-gold font-light italic">Defined</span>
-                    </h2>
-                    <p className="mb-10 max-w-lg text-base leading-relaxed font-light text-gray-300">
+                        <span className={styles["shimmer-text"]}>Brilliance</span>{" "}
+                        <span className={`${styles["gradient-text"]} block font-light italic sm:inline`}>Defined</span>
+                    </h1>
+
+                    {/* Sub-copy */}
+                    <p
+                        className={`mb-8 max-w-md text-sm leading-relaxed font-light text-white/70 sm:mb-10 sm:max-w-lg sm:text-base lg:mb-12 ${styles["rise-3"]}`}
+                    >
                         Discover our exquisite selection of high jewelry. Unparalleled craftsmanship meeting
                         extraordinary earth-mined diamonds.
                     </p>
 
-                    {/* Scarcity / Sales Widget */}
-                    <div className="group relative mb-10 inline-block overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-md">
-                        <div className="from-gold/10 absolute inset-0 bg-linear-to-r to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-                        <div className="relative z-10 flex flex-col items-center gap-6 sm:flex-row">
-                            <div className="flex flex-col gap-2">
-                                <span className="text-gold flex items-center gap-2 text-sm font-bold tracking-widest uppercase">
-                                    <Flame size={16} className="animate-pulse text-red-500" /> Flash Event
+                    {/* ── Flash Sale Widget ── */}
+                    <div
+                        className={`group relative mb-8 max-w-lg overflow-hidden rounded-2xl border bg-white/5 p-4 shadow-2xl backdrop-blur-md sm:mb-10 sm:p-5 ${styles["border-shimmer"]} ${styles["rise-4"]}`}
+                    >
+                        {/* Hover gradient overlay */}
+                        <div className="from-gold/10 via-gold/5 absolute inset-0 bg-linear-to-r to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+                        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                            <div className="flex flex-col gap-1.5">
+                                <span className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase sm:text-sm">
+                                    <Flame size={16} className="animate-pulse text-red-500" />
+                                    <span className="text-gold">Flash Event</span>
                                 </span>
-                                <span className="font-serif text-lg text-white">Exclusive VIP Sale - 20% Off</span>
+                                <span className="font-serif text-base text-white sm:text-lg">
+                                    Exclusive VIP Sale — 20% Off
+                                </span>
                             </div>
-                            <div className="hidden h-12 w-px bg-white/20 sm:block"></div>
-                            <div className="flex gap-4">
-                                <div className="flex flex-col items-center">
-                                    <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-black text-xl font-bold text-white shadow-inner">
-                                        {String(timeLeft.hours).padStart(2, "0")}
-                                    </span>
-                                    <span className="mt-1 text-[10px] tracking-widest text-gray-400 uppercase">
-                                        Hrs
-                                    </span>
-                                </div>
-                                <span className="mt-1 text-xl font-bold text-white">:</span>
-                                <div className="flex flex-col items-center">
-                                    <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-black text-xl font-bold text-white shadow-inner">
-                                        {String(timeLeft.minutes).padStart(2, "0")}
-                                    </span>
-                                    <span className="mt-1 text-[10px] tracking-widest text-gray-400 uppercase">
-                                        Min
-                                    </span>
-                                </div>
-                                <span className="mt-1 text-xl font-bold text-white">:</span>
-                                <div className="flex flex-col items-center">
-                                    <span
-                                        className={`text-gold border-gold/30 ${styles["animate-pulse-glow"]} flex h-10 w-10 items-center justify-center rounded-lg border bg-black text-xl font-bold shadow-inner`}
-                                    >
-                                        {String(timeLeft.seconds).padStart(2, "0")}
-                                    </span>
-                                    <span className="text-gold mt-1 text-[10px] tracking-widest uppercase">Sec</span>
-                                </div>
+
+                            <div className="hidden h-12 w-px bg-white/20 sm:block" />
+
+                            {/* Timer */}
+                            <div className="flex items-center justify-center gap-3 sm:gap-4">
+                                {(
+                                    [
+                                        { val: timeLeft.hours, label: "Hrs", highlight: false },
+                                        { val: timeLeft.minutes, label: "Min", highlight: false },
+                                        { val: timeLeft.seconds, label: "Sec", highlight: true },
+                                    ] as const
+                                ).map((t, i) => (
+                                    <div key={t.label} className="flex items-center gap-3 sm:gap-4">
+                                        {i > 0 && <span className="text-gold/50 text-lg font-bold sm:text-xl">:</span>}
+                                        <div className="flex flex-col items-center">
+                                            <span
+                                                className={`flex h-10 w-10 items-center justify-center rounded-xl border text-lg font-bold shadow-inner sm:h-11 sm:w-11 sm:text-xl ${
+                                                    t.highlight
+                                                        ? `text-gold border-gold/40 bg-gold/10 ${styles["animate-pulse-glow"]}`
+                                                        : "border-white/15 bg-white/5 text-white"
+                                                }`}
+                                            >
+                                                {String(t.val).padStart(2, "0")}
+                                            </span>
+                                            <span
+                                                className={`mt-1 text-[8px] tracking-widest uppercase sm:text-[9px] ${t.highlight ? "text-gold" : "text-gray-500"}`}
+                                            >
+                                                {t.label}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
+
+                        {/* Bottom urgency bar */}
+                        <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs sm:mt-4">
                             <div className="flex items-center gap-2 text-gray-300">
-                                <span className="h-2 w-2 animate-ping rounded-full bg-red-500"></span>
-                                Only <strong className="px-1 tracking-widest text-white">2 SLOTS</strong> remaining
+                                <span className="h-2 w-2 animate-ping rounded-full bg-red-500" />
+                                Only <strong className="text-gold px-1 tracking-widest">2 SLOTS</strong> remaining
                             </div>
-                            <span className="text-gold cursor-pointer text-[10px] font-bold tracking-widest uppercase hover:underline">
+                            <span className="text-gold hover:text-gold-light cursor-pointer text-[10px] font-bold tracking-widest uppercase transition-colors hover:underline">
                                 Claim Yours &rarr;
                             </span>
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-6 sm:flex-row">
-                        <button className="hover:bg-gold bg-white px-10 py-5 text-xs font-bold tracking-[0.2em] text-black uppercase transition-all duration-300 hover:text-white">
-                            Shop Collection
-                        </button>
-                        <button className="hover:border-gold hover:text-gold flex items-center justify-center gap-3 border border-white/30 px-10 py-5 text-xs font-bold tracking-[0.2em] text-white uppercase backdrop-blur-md transition-all duration-300">
+                    {/* ── CTA Buttons ── */}
+                    <div className={`flex flex-col gap-3 sm:flex-row sm:gap-5 ${styles["rise-5"]}`}>
+                        <Link
+                            href="/collections"
+                            className="group bg-gold relative overflow-hidden px-8 py-4 text-center text-[11px] font-bold tracking-[0.25em] text-white uppercase shadow-[0_10px_40px_rgba(212,175,55,0.3)] transition-all duration-500 hover:shadow-[0_15px_50px_rgba(212,175,55,0.5)] active:scale-[0.98] sm:px-10 sm:py-5 sm:text-xs"
+                        >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                <Sparkles size={14} />
+                                Shop Collection
+                            </span>
+                        </Link>
+                        <Link
+                            href="/about"
+                            className="group hover:border-gold hover:bg-gold/10 hover:text-gold flex items-center justify-center gap-3 border border-white/30 px-8 py-4 text-[11px] font-bold tracking-[0.25em] text-white uppercase backdrop-blur-md transition-all duration-500 sm:px-10 sm:py-5 sm:text-xs"
+                        >
                             View Lookbook
-                            <ArrowRight size={16} />
-                        </button>
+                            <ArrowRight
+                                size={16}
+                                className="transition-transform duration-300 group-hover:translate-x-1"
+                            />
+                        </Link>
                     </div>
                 </div>
 
-                {/* Hero Right Content - Floating Fancy Constellation */}
-                <div
-                    className="relative mt-20 flex h-[500px] w-full items-center justify-center lg:mt-0 lg:h-full lg:w-1/2"
-                    data-aos="zoom-in"
-                    data-aos-delay="300"
-                    data-aos-duration="1500"
-                >
-                    <div className="relative flex h-full w-full max-w-lg items-center justify-center">
-                        {/* Decorative Core Glow */}
-                        <div className="bg-gold/20 absolute inset-0 m-auto h-64 w-64 animate-pulse rounded-full opacity-70 blur-[80px]"></div>
+                {/* ── RIGHT: Orbit Galaxy ── */}
+                <div className="relative mt-12 flex h-[350px] w-full items-center justify-center sm:mt-16 sm:h-[420px] lg:mt-0 lg:h-full lg:w-[45%]">
+                    <div className="relative flex h-full w-full max-w-sm items-center justify-center sm:max-w-md lg:max-w-lg">
+                        {/* Core glow halo */}
+                        <div
+                            className={`bg-gold/20 absolute inset-0 m-auto h-48 w-48 rounded-full opacity-60 blur-[80px] sm:h-64 sm:w-64 sm:blur-[100px] lg:h-72 lg:w-72 ${styles["halo"]}`}
+                        />
 
-                        {/* Centerpiece Image - Large Diamond */}
-                        {/* Hero Item Galaxy - Simplified Bulletproof Rotation */}
+                        {/* Orbit rings */}
                         <div className={styles["orbit-container"]}>
-                            {/* OUTER GALAXY RING */}
+                            {/* OUTER RING */}
                             <div className={styles["outer-ring"]}>
                                 {[
                                     "https://tahigems.vn/wp-content/uploads/2021/07/tahigems-round.webp",
@@ -163,7 +218,7 @@ export const Hero = () => {
                                         className={styles["orbit-item"]}
                                         style={{
                                             transform: `translateX(-50%) rotate(${i * 90}deg)`,
-                                            transformOrigin: "50% 280px", // Half of 560px
+                                            transformOrigin: "50% 260px",
                                         }}
                                     >
                                         <div className={styles["item-content"]}>
@@ -173,7 +228,7 @@ export const Hero = () => {
                                 ))}
                             </div>
 
-                            {/* INNER GALAXY RING */}
+                            {/* INNER RING */}
                             <div className={styles["inner-ring"]}>
                                 {[
                                     "https://ceresglobaljewels.com/wp-content/uploads/2024/12/kc1.png",
@@ -185,7 +240,7 @@ export const Hero = () => {
                                         className={styles["orbit-item"]}
                                         style={{
                                             transform: `translateX(-50%) rotate(${i * 120}deg)`,
-                                            transformOrigin: "50% 190px", // Half of 380px
+                                            transformOrigin: "50% 175px",
                                         }}
                                     >
                                         <div className={styles["item-content"]}>
@@ -195,64 +250,79 @@ export const Hero = () => {
                                 ))}
                             </div>
 
-                            {/* Sparkles */}
-                            {[...Array(20)].map((_, i) => (
+                            {/* Twinkle particles */}
+                            {SPARKLES_DATA.map((s, i) => (
                                 <div
                                     key={`sparkle-${i}`}
-                                    className="absolute h-1 w-1 animate-pulse rounded-full bg-white shadow-[0_0_8px_white]"
+                                    className={`absolute rounded-full bg-white shadow-[0_0_8px_rgba(212,175,55,0.6)] ${styles["twinkle"]}`}
                                     style={{
-                                        top: `${Math.random() * 100}%`,
-                                        left: `${Math.random() * 100}%`,
-                                        animationDelay: `${Math.random() * 5}s`,
+                                        top: s.top,
+                                        left: s.left,
+                                        width: `${s.size}px`,
+                                        height: `${s.size}px`,
+                                        ["--duration" as string]: s.duration,
+                                        ["--delay" as string]: s.delay,
                                     }}
-                                ></div>
+                                />
                             ))}
                         </div>
 
-                        {/* Centerpiece Image - Large Diamond */}
-                        <div className={`absolute z-30 m-auto w-[60%] ${styles["animate-float"]} sm:w-[45%]`}>
+                        {/* Centerpiece Diamond */}
+                        <div className={`absolute z-30 m-auto w-[50%] sm:w-[42%] ${styles["animate-float"]}`}>
                             <img
                                 src="https://cdn.hstatic.net/products/1000381168/upload_f1abf23f3d2d4abe8249e0881ae040c4_grande.jpg"
                                 alt="Centerpiece Diamond"
                                 className="h-auto w-full rounded-full object-cover mix-blend-lighten shadow-2xl"
                             />
-                            {/* Price Tag */}
-                            <div className="border-gold/30 absolute -right-4 bottom-4 z-40 animate-bounce rounded-xl border bg-white/10 p-3 shadow-[0_10px_30px_rgba(212,175,55,0.2)] backdrop-blur-md delay-100">
-                                <span className="mb-1 block text-[8px] font-bold tracking-widest text-gray-300 uppercase">
+                            {/* Price tag */}
+                            <div className="border-gold/40 absolute -right-2 bottom-2 z-40 animate-bounce rounded-xl border bg-black/60 p-2.5 shadow-[0_10px_30px_rgba(212,175,55,0.3)] backdrop-blur-md delay-100 sm:-right-4 sm:bottom-4 sm:p-3">
+                                <span className="text-gold mb-0.5 block text-[7px] font-bold tracking-widest uppercase sm:text-[8px]">
                                     GIA Certified
                                 </span>
-                                <span className="font-serif text-lg text-white">$14,500</span>
+                                <span className="font-serif text-sm text-white sm:text-lg">$14,500</span>
                             </div>
                         </div>
 
-                        {/* Decorative Orbit Rings */}
-                        <div className="border-gold/20 pointer-events-none absolute inset-0 m-auto h-full max-h-[400px] w-full max-w-[400px] animate-[spin_20s_linear_infinite] rounded-full border border-dashed"></div>
-                        <div className="pointer-events-none absolute inset-0 m-auto h-[110%] max-h-[450px] w-[110%] max-w-[450px] animate-[spin_35s_linear_infinite_reverse] rounded-full border-[0.5px] border-white/10"></div>
+                        {/* Decorative orbit lines */}
+                        <div className="border-gold/20 pointer-events-none absolute inset-0 m-auto h-[70%] w-[70%] animate-[spin_25s_linear_infinite] rounded-full border border-dashed sm:h-full sm:max-h-[380px] sm:w-full sm:max-w-[380px]" />
+                        <div className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] animate-[spin_40s_linear_infinite_reverse] rounded-full border-[0.5px] border-white/10 sm:h-[110%] sm:max-h-[430px] sm:w-[110%] sm:max-w-[430px]" />
                     </div>
                 </div>
             </div>
 
-            {/* Live Gold Price Ticker */}
-            <div
-                className="absolute bottom-0 z-30 w-full border-t border-white/10 bg-black/70 p-3 backdrop-blur-lg"
-                data-aos="fade-in"
-                data-aos-delay="1000"
-            >
-                <div className="container mx-auto flex items-center justify-center gap-8 overflow-hidden text-[11px] font-bold tracking-widest text-white uppercase">
-                    <span className="text-gold flex items-center gap-2">
+            {/* ═══ GOLD PRICE MARQUEE TICKER ═══ */}
+            <div className="border-gold/20 absolute bottom-0 z-30 w-full overflow-hidden border-t bg-black/80 backdrop-blur-xl">
+                <div className="container mx-auto flex items-center py-2.5 sm:py-3">
+                    <span className="z-10 flex shrink-0 items-center gap-2 bg-black/80 pr-4 text-[10px] font-bold tracking-widest uppercase sm:pr-6 sm:text-[11px]">
                         <span className="relative flex h-2 w-2">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                         </span>
-                        Live Market Prices:
+                        <span className="text-gold">Live Prices</span>
                     </span>
-                    {Object.entries(GOLD_PRICE).map(([k, v]) => (
-                        <span key={k} className="hidden sm:inline">
-                            {k}: <span className="ml-1 text-gray-300">{v}</span>
-                        </span>
-                    ))}
+                    <div className="relative flex-1 overflow-hidden">
+                        <div className={styles["ticker-track"]}>
+                            {[...Array(2)].map((_, rep) => (
+                                <div key={rep} className="flex shrink-0 gap-6 sm:gap-10">
+                                    {Object.entries(GOLD_PRICE).map(([k, v]) => (
+                                        <span
+                                            key={`${k}-${rep}`}
+                                            className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest whitespace-nowrap text-white uppercase sm:gap-2 sm:text-[11px]"
+                                        >
+                                            <Diamond size={10} className="text-gold" />
+                                            {k}: <span className="text-gold/70 ml-0.5 sm:ml-1">{v}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* ═══ BOTTOM CORNER ACCENTS ═══ */}
+            <div className="border-gold/30 pointer-events-none absolute bottom-16 left-8 z-30 hidden h-20 w-20 border-b-2 border-l-2 lg:block" />
+            <div className="border-gold/30 pointer-events-none absolute right-8 bottom-16 z-30 hidden h-20 w-20 border-r-2 border-b-2 lg:block" />
         </section>
     );
 };
