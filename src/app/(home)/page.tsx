@@ -1,3 +1,4 @@
+import { ConsultantModal } from "../_components/ConsultantModal";
 import { HomeViews } from "./_components/HomeViews";
 
 export default function Home() {
@@ -63,6 +64,7 @@ export default function Home() {
     return (
         <>
             <div className="selection:bg-gold bg-white font-sans antialiased transition-colors duration-500 selection:text-black dark:bg-[#030303]">
+                <ConsultantModal />
                 <HomeViews diamonds={diamonds} />
             </div>
         </>

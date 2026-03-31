@@ -4,7 +4,7 @@ import "./globals.css";
 import { AOSInit } from "@/components/AOSInit";
 import { Header } from "./_components/Header";
 import { Footer } from "./_components/Footer";
-import { ConsultantModal } from "./_components/ConsultantModal";
+
 
 const jost = Jost({
     variable: "--font-jost",
@@ -30,12 +30,11 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={`${jost.variable} ${playfair.variable} h-full antialiased`} suppressHydrationWarning>
-            <AOSInit />
             <body className="flex min-h-full flex-col font-sans">
+                <AOSInit />
                 <Header />
-                {children}
+                <main className="flex-grow">{children}</main>
                 <Footer />
-                {/* <ConsultantModal /> */}
             </body>
         </html>
     );
