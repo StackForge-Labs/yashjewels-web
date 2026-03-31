@@ -4,6 +4,7 @@ import { Instagram } from "../icon/Instagram";
 import { Youtube } from "../icon/Youtube";
 import { ScrollToTop } from "./ScrollToTop";
 import { FomoNotification } from "./FomoNotification";
+import { PromoBar } from "./PromoBar";
 import Link from "next/link";
 
 export const Footer = () => {
@@ -181,6 +182,7 @@ export const Footer = () => {
             </div>
             <ScrollToTop />
             <FomoNotification />
+            <PromoBar />
         </footer>
     );
 };

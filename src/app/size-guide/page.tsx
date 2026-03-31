@@ -93,7 +93,7 @@ export default function SizeGuidePage() {
                                         <tr className="border-b border-gray-100 dark:border-white/5">
                                             <th className="py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Diameter (mm)</th>
                                             <th className="py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Perimeter (mm)</th>
-                                            <th className="py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase text-gold">US Size</th>
+                                            <th className="py-4 text-[10px] font-bold tracking-widest text-gold uppercase">US Size</th>
                                             <th className="py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase">VN Size</th>
                                         </tr>
                                     </thead>
