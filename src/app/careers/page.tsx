@@ -28,7 +28,7 @@ export default function CareersPage() {
     return (
         <>
             <PageHero
-                title="Join Our Maison"
+                title="Careers"
                 subtitle="Help us craft the future of high jewelry. We're looking for passionate people who share our love for excellence."
                 breadcrumbs={[{ label: "Careers" }]}
             />

@@ -32,7 +32,7 @@ export default function GoldPricePage() {
     return (
         <>
             <PageHero
-                title="Gold Price Table"
+                title="Gold Price"
                 subtitle="Daily gold rates for jewelry pricing. Prices are updated hourly from global markets."
                 breadcrumbs={[{ label: "Gold Price" }]}
             />

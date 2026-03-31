@@ -28,9 +28,9 @@ export default function AboutPage() {
     return (
         <>
             <PageHero
-                title="Our Heritage"
-                subtitle="Crafting timeless beauty since 2005. Every piece tells a story of passion, precision, and artistry."
-                breadcrumbs={[{ label: "About Us" }]}
+                title="Our Story"
+                subtitle="Crafting timeless beauty since 2005. Every piece tells a story of passion and skill."
+                breadcrumbs={[{ label: "About" }]}
             />
 
             <section className="bg-white py-12 md:py-24 transition-colors dark:bg-dark-bg">
@@ -103,7 +103,7 @@ export default function AboutPage() {
                     {/* Craftsmanship Process */}
                     <div className="mb-24">
                         <div className="mb-12 text-center">
-                            <span className="text-gold mb-3 block text-[10px] font-bold tracking-[0.3em] uppercase">Savoir-Faire</span>
+                            <span className="text-gold mb-3 block text-[10px] font-bold tracking-[0.3em] uppercase">Behind the Scenes</span>
                             <h2 className="font-serif text-3xl md:text-4xl text-gray-900 dark:text-white">Our Process</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
@@ -121,8 +121,8 @@ export default function AboutPage() {
 
                     {/* CTA */}
                     <div className="rounded-2xl bg-gray-50 p-8 text-center md:p-16 dark:bg-white/2">
-                        <h3 className="mb-4 font-serif text-2xl text-gray-900 dark:text-white">Visit Our Maison</h3>
-                        <p className="mb-8 text-sm text-gray-500 dark:text-gray-400">Experience the art of high jewelry in person at our boutique.</p>
+                        <h3 className="mb-4 font-serif text-2xl text-gray-900 dark:text-white">Visit Our Store</h3>
+                        <p className="mb-8 text-sm text-gray-500 dark:text-gray-400">Experience our high jewelry in person at our boutique.</p>
                         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
                             <Link href="/contact" className="bg-gold group inline-flex items-center justify-center gap-3 rounded-xl px-10 py-4 text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105">
                                 Book an Appointment <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

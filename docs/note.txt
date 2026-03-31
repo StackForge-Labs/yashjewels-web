@@ -1,1 +1,3 @@
 Câu lệnh xóa tất cả các nhánh đã merge: git branch --merged | grep -v "\*" | grep -v "master" | grep -v "main" | xargs -n 1 git branch -d
+
+hãy dựa vào các file tính năng sau của tôi mà hãy đề xuất cho tôi 1 cấu trúc dự án chuẩn clean architecture nhé. File README.md là file tổng hợp các chức năng của website, TOPIC.MD là file dịch đề tài sang tiếng việt, TABLE.MD là mô tả chức năng của từng bảng trong đề nó yêu cầu (nhưng chỉ làm tham khảo thôi), còn DETAIL_MODULE.MD là phân tích sâu vào trong từng phần bên trong cái chính của file README.MD

@@ -5,23 +5,22 @@ const SECTIONS = [
     {
         title: "1. Information We Collect",
         content: [
-            "Personal identification information (name, email address, phone number, date of birth)",
-            "Delivery addresses and billing information",
-            "Identity verification documents (CCCD/Passport) for KYC compliance on high-value orders",
-            "Payment information (processed securely through third-party providers — we never store card details)",
-            "Browsing behavior, search history, and interaction data on our website",
-            "Device information, IP address, and browser type for security purposes",
+            "Your identity (name, email, phone number, birthday)",
+            "Your delivery address and billing details",
+            "A copy of your ID or Passport for safe orders",
+            "How you use our website and search for products",
+            "Basic device info like your IP address for security",
         ],
     },
     {
         title: "2. How We Use Your Information",
         content: [
-            "Processing and fulfilling your orders, including delivery and payment",
-            "Identity verification (KYC) for orders exceeding 5,000,000 đ as required by regulations",
-            "Communicating order updates, shipping notifications, and promotional offers",
-            "Improving our website, products, and customer service experience",
-            "Preventing fraud, unauthorized access, and securing your account",
-            "Complying with legal obligations and resolving disputes",
+            "To ship your orders and process payments",
+            "To verify your identity for expensive orders (over 5,000,000 đ)",
+            "To send you updates about your package or special deals",
+            "To make our website and service better for you",
+            "To keep your account safe and prevent fraud",
+            "To follow the law and solve any issues",
         ],
     },
     {
@@ -38,12 +37,12 @@ const SECTIONS = [
     {
         title: "4. Data Security",
         content: [
-            "All data transmitted via 256-bit SSL/TLS encryption",
-            "Passwords hashed using BCrypt with cost factor 12",
-            "Sensitive documents (CCCD images) stored with encryption at rest",
-            "Regular security audits and vulnerability assessments",
-            "Employee access restricted on a need-to-know basis",
-            "JWT tokens with short expiry and automatic rotation",
+            "We use industry-standard encryption for all data",
+            "Your passwords are saved using high-security hashing",
+            "Personal ID photos are encrypted and stored safely",
+            "We regularly check our systems for any security risks",
+            "Only necessary employees can see your information",
+            "We use secure login sessions that expire for your safety",
         ],
     },
     {
@@ -69,10 +68,9 @@ const SECTIONS = [
     {
         title: "7. Data Retention",
         content: [
-            "Active accounts: Data retained as long as your account exists",
-            "Order records: Retained for 5 years after completion for legal compliance",
-            "KYC documents: Retained for 3 years after last verification, then securely deleted",
-            "Deleted accounts: Personal data purged within 30 days, anonymized order data retained",
+            "Order records: Kept for 5 years for legal reasons",
+            "ID documents: Kept for 3 years, then deleted safely",
+            "Deleted accounts: Your info is removed within 30 days",
         ],
     },
 ];

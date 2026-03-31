@@ -6,7 +6,7 @@ export default function PaymentGuidePage() {
     return (
         <>
             <PageHero
-                title="Shopping & Payment Guide"
+                title="Payment Guide"
                 subtitle="Everything you need to know about buying jewelry online with confidence."
                 breadcrumbs={[{ label: "Policies", href: "/policies/warranty" }, { label: "Payment Guide" }]}
             />

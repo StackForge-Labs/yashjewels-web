@@ -24,9 +24,9 @@ export default function ContactPage() {
     return (
         <>
             <PageHero
-                title="Expert Assistance"
-                subtitle="Our private consultants are available to guide you through our collections and bespoke services."
-                breadcrumbs={[{ label: "Contact Us" }]}
+                title="Get in Touch"
+                subtitle="Our experts are here to help you with your jewelry and custom design needs."
+                breadcrumbs={[{ label: "Contact" }]}
                 backgroundImage="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=2000"
             />
 
@@ -103,11 +103,11 @@ export default function ContactPage() {
                                         value={formData.subject}
                                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                                     >
-                                        <option>General Inquiry</option>
-                                        <option>Bespoke Design Service</option>
-                                        <option>Repair & Restoration</option>
-                                        <option>Order Tracking</option>
-                                        <option>Wholesale Partnerships</option>
+                                        <option>General Question</option>
+                                        <option>Custom Jewelry</option>
+                                        <option>Repair Service</option>
+                                        <option>Order Shipping</option>
+                                        <option>Become a Partner</option>
                                     </select>
                                 </div>
 
@@ -129,7 +129,7 @@ export default function ContactPage() {
                                     type="submit"
                                     className="bg-gold group shadow-gold/20 flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-xs font-bold tracking-[0.3em] text-white uppercase shadow-lg transition-all hover:brightness-110 active:scale-[0.98]"
                                 >
-                                    Submit Inquiry
+                                    Send Message
                                     <Send size={16} className="transition-transform group-hover:translate-x-1" />
                                 </button>
                             </form>
@@ -150,7 +150,7 @@ export default function ContactPage() {
                                 </div>
                             </div>
                             <div>
-                                <h2 className="mb-8 font-serif text-3xl text-gray-900 dark:text-white">Our Maison</h2>
+                                <h2 className="mb-8 font-serif text-3xl text-gray-900 dark:text-white">Our Story</h2>
                                 <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
                                     <div className="space-y-2">
                                         <div className="text-gold flex items-center gap-3">

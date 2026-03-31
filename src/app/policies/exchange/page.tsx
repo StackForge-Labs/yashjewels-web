@@ -6,9 +6,9 @@ export default function ExchangePage() {
     return (
         <>
             <PageHero
-                title="Exchange & Return Policy"
+                title="Exchange Policy"
                 subtitle="We want you to love every piece. If something isn't right, we're here to help."
-                breadcrumbs={[{ label: "Policies", href: "/policies/warranty" }, { label: "Exchange & Return" }]}
+                breadcrumbs={[{ label: "Policies", href: "/policies/warranty" }, { label: "Exchange Policy" }]}
             />
 
             <section className="bg-white py-12 md:py-24 transition-colors dark:bg-dark-bg">
