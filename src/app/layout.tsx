@@ -35,7 +35,7 @@ export default function RootLayout({
                 <Header />
                 {children}
                 <Footer />
-                <ConsultantModal />
+                {/* <ConsultantModal /> */}
             </body>
         </html>
     );
