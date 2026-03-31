@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { AOSInit } from "@/components/AOSInit";
 
 const jost = Jost({
     variable: "--font-jost",
@@ -26,6 +27,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={`${jost.variable} ${playfair.variable} h-full antialiased`} suppressHydrationWarning>
+            <AOSInit />
             <body className="flex min-h-full flex-col font-sans">{children}</body>
         </html>
     );

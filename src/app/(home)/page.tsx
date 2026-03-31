@@ -1,9 +1,9 @@
 import React from "react";
-import { HomeViews } from "../components/HomeViews";
-import ThemeToggle from "../components/ThemeToggle";
-import SearchModal from "../components/SearchModal";
-import ProductCard from "../components/ProductCard";
-import { AOSInit } from "../components/AOSInit";
+import { HomeViews } from "./_components/HomeViews";
+import ThemeToggle from "./_components/ThemeToggle";
+import SearchModal from "./_components/SearchModal";
+import ProductCard from "./_components/ProductCard";
+import { AOSInit } from "../../components/AOSInit";
 import {
     Search,
     ShoppingCart,
@@ -137,7 +137,6 @@ export default function Home() {
 
     return (
         <div className="selection:bg-gold bg-white font-sans antialiased transition-colors duration-500 selection:text-black dark:bg-[#030303]">
-            <AOSInit />
             {/* Top Notification Bar */}
             <div className="border-b border-gray-200 bg-gray-50 py-2 text-xs text-gray-500 transition-colors dark:border-white/5 dark:bg-[#080808] dark:text-gray-400">
                 <div className="container mx-auto flex items-center justify-between px-4">
@@ -279,28 +278,48 @@ export default function Home() {
                                         </h4>
                                         <ul className="space-y-5 text-sm font-medium text-gray-500 dark:text-gray-400">
                                             <li>
-                                                <a href="#" className="hover:text-gold flex items-center gap-3 transition-colors">
-                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-yellow-300 to-yellow-600 shadow-sm"></span> Yellow Gold 18K
+                                                <a
+                                                    href="#"
+                                                    className="hover:text-gold flex items-center gap-3 transition-colors"
+                                                >
+                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-yellow-300 to-yellow-600 shadow-sm"></span>{" "}
+                                                    Yellow Gold 18K
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#" className="hover:text-gold flex items-center gap-3 transition-colors">
-                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-gray-200 to-gray-400 shadow-sm"></span> White Gold 18K
+                                                <a
+                                                    href="#"
+                                                    className="hover:text-gold flex items-center gap-3 transition-colors"
+                                                >
+                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-gray-200 to-gray-400 shadow-sm"></span>{" "}
+                                                    White Gold 18K
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#" className="hover:text-gold flex items-center gap-3 transition-colors">
-                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-rose-300 to-rose-500 shadow-sm"></span> Rose Gold 18K
+                                                <a
+                                                    href="#"
+                                                    className="hover:text-gold flex items-center gap-3 transition-colors"
+                                                >
+                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-rose-300 to-rose-500 shadow-sm"></span>{" "}
+                                                    Rose Gold 18K
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#" className="hover:text-gold flex items-center gap-3 transition-colors">
-                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-slate-300 to-slate-500 shadow-sm"></span> Platinum 950
+                                                <a
+                                                    href="#"
+                                                    className="hover:text-gold flex items-center gap-3 transition-colors"
+                                                >
+                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gradient-to-br from-slate-300 to-slate-500 shadow-sm"></span>{" "}
+                                                    Platinum 950
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#" className="hover:text-gold flex items-center gap-3 transition-colors">
-                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gray-800 shadow-sm"></span> Titanium
+                                                <a
+                                                    href="#"
+                                                    className="hover:text-gold flex items-center gap-3 transition-colors"
+                                                >
+                                                    <span className="block h-4 w-4 rounded-full border border-white bg-gray-800 shadow-sm"></span>{" "}
+                                                    Titanium
                                                 </a>
                                             </li>
                                         </ul>
@@ -310,9 +329,19 @@ export default function Home() {
                                             Diamond Shape
                                         </h4>
                                         <ul className="space-y-5 text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            {["Round Brilliant", "Princess Cut", "Emerald Cut", "Oval Shape", "Pear Shape", "Cushion Cut"].map((item) => (
+                                            {[
+                                                "Round Brilliant",
+                                                "Princess Cut",
+                                                "Emerald Cut",
+                                                "Oval Shape",
+                                                "Pear Shape",
+                                                "Cushion Cut",
+                                            ].map((item) => (
                                                 <li key={item}>
-                                                    <a href="#" className="group/link hover:text-gold flex items-center justify-between transition-colors">
+                                                    <a
+                                                        href="#"
+                                                        className="group/link hover:text-gold flex items-center justify-between transition-colors"
+                                                    >
                                                         {item}
                                                     </a>
                                                 </li>
@@ -326,20 +355,32 @@ export default function Home() {
                                         <ul className="space-y-6 text-sm font-medium text-gray-500 dark:text-gray-400">
                                             <li>
                                                 <a href="#" className="hover:text-gold block transition-colors">
-                                                    <span className="mb-1 block font-serif text-black dark:text-white">The Imperial</span>
-                                                    <span className="text-xs font-light text-gray-400">Timeless masterpieces</span>
+                                                    <span className="mb-1 block font-serif text-black dark:text-white">
+                                                        The Imperial
+                                                    </span>
+                                                    <span className="text-xs font-light text-gray-400">
+                                                        Timeless masterpieces
+                                                    </span>
                                                 </a>
                                             </li>
                                             <li>
                                                 <a href="#" className="hover:text-gold block transition-colors">
-                                                    <span className="mb-1 block font-serif text-black dark:text-white">Aura Solitaire</span>
-                                                    <span className="text-xs font-light text-gray-400">Classic elegance</span>
+                                                    <span className="mb-1 block font-serif text-black dark:text-white">
+                                                        Aura Solitaire
+                                                    </span>
+                                                    <span className="text-xs font-light text-gray-400">
+                                                        Classic elegance
+                                                    </span>
                                                 </a>
                                             </li>
                                             <li>
                                                 <a href="#" className="hover:text-gold block transition-colors">
-                                                    <span className="mb-1 block font-serif text-black dark:text-white">High Jewelry</span>
-                                                    <span className="text-xs font-light text-gray-400">Exclusive creations</span>
+                                                    <span className="mb-1 block font-serif text-black dark:text-white">
+                                                        High Jewelry
+                                                    </span>
+                                                    <span className="text-xs font-light text-gray-400">
+                                                        Exclusive creations
+                                                    </span>
                                                 </a>
                                             </li>
                                         </ul>
@@ -352,7 +393,9 @@ export default function Home() {
                                                 className="h-72 w-full object-cover transition-transform duration-[1.5s] group-hover/img:scale-110"
                                             />
                                             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6">
-                                                <p className="text-gold mb-2 text-[10px] font-bold tracking-widest uppercase">New Arrivals</p>
+                                                <p className="text-gold mb-2 text-[10px] font-bold tracking-widest uppercase">
+                                                    New Arrivals
+                                                </p>
                                                 <p className="mb-2 font-serif text-2xl text-white">The Imperial</p>
                                                 <p className="flex translate-y-4 transform items-center gap-2 text-[11px] font-bold tracking-widest text-gray-300 uppercase opacity-0 transition-all duration-500 group-hover/img:translate-y-0 group-hover/img:opacity-100">
                                                     Shop Now <ArrowRight size={14} />
@@ -366,7 +409,9 @@ export default function Home() {
                                                 className="h-72 w-full object-cover transition-transform duration-[1.5s] group-hover/img:scale-110"
                                             />
                                             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6">
-                                                <p className="text-gold mb-2 text-[10px] font-bold tracking-widest uppercase">Trending</p>
+                                                <p className="text-gold mb-2 text-[10px] font-bold tracking-widest uppercase">
+                                                    Trending
+                                                </p>
                                                 <p className="mb-2 font-serif text-2xl text-white">Bridal Edit</p>
                                                 <p className="flex translate-y-4 transform items-center gap-2 text-[11px] font-bold tracking-widest text-gray-300 uppercase opacity-0 transition-all duration-500 group-hover/img:translate-y-0 group-hover/img:opacity-100">
                                                     Shop Now <ArrowRight size={14} />
@@ -388,10 +433,38 @@ export default function Home() {
                             </a>
                             <div className="invisible absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 overflow-hidden rounded-b-lg border border-gray-100 bg-white opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <ul className="flex flex-col text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Engagement Rings</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Wedding Bands for Her</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Wedding Bands for Him</a></li>
-                                    <li><a href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5">Bridal Jewelry Sets</a></li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Engagement Rings
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Wedding Bands for Her
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Wedding Bands for Him
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                                        >
+                                            Bridal Jewelry Sets
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -406,10 +479,38 @@ export default function Home() {
                             </a>
                             <div className="invisible absolute top-full left-1/2 z-50 w-56 -translate-x-1/2 overflow-hidden rounded-b-lg border border-gray-100 bg-white opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <ul className="flex flex-col text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">The Imperial</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Aura Solitaire</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Modern Essentials</a></li>
-                                    <li><a href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5">Everyday Elegance</a></li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            The Imperial
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Aura Solitaire
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Modern Essentials
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                                        >
+                                            Everyday Elegance
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -424,10 +525,38 @@ export default function Home() {
                             </a>
                             <div className="invisible absolute top-full left-1/2 z-50 w-56 -translate-x-1/2 overflow-hidden rounded-b-lg border border-gray-100 bg-white opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <ul className="flex flex-col text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Bespoke Design</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Diamond Upgrades</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Jewelry Repair</a></li>
-                                    <li><a href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5">Appraisals</a></li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Bespoke Design
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Diamond Upgrades
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Jewelry Repair
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                                        >
+                                            Appraisals
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -442,10 +571,38 @@ export default function Home() {
                             </a>
                             <div className="invisible absolute top-full left-1/2 z-50 w-56 -translate-x-1/2 overflow-hidden rounded-b-lg border border-gray-100 bg-white opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <ul className="flex flex-col text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Our Heritage</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Savoir-Faire</a></li>
-                                    <li><a href="#" className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">Journal & News</a></li>
-                                    <li><a href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5">Careers</a></li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Our Heritage
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Savoir-Faire
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
+                                        >
+                                            Journal & News
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#"
+                                            className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                                        >
+                                            Careers
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
