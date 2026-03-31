@@ -4,6 +4,7 @@ import "./globals.css";
 import { AOSInit } from "@/components/AOSInit";
 import { Header } from "./_components/Header";
 import { Footer } from "./_components/Footer";
+import { ConsultantModal } from "./_components/ConsultantModal";
 
 const jost = Jost({
     variable: "--font-jost",
@@ -34,6 +35,7 @@ export default function RootLayout({
                 <Header />
                 {children}
                 <Footer />
+                <ConsultantModal />
             </body>
         </html>
     );
