@@ -4,6 +4,7 @@ import { Instagram } from "../icon/Instagram";
 import { Youtube } from "../icon/Youtube";
 import { ScrollToTop } from "./ScrollToTop";
 import { FomoNotification } from "./FomoNotification";
+import Link from "next/link";
 
 export const Footer = () => {
     return (
@@ -65,13 +66,31 @@ export const Footer = () => {
                                 Service
                             </h3>
                             <ul className="space-y-3 md:space-y-4 text-[11px] md:text-sm font-medium text-gray-500 dark:text-gray-400">
-                                {["Contact Us", "Shipping", "Returns", "Size Guide", "FAQ"].map((link, idx) => (
-                                    <li key={idx}>
-                                        <a href="#" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                            <ChevronRight size={12} className="text-gray-300" /> {link}
-                                        </a>
-                                    </li>
-                                ))}
+                                <li>
+                                    <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Contact Us
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/policies/payment-guide" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Shipping
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/policies/exchange" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Returns
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/size-guide" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Size Guide
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> FAQ
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                         <div>
@@ -79,13 +98,31 @@ export const Footer = () => {
                                 Discover
                             </h3>
                             <ul className="space-y-3 md:space-y-4 text-[11px] md:text-sm font-medium text-gray-500 dark:text-gray-400">
-                                {["Our Story", "High Jewelry", "Journal", "Diamond Guide", "Boutiques"].map((link, idx) => (
-                                    <li key={idx}>
-                                        <a href="#" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                            <ChevronRight size={12} className="text-gray-300" /> {link}
-                                        </a>
-                                    </li>
-                                ))}
+                                <li>
+                                    <Link href="/about" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Our Story
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/collections" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> High Jewelry
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/about" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Journal
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/diamond-guide" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Diamond Guide
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gray-300" /> Boutiques
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -136,9 +173,9 @@ export const Footer = () => {
                     </div>
 
                     <div className="flex gap-6 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                        <a href="#" className="hover:text-gold transition-colors">Privacy</a>
-                        <a href="#" className="hover:text-gold transition-colors">Terms</a>
-                        <a href="#" className="hover:text-gold transition-colors">Sitemap</a>
+                        <Link href="/policies/privacy" className="hover:text-gold transition-colors">Privacy</Link>
+                        <Link href="/policies/payment-guide" className="hover:text-gold transition-colors">Terms</Link>
+                        <Link href="/" className="hover:text-gold transition-colors">Sitemap</Link>
                     </div>
                 </div>
             </div>
