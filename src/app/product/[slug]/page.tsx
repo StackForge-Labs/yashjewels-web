@@ -99,39 +99,55 @@ const ProductDetailPage = () => {
                 </nav>
 
                 <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
-                    {/* Left: Image Gallery */}
+                    {/* Left: Enhanced Editorial Gallery Layout */}
                     <div className="lg:col-span-6">
-                        <div className="sticky top-32 space-y-4">
-                            <div className="group relative aspect-square overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-2xl shadow-black/5 dark:border-white/5 dark:bg-[#111] dark:shadow-black/40">
-                                <img
-                                    src={mainImage}
-                                    alt={MOCK_PRODUCT.name}
-                                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                                />
-                                <div className="absolute top-6 left-6">
-                                    <div className="bg-gold/90 flex items-center gap-2 rounded-full px-4 py-1.5 text-[10px] font-bold tracking-widest text-white uppercase shadow-lg backdrop-blur-md">
-                                        <Sparkles size={12} /> Maison Edition
-                                    </div>
-                                </div>
-                                <button className="absolute top-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-xl backdrop-blur-md transition-all hover:bg-white hover:text-red-500 dark:bg-black/60 dark:text-white dark:hover:text-red-500">
-                                    <Heart size={20} />
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-4 gap-3 md:gap-4">
+                        <div className="group/gallery sticky top-32 flex gap-2">
+                            {/* Vertically Stacked Thumbnails - Left */}
+                            <div className="flex h-full w-20 shrink-0 flex-col gap-3 md:w-24">
                                 {MOCK_PRODUCT.images.map((img, i) => (
                                     <button
                                         key={i}
                                         onClick={() => setMainImage(img)}
-                                        className={`aspect-square overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                                        className={`aspect-square overflow-hidden rounded-2xl border-2 transition-all duration-500 ${
                                             mainImage === img
-                                                ? "border-gold ring-gold/10 scale-95 ring-4"
-                                                : "border-transparent opacity-60 hover:scale-105 hover:opacity-100"
+                                                ? "border-gold ring-gold/10 shadow-gold/20 shadow-lg ring-4"
+                                                : "border-transparent opacity-50 grayscale hover:border-gray-200 hover:opacity-100 hover:grayscale-0 dark:hover:border-white/20"
                                         }`}
                                     >
                                         <img src={img} alt="thumbnail" className="h-full w-full object-cover" />
                                     </button>
                                 ))}
+
+                                {/* Extra Visual Element to fill space if needed */}
+                                <div className="mt-auto flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 text-gray-300 dark:border-white/5 dark:text-gray-800">
+                                    <Diamond size={24} />
+                                </div>
+                            </div>
+
+                            {/* Main Display - Right */}
+                            <div className="relative aspect-[4/5] grow overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 shadow-2xl shadow-black/5 dark:border-white/5 dark:bg-[#111] dark:shadow-black/40">
+                                <img
+                                    src={mainImage}
+                                    alt={MOCK_PRODUCT.name}
+                                    className="h-full w-full object-cover transition-transform duration-1000 group-hover/gallery:scale-110"
+                                />
+
+                                {/* Overlay Badges */}
+                                <div className="absolute top-6 left-6 z-10">
+                                    <div className="bg-gold/90 flex items-center gap-2 rounded-full px-4 py-1.5 text-[10px] font-bold tracking-widest text-white uppercase shadow-lg backdrop-blur-md">
+                                        <Sparkles size={12} /> Maison Edition
+                                    </div>
+                                </div>
+                                <button className="absolute top-6 right-6 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-xl backdrop-blur-md transition-all hover:bg-white hover:text-red-500 dark:bg-black/60 dark:text-white dark:hover:text-red-500">
+                                    <Heart size={20} />
+                                </button>
+
+                                {/* Aesthetic Corner Texture */}
+                                <div className="text-gold pointer-events-none absolute right-0 bottom-0 h-32 w-32 stroke-current opacity-10 dark:text-white">
+                                    <svg viewBox="0 0 100 100" className="h-full w-full">
+                                        <path d="M100 100 L100 0 L0 100 Z" fill="currentColor" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
