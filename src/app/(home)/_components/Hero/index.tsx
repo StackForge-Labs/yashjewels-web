@@ -79,7 +79,7 @@ export const Hero = () => {
             <div className="border-gold/30 pointer-events-none absolute top-8 right-8 z-30 hidden h-20 w-20 border-t-2 border-r-2 lg:block" />
 
             {/* ═══ MAIN CONTENT ═══ */}
-            <div className="relative z-20 container mx-auto flex min-h-screen w-full flex-col px-5 pt-20 pb-16 sm:px-8 sm:pt-28 md:pt-32 lg:flex-row lg:items-center lg:px-12 lg:pt-0 lg:pb-0">
+            <div className="relative z-20 container mx-auto flex min-h-[85vh] w-full flex-col px-5 pt-16 pb-16 sm:px-8 sm:pt-20 lg:flex-row lg:px-12 lg:pt-24 lg:pb-0">
                 {/* ── LEFT: Text & CTA ── */}
                 <div className="flex w-full flex-col lg:w-[55%]">
                     {/* Noblesse Ornamental Header */}
@@ -199,7 +199,7 @@ export const Hero = () => {
                 </div>
 
                 {/* ── RIGHT: Orbit Galaxy ── */}
-                <div className="relative mt-12 flex h-[350px] w-full items-center justify-center sm:mt-16 sm:h-[420px] lg:mt-0 lg:h-full lg:w-[45%]">
+                <div className="relative flex h-[350px] w-full items-center justify-center sm:h-[420px] lg:mt-32 lg:h-[600px] lg:w-[45%]">
                     <div className="relative flex h-full w-full max-w-sm items-center justify-center sm:max-w-md lg:max-w-lg">
                         {/* Core glow halo */}
                         <div
