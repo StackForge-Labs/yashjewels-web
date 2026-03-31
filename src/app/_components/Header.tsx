@@ -430,13 +430,13 @@ export const Header = () => {
                             </div>
                         </div>
 
-                        {/* Dropdown 4: The Maison */}
+                        {/* Dropdown 4: About */}
                         <div className="group relative flex h-full items-center">
                             <Link
                                 href="/about"
                                 className="hover:text-gold relative py-8 text-xs font-bold tracking-[0.15em] text-gray-700 uppercase transition-colors dark:text-gray-300"
                             >
-                                The Maison
+                                About
                             </Link>
                             <div className="invisible absolute top-full left-1/2 z-50 w-56 -translate-x-1/2 overflow-hidden rounded-b-lg border border-gray-100 bg-white opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <ul className="flex flex-col text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -445,7 +445,7 @@ export const Header = () => {
                                             href="/about"
                                             className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
                                         >
-                                            Our Heritage
+                                            Our History
                                         </Link>
                                     </li>
                                     <li>
@@ -453,7 +453,7 @@ export const Header = () => {
                                             href="#"
                                             className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
                                         >
-                                            Savoir-Faire
+                                            Our Craft
                                         </a>
                                     </li>
                                     <li>
@@ -461,7 +461,7 @@ export const Header = () => {
                                             href="#"
                                             className="hover:text-gold block border-b border-gray-50 px-6 py-4 transition-colors hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
                                         >
-                                            Journal & News
+                                            News
                                         </a>
                                     </li>
                                     <li>
