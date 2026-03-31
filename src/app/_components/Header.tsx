@@ -486,9 +486,12 @@ export const Header = () => {
 
                         <SearchModal />
 
-                        <button className="hover:text-gold hidden transform transition-colors duration-300 hover:scale-110 sm:block">
+                        <Link
+                            href="/auth/login"
+                            className="hover:text-gold hidden transform transition-colors duration-300 hover:scale-110 sm:block"
+                        >
                             <User size={22} strokeWidth={1.5} />
-                        </button>
+                        </Link>
 
                         <Link
                             href="/wishlist"
