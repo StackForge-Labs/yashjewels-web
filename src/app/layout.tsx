@@ -30,12 +30,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={`${jost.variable} ${playfair.variable} h-full antialiased`} suppressHydrationWarning>
-            <AOSInit />
             <body className="flex min-h-full flex-col font-sans">
+                <AOSInit />
                 <Header />
-                {children}
+                <main className="flex-grow">{children}</main>
                 <Footer />
-                {/* <ConsultantModal /> */}
+                <ConsultantModal />
             </body>
         </html>
     );
