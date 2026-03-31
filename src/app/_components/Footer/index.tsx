@@ -36,8 +36,8 @@ export const Footer = () => {
                             </h2>
                         </div>
                         <p className="mb-8 text-[13px] md:text-sm leading-relaxed text-gray-500 dark:text-gray-400 text-center lg:text-left">
-                            Chuyên kim cương tự nhiên, trang sức cao cấp và nhẫn cưới thiết kế. 
-                            Chế tác thủ công, tinh xảo và bền vững theo thời gian.
+                            Natural diamonds, high jewelry, and custom engagement rings. 
+                            Handcrafted, elegant, and made to last.
                         </p>
                         
                         <div className="space-y-4 mb-8">
@@ -64,64 +64,64 @@ export const Footer = () => {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-10 lg:col-span-4 md:px-10 lg:px-0">
                         <div>
                             <h3 className="mb-6 md:mb-8 font-serif text-[13px] md:text-lg font-bold tracking-[0.2em] text-gray-900 uppercase dark:text-white">
-                                Dịch vụ
+                                Services
                             </h3>
                             <ul className="space-y-3 md:space-y-4 text-[11px] md:text-sm font-medium text-gray-500 dark:text-gray-400">
                                 <li>
                                     <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Liên hệ
+                                        <ChevronRight size={12} className="text-gray-300" /> Contact
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/policies/payment-guide" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Giao hàng
+                                        <ChevronRight size={12} className="text-gray-300" /> Shipping
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/policies/exchange" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Đổi trả
+                                        <ChevronRight size={12} className="text-gray-300" /> Returns
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/size-guide" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Hướng dẫn size
+                                        <ChevronRight size={12} className="text-gray-300" /> Size Guide
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Câu hỏi thường gặp
+                                        <ChevronRight size={12} className="text-gray-300" /> FAQ
                                     </Link>
                                 </li>
                             </ul>
                         </div>
                         <div>
                             <h3 className="mb-6 md:mb-8 font-serif text-[13px] md:text-lg font-bold tracking-[0.2em] text-gray-900 uppercase dark:text-white">
-                                Khám phá
+                                Discover
                             </h3>
                             <ul className="space-y-3 md:space-y-4 text-[11px] md:text-sm font-medium text-gray-500 dark:text-gray-400">
                                 <li>
                                     <Link href="/about" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Câu chuyện Yash
+                                        <ChevronRight size={12} className="text-gray-300" /> Our Story
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/collections" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> BST Cao cấp
+                                        <ChevronRight size={12} className="text-gray-300" /> High Jewelry
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/about" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Tạp chí
+                                        <ChevronRight size={12} className="text-gray-300" /> Journal
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/diamond-guide" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Kiến thức kim cương
+                                        <ChevronRight size={12} className="text-gray-300" /> Diamond Guide
                                     </Link>
                                 </li>
                                 <li>
                                     <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Cửa hàng
+                                        <ChevronRight size={12} className="text-gray-300" /> Boutique
                                     </Link>
                                 </li>
                             </ul>
@@ -131,7 +131,7 @@ export const Footer = () => {
                     {/* Column 3: Boutique & Newsletter */}
                     <div className="lg:col-span-4">
                         <h3 className="mb-6 md:mb-8 font-serif text-[13px] md:text-lg font-bold tracking-[0.2em] text-gray-900 uppercase dark:text-white text-center lg:text-left">
-                            Cửa hàng
+                            Boutique
                         </h3>
                         <div className="mb-8 h-40 md:h-48 w-full overflow-hidden rounded-xl border border-gray-100 shadow-sm dark:border-white/5">
                             <iframe
@@ -147,7 +147,7 @@ export const Footer = () => {
                         <div className="group relative max-w-md mx-auto lg:mx-0">
                             <input
                                 type="email"
-                                placeholder="Đăng ký nhận tin"
+                                placeholder="Subscribe to news"
                                 className="block w-full rounded-sm border border-gray-100 bg-white px-5 py-4 text-xs md:text-sm text-gray-900 shadow-sm transition-colors outline-none focus:border-gold dark:border-white/5 dark:bg-white/5 dark:text-white"
                             />
                             <button className="absolute top-0 right-0 bottom-0 flex items-center justify-center px-6 text-gold">
@@ -174,9 +174,9 @@ export const Footer = () => {
                     </div>
 
                     <div className="flex gap-6 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                        <Link href="/policies/privacy" className="hover:text-gold transition-colors">Bảo mật</Link>
-                        <Link href="/policies/payment-guide" className="hover:text-gold transition-colors">Điều khoản</Link>
-                        <Link href="/" className="hover:text-gold transition-colors">Sơ đồ</Link>
+                        <Link href="/policies/privacy" className="hover:text-gold transition-colors">Privacy</Link>
+                        <Link href="/policies/payment-guide" className="hover:text-gold transition-colors">Terms</Link>
+                        <Link href="/" className="hover:text-gold transition-colors">Sitemap</Link>
                     </div>
                 </div>
             </div>
