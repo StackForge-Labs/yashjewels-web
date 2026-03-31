@@ -88,8 +88,13 @@ export const Footer = () => {
                                     </Link>
                                 </li>
                                 <li>
+                                    <Link href="/gold-price" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gold" /> Gold Price
+                                    </Link>
+                                </li>
+                                <li>
                                     <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> FAQ
+                                        <ChevronRight size={12} className="text-gray-300" /> Help & FAQ
                                     </Link>
                                 </li>
                             </ul>
@@ -120,8 +125,8 @@ export const Footer = () => {
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Boutique
+                                    <Link href="/careers" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gold" /> Careers
                                     </Link>
                                 </li>
                             </ul>
@@ -176,7 +181,7 @@ export const Footer = () => {
                     <div className="flex gap-6 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                         <Link href="/policies/privacy" className="hover:text-gold transition-colors">Privacy</Link>
                         <Link href="/policies/payment-guide" className="hover:text-gold transition-colors">Terms</Link>
-                        <Link href="/" className="hover:text-gold transition-colors">Sitemap</Link>
+                        <Link href="/policies/warranty" className="hover:text-gold transition-colors">Warranty</Link>
                     </div>
                 </div>
             </div>
