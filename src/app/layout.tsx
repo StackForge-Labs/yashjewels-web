@@ -33,7 +33,7 @@ export default function RootLayout({
             <body className="flex min-h-full flex-col font-sans">
                 <AOSInit />
                 <Header />
-                <main className="flex-grow">{children}</main>
+                <main className="grow pb-0 lg:pb-24">{children}</main>
                 <Footer />
             </body>
         </html>

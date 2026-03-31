@@ -61,7 +61,7 @@ export const FomoNotification = () => {
 
     return (
         <div
-            className={`fixed bottom-8 left-8 z-100 flex max-w-[360px] overflow-hidden rounded-2xl border border-gray-100 bg-white/95 p-0 shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all duration-700 select-none dark:border-white/10 dark:bg-zinc-900/95 ${
+            className={`fixed bottom-8 left-8 z-100 hidden max-w-[360px] overflow-hidden rounded-2xl border border-gray-100 bg-white/95 p-0 shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all duration-700 select-none lg:flex dark:border-white/10 dark:bg-zinc-900/95 ${
                 isVisible ? "translate-x-0 opacity-100" : "-translate-x-10 opacity-0"
             }`}
         >
