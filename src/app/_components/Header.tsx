@@ -44,7 +44,7 @@ export const Header = () => {
             <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 shadow-sm backdrop-blur-xl transition-all dark:border-white/5 dark:bg-[#050505]/90 dark:shadow-none">
                 <div className="container mx-auto flex items-center justify-between px-4">
                     {/* Logo */}
-                    <div className="group flex cursor-pointer flex-col items-center py-4 md:py-0">
+                    <Link href="/" className="group flex cursor-pointer flex-col items-center py-4 md:py-0">
                         <div className="text-gold mb-1 scale-75 transform transition-transform duration-500 group-hover:rotate-180 md:scale-100">
                             <svg
                                 width="34"
@@ -81,7 +81,7 @@ export const Header = () => {
                         <span className="text-gold mt-1 text-[6px] font-bold tracking-[0.3em] uppercase md:text-[8px]">
                             High Jewelry
                         </span>
-                    </div>
+                    </Link>
 
                     {/* Centered Nav with Hover Dropdowns */}
                     <nav className="hidden h-full items-center gap-8 xl:flex">
@@ -490,11 +490,17 @@ export const Header = () => {
                             <User size={22} strokeWidth={1.5} />
                         </button>
 
-                        <Link href="/wishlist" className="hover:text-gold relative transform transition-colors duration-300 hover:scale-110">
+                        <Link
+                            href="/wishlist"
+                            className="hover:text-gold relative transform transition-colors duration-300 hover:scale-110"
+                        >
                             <Heart size={22} strokeWidth={1.5} />
                         </Link>
 
-                        <Link href="/cart" className="hover:text-gold relative transform transition-colors duration-300 hover:scale-110">
+                        <Link
+                            href="/cart"
+                            className="hover:text-gold relative transform transition-colors duration-300 hover:scale-110"
+                        >
                             <ShoppingCart size={22} strokeWidth={1.5} />
                             <span className="bg-gold absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white md:h-4 md:w-4 md:text-[9px] dark:text-black">
                                 3
