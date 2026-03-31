@@ -685,7 +685,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
             </section>
 
             {/* SECTION 10: STORES (Luxurious Floating Cards) */}
-            <section className="relative bg-gray-50 py-32 transition-colors duration-500 dark:bg-[#050505]">
+            <section className="relative bg-gray-50 py-32 transition-colors duration-500 dark:bg-dark-bg">
                 <div className="container mx-auto px-4 lg:px-12">
                     <div className="mb-16 text-center" data-aos="fade-up">
                         <span className="text-gold mb-3 block text-[10px] font-bold tracking-[0.4em] uppercase">
