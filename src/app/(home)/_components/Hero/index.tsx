@@ -1,4 +1,4 @@
-import { ArrowRight, Flame, Diamond, Sparkles } from "lucide-react";
+import { ArrowRight, Flame, Diamond, Sparkles, Gem, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import styles from "./Hero.module.css";
 import Link from "next/link";
@@ -79,32 +79,41 @@ export const Hero = () => {
             <div className="border-gold/30 pointer-events-none absolute top-8 right-8 z-30 hidden h-20 w-20 border-t-2 border-r-2 lg:block" />
 
             {/* ═══ MAIN CONTENT ═══ */}
-            <div className="relative z-20 container mx-auto flex h-full w-full flex-col px-5 py-24 sm:px-8 lg:flex-row lg:items-center lg:px-12 lg:py-0">
+            <div className="relative z-20 container mx-auto flex min-h-screen w-full flex-col px-5 pt-20 pb-16 sm:px-8 sm:pt-28 md:pt-32 lg:flex-row lg:items-center lg:px-12 lg:pt-0 lg:pb-0">
                 {/* ── LEFT: Text & CTA ── */}
-                <div className="flex w-full flex-col justify-center lg:w-[55%]">
-                    {/* Edition badge */}
-                    <div className={`mb-5 flex items-center gap-3 sm:mb-6 ${styles["rise-1"]}`}>
-                        <span className="bg-gold h-px w-8 sm:w-12" />
-                        <span className="border-gold/30 bg-gold/10 text-gold rounded-full border px-4 py-1.5 text-[9px] font-bold tracking-[0.4em] uppercase backdrop-blur-sm sm:text-[10px]">
-                            ✦ The 2026 Collection
+                <div className="flex w-full flex-col lg:w-[55%]">
+                    {/* Noblesse Ornamental Header */}
+                    <div className={`${styles["ornamental-hr"]} animate-fade-in`}>
+                        <Gem className="h-3 w-3" />
+                        <span className="text-gold/80 text-[10px] font-bold tracking-[0.4em] uppercase">
+                            The 2026 Collection
                         </span>
-                        <span className="bg-gold h-px w-8 sm:w-12" />
                     </div>
 
-                    {/* Main heading */}
                     <h1
-                        className={`mb-5 font-serif text-[2.5rem] leading-[1.1] font-light text-white drop-shadow-lg sm:mb-6 sm:text-6xl md:text-7xl lg:text-[5.5rem] 2xl:text-8xl ${styles["rise-2"]}`}
+                        className={`${styles["noble-title"]} ${styles["animate-kerning"]} mb-6 flex flex-col sm:mb-8 md:mb-10 lg:mb-12`}
                     >
-                        <span className={styles["shimmer-text"]}>Brilliance</span>{" "}
-                        <span className={`${styles["gradient-text"]} block font-light italic sm:inline`}>Defined</span>
+                        <span
+                            data-text="Brilliance"
+                            className="xs:text-5xl text-4xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl"
+                        >
+                            Brilliance
+                        </span>
+                        <span
+                            data-text="Defined"
+                            className="xs:text-4xl mt-1 ml-4 text-3xl font-light italic sm:mt-2 sm:ml-8 sm:text-5xl md:text-6xl lg:ml-12 lg:text-[5rem] xl:text-[6.5rem]"
+                        >
+                            Defined
+                        </span>
                     </h1>
 
-                    {/* Sub-copy */}
                     <p
-                        className={`mb-8 max-w-md text-sm leading-relaxed font-light text-white/70 sm:mb-10 sm:max-w-lg sm:text-base lg:mb-12 ${styles["rise-3"]}`}
+                        className={`${styles["subtext-premium"]} mb-8 max-w-[90%] text-[10px] sm:mb-10 sm:max-w-xl sm:text-xs md:mb-12 md:text-sm lg:text-sm xl:text-base`}
+                        data-aos="fade-up"
+                        data-aos-delay="200"
                     >
-                        Discover our exquisite selection of high jewelry. Unparalleled craftsmanship meeting
-                        extraordinary earth-mined diamonds.
+                        Curation of high jewelry, where unparalleled craftsmanship <br className="hidden md:block" />{" "}
+                        meets extraordinary earth-mined diamonds.
                     </p>
 
                     {/* ── Flash Sale Widget ── */}
@@ -171,26 +180,20 @@ export const Hero = () => {
                         </div>
                     </div>
 
-                    {/* ── CTA Buttons ── */}
-                    <div className={`flex flex-col gap-3 sm:flex-row sm:gap-5 ${styles["rise-5"]}`}>
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6" data-aos="fade-up" data-aos-delay="400">
                         <Link
                             href="/collections"
-                            className="group bg-gold relative overflow-hidden px-8 py-4 text-center text-[11px] font-bold tracking-[0.25em] text-white uppercase shadow-[0_10px_40px_rgba(212,175,55,0.3)] transition-all duration-500 hover:shadow-[0_15px_50px_rgba(212,175,55,0.5)] active:scale-[0.98] sm:px-10 sm:py-5 sm:text-xs"
+                            className={`${styles["luxury-button"]} flex h-12 items-center gap-3 rounded-full px-6 text-[9px] font-bold tracking-widest text-black uppercase transition-all sm:h-14 sm:px-10 sm:text-[10px] md:text-[11px]`}
                         >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                <Sparkles size={14} />
-                                Shop Collection
-                            </span>
+                            <ShoppingBag className="h-4 w-4" />
+                            Shop Collection
                         </Link>
                         <Link
                             href="/about"
-                            className="group hover:border-gold hover:bg-gold/10 hover:text-gold flex items-center justify-center gap-3 border border-white/30 px-8 py-4 text-[11px] font-bold tracking-[0.25em] text-white uppercase backdrop-blur-md transition-all duration-500 sm:px-10 sm:py-5 sm:text-xs"
+                            className={`${styles["ghost-luxury"]} group border-gold/20 hover:bg-gold/5 flex h-12 items-center gap-3 rounded-full border px-6 text-[9px] font-bold tracking-widest text-white uppercase transition-all sm:h-14 sm:px-10 sm:text-[10px] md:text-[11px]`}
                         >
                             View Lookbook
-                            <ArrowRight
-                                size={16}
-                                className="transition-transform duration-300 group-hover:translate-x-1"
-                            />
+                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Link>
                     </div>
                 </div>

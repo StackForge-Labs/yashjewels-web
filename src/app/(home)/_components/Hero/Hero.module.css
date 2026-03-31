@@ -103,18 +103,132 @@
 
 .shimmer-text {
     background: linear-gradient(
-        90deg,
-        rgba(255,255,255,1) 0%,
-        rgba(212, 175, 55, 0.8) 25%,
-        rgba(245, 215, 110, 1) 50%,
-        rgba(212, 175, 55, 0.8) 75%,
-        rgba(255,255,255,1) 100%
+        120deg,
+        rgba(255, 255, 255, 1) 0%,
+        rgba(212, 175, 55, 0.4) 15%,
+        rgba(255, 255, 255, 1) 30%,
+        rgba(245, 215, 110, 0.6) 50%,
+        rgba(255, 255, 255, 1) 70%,
+        rgba(212, 175, 55, 0.4) 85%,
+        rgba(255, 255, 255, 1) 100%
     );
-    background-size: 200% auto;
+    background-size: 300% auto;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: text-shimmer 5s linear infinite;
+    animation: text-shimmer 6s linear infinite;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.1);
+}
+
+.ornamental-hr {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: #c5a021;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+}
+
+.ornamental-hr::before,
+.ornamental-hr::after {
+    content: "";
+    height: 1px;
+    background: linear-gradient(to right, transparent, #c5a021, transparent);
+    flex: 1;
+    width: 60px;
+}
+
+.luxury-button {
+    background: linear-gradient(135deg, #c5a021 0%, #a6851a 100%);
+    box-shadow: 0 10px 20px -10px rgba(197, 160, 33, 0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.luxury-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px -10px rgba(197, 160, 33, 0.6);
+}
+
+.ghost-luxury {
+    border: 1px solid rgba(197, 160, 33, 0.3);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+}
+
+.noble-title {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    text-transform: capitalize;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    /* Base gold texture */
+    background: linear-gradient(
+        to bottom,
+        #fff 0%,
+        #fef9e7 20%,
+        #d4af37 60%,
+        #8a6b16 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #d4af37; /* Fallback */
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+    position: relative;
+}
+
+.noble-title span {
+    display: block;
+    width: max-content;
+}
+
+/* Luxury Light Sweep Effect */
+.noble-title span::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    /* Layered shimmer */
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        transparent 40%,
+        rgba(255, 255, 255, 0.8) 50%,
+        transparent 60%,
+        transparent 100%
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: noble-shimmer-sweep 6s infinite;
+    pointer-events: none;
+}
+
+@keyframes noble-shimmer-sweep {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.subtext-premium {
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.15em;
+    font-weight: 300;
+    line-height: 2.2;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    text-align: left;
+}
+
+@keyframes kerning-expand {
+    from { letter-spacing: -0.1em; opacity: 0; filter: blur(10px); }
+    to { letter-spacing: -0.02em; opacity: 1; filter: blur(0); }
+}
+
+.animate-kerning {
+    animation: kerning-expand 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .bokeh {
@@ -138,12 +252,13 @@
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #d4af37, #f5d76e, #d4af37, #b58c49);
+    background: linear-gradient(135deg, #d4af37 0%, #f5d76e 25%, #fff9e6 50%, #f5d76e 75%, #b58c49 100%);
     background-size: 300% 300%;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: gradient-shift 4s ease infinite;
+    animation: gradient-shift 5s ease infinite;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
 }
 
 /* ── Staggered rises ── */
