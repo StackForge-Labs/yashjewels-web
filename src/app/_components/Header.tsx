@@ -12,32 +12,23 @@ export const Header = () => {
             {/* Top Notification Bar */}
             <div className="border-b border-gray-200 bg-gray-50 py-2 text-xs text-gray-500 transition-colors dark:border-white/5 dark:bg-[#080808] dark:text-gray-400">
                 <div className="container mx-auto flex items-center justify-between px-4">
-                    <div className="flex items-center gap-4">
-                        <span className="bg-gold rounded-sm px-2 py-0.5 text-[10px] font-medium tracking-widest text-black uppercase">
+                    <div className="flex items-center gap-3 md:gap-4 shrink-0">
+                        <span className="bg-gold rounded-sm px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold tracking-widest text-black uppercase">
                             Global
                         </span>
-                        <span className="hidden sm:inline">Official Yash Jewels Retail Network</span>
+                        <span className="hidden lg:inline font-medium text-[10px] tracking-wider uppercase">Official Retail Network</span>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <span className="hover:text-gold flex cursor-pointer items-center gap-2 transition-colors">
-                            <Phone size={14} className="text-gold" />
-                            Hotline: <strong className="text-gray-800 dark:text-gray-200">+1 (800) 123-4567</strong>
-                        </span>
-                        <div className="hidden items-center gap-3 border-l border-gray-300 pl-6 sm:flex dark:border-white/10">
-                            <span className="hover:text-gold transform cursor-pointer transition-colors hover:-translate-y-0.5">
-                                <Facebook size={14} />
+                    <div className="flex items-center gap-4 md:gap-6">
+                        <a href="tel:+18001234567" className="hover:text-gold flex items-center gap-1.5 transition-colors">
+                            <Phone size={12} className="text-gold" />
+                            <span className="text-[10px] font-bold tracking-wider md:text-xs">
+                                <span className="hidden sm:inline">Hotline: </span>+1 (800) 123-4567
                             </span>
-                            <span className="hover:text-gold transform cursor-pointer transition-colors hover:-translate-y-0.5">
-                                <Instagram size={14} />
-                            </span>
-                            <span className="hover:text-gold transform cursor-pointer transition-colors hover:-translate-y-0.5">
-                                <Youtube size={14} />
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2 border-l border-gray-300 pl-6 dark:border-white/10">
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">EN</span>
-                            <span className="text-gray-400">/</span>
-                            <span className="hover:text-gold cursor-pointer transition-colors">USD</span>
+                        </a>
+                        <div className="flex items-center gap-2 border-l border-gray-200 dark:border-white/10 pl-4 md:pl-6">
+                            <span className="font-bold text-gray-800 dark:text-gray-200 text-[10px] tracking-widest uppercase">EN</span>
+                            <span className="text-gray-300">/</span>
+                            <span className="hover:text-gold cursor-pointer transition-colors text-[10px] tracking-widest uppercase">USD</span>
                         </div>
                     </div>
                 </div>
@@ -47,8 +38,8 @@ export const Header = () => {
             <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 shadow-sm backdrop-blur-xl transition-all dark:border-white/5 dark:bg-[#050505]/90 dark:shadow-none">
                 <div className="container mx-auto flex items-center justify-between px-4">
                     {/* Logo */}
-                    <div className="group flex cursor-pointer flex-col items-center">
-                        <div className="text-gold mb-1 transform transition-transform duration-500 group-hover:rotate-180">
+                    <div className="group flex cursor-pointer flex-col items-center py-4 md:py-0">
+                        <div className="text-gold mb-1 transform transition-transform duration-500 group-hover:rotate-180 scale-75 md:scale-100">
                             <svg
                                 width="34"
                                 height="34"
@@ -78,10 +69,10 @@ export const Header = () => {
                                 />
                             </svg>
                         </div>
-                        <h1 className="font-serif text-xl leading-none tracking-[0.2em] text-gray-900 uppercase dark:text-white">
+                        <h1 className="font-serif text-sm md:text-xl leading-none tracking-[0.2em] text-gray-900 uppercase dark:text-white">
                             Yash Jewels
                         </h1>
-                        <span className="text-gold mt-1.5 text-[8px] font-medium tracking-[0.3em] uppercase">
+                        <span className="text-gold mt-1 text-[6px] md:text-[8px] font-bold tracking-[0.3em] uppercase">
                             High Jewelry
                         </span>
                     </div>
@@ -481,19 +472,25 @@ export const Header = () => {
                     </nav>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-5 text-gray-700 dark:text-gray-300">
-                        <ThemeToggle />
-                        <div className="mx-1 h-6 w-px bg-gray-200 dark:bg-gray-800"></div>
+                    <div className="flex items-center gap-3 md:gap-5 text-gray-700 dark:text-gray-300">
+                        <div className="hidden sm:block">
+                            <ThemeToggle />
+                        </div>
+                        <div className="hidden md:block mx-1 h-6 w-px bg-gray-200 dark:bg-gray-800"></div>
+                        
                         <SearchModal />
-                        <button className="hover:text-gold transform transition-colors duration-300 hover:scale-110">
+                        
+                        <button className="hover:text-gold transform transition-colors duration-300 hover:scale-110 hidden sm:block">
                             <User size={22} strokeWidth={1.5} />
                         </button>
+                        
                         <button className="hover:text-gold relative transform transition-colors duration-300 hover:scale-110">
                             <Heart size={22} strokeWidth={1.5} />
                         </button>
+                        
                         <button className="hover:text-gold relative transform transition-colors duration-300 hover:scale-110">
                             <ShoppingCart size={22} strokeWidth={1.5} />
-                            <span className="bg-gold absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white dark:text-black">
+                            <span className="bg-gold absolute -top-1 -right-1 flex h-3.5 md:h-4 w-3.5 md:w-4 items-center justify-center rounded-full text-[8px] md:text-[9px] font-bold text-white dark:text-black">
                                 3
                             </span>
                         </button>
