@@ -3,10 +3,10 @@
 import React, { useState, useMemo } from "react";
 import { ChevronRight, Search, RotateCcw, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
-import ProductCard from "../(home)/_components/ProductCard";
-import FilterDropdown from "./_components/FilterDropdown";
-import MobileFilterDrawer from "./_components/MobileFilterDrawer";
-import Pagination from "./_components/Pagination";
+import ProductCard from "../../(home)/_components/ProductCard";
+import FilterDropdown from "../_components/FilterDropdown";
+import MobileFilterDrawer from "../_components/MobileFilterDrawer";
+import Pagination from "../_components/Pagination";
 
 // Mock Data targeting high-fidelity imagery and doc requirements
 const MOCK_PRODUCTS = [
@@ -86,7 +86,15 @@ const CollectionsPage = () => {
             const max = maxPrice ? Number(maxPrice) : Infinity;
             const matchesPrice = price >= min && price <= max;
 
-            return matchesSearch && matchesBrand && matchesCarat && matchesMetal && matchesType && matchesReady && matchesPrice;
+            return (
+                matchesSearch &&
+                matchesBrand &&
+                matchesCarat &&
+                matchesMetal &&
+                matchesType &&
+                matchesReady &&
+                matchesPrice
+            );
         });
 
         if (sortBy === "Price: Low to High") {
@@ -96,16 +104,27 @@ const CollectionsPage = () => {
         }
 
         return result;
-    }, [searchQuery, selectedBrand, selectedCarat, selectedMetal, selectedType, isReadyOnly, minPrice, maxPrice, sortBy]);
+    }, [
+        searchQuery,
+        selectedBrand,
+        selectedCarat,
+        selectedMetal,
+        selectedType,
+        isReadyOnly,
+        minPrice,
+        maxPrice,
+        sortBy,
+    ]);
 
     return (
-        <main className="bg-white pt-28 pb-32 transition-colors dark:bg-[#050505]">
+        <main className="bg-white pt-10 pb-32 transition-colors dark:bg-[#050505]">
             <div className="container mx-auto px-4 lg:px-12">
-
                 {/* Header Section */}
                 <div className="mb-16 flex flex-col items-center text-center">
                     <nav className="mb-6 flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] text-gray-400 uppercase">
-                        <Link href="/" className="hover:text-gold transition-colors">Home</Link>
+                        <Link href="/" className="hover:text-gold transition-colors">
+                            Home
+                        </Link>
                         <ChevronRight size={10} />
                         <span className="text-gray-900 dark:text-white">Fine Collections</span>
                     </nav>
@@ -113,13 +132,13 @@ const CollectionsPage = () => {
                         The <span className="text-gold font-light italic">Art</span> of Brilliance
                     </h1>
                     <p className="max-w-2xl text-[14px] leading-relaxed text-gray-400 dark:text-gray-500">
-                        Explore our heritage of handcrafted excellence. From solitaire engagement rings to
-                        high-jewelry masterpieces, each piece is a celebration of eternal elegance.
+                        Explore our heritage of handcrafted excellence. From solitaire engagement rings to high-jewelry
+                        masterpieces, each piece is a celebration of eternal elegance.
                     </p>
                 </div>
 
                 {/* Search & Layout Toggle */}
-                <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between border-b border-gray-50 pb-10 dark:border-white/5">
+                <div className="mb-10 flex flex-col gap-6 border-b border-gray-50 pb-10 lg:flex-row lg:items-center lg:justify-between dark:border-white/5">
                     <div className="relative w-full max-w-xl">
                         <Search className="absolute top-1/2 left-0 -translate-y-1/2 text-gray-300" size={18} />
                         <input
@@ -127,7 +146,7 @@ const CollectionsPage = () => {
                             placeholder="Find your masterpiece..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full border-b border-gray-100 bg-transparent py-3 pr-6 pl-8 text-sm font-medium tracking-wide text-gray-900 transition-all outline-none focus:border-gold dark:border-white/5 dark:text-white"
+                            className="focus:border-gold w-full border-b border-gray-100 bg-transparent py-3 pr-6 pl-8 text-sm font-medium tracking-wide text-gray-900 transition-all outline-none dark:border-white/5 dark:text-white"
                         />
                     </div>
                     <div className="flex items-center gap-6 self-end">
@@ -155,12 +174,13 @@ const CollectionsPage = () => {
                 </div>
 
                 <div className="flex flex-col gap-12 lg:flex-row lg:gap-16">
-
                     {/* Desktop Sidebar Filters */}
-                    <aside className="hidden w-64 shrink-0 lg:block space-y-12">
+                    <aside className="hidden w-64 shrink-0 space-y-12 lg:block">
                         {/* Metal Filter */}
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">Metal Tone</h3>
+                            <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                                Metal Tone
+                            </h3>
                             <div className="flex gap-3">
                                 {METALS.map((m) => (
                                     <button
@@ -169,7 +189,9 @@ const CollectionsPage = () => {
                                         onClick={() => setSelectedMetal(selectedMetal === m.name ? "All" : m.name)}
                                         style={{ backgroundColor: m.color }}
                                         className={`h-8 w-8 rounded-full border transition-all hover:scale-110 ${
-                                            selectedMetal === m.name ? "ring-gold ring-2 ring-offset-4 scale-110" : "border-gray-200 dark:border-white/10"
+                                            selectedMetal === m.name
+                                                ? "ring-gold scale-110 ring-2 ring-offset-4"
+                                                : "border-gray-200 dark:border-white/10"
                                         }`}
                                     />
                                 ))}
@@ -177,39 +199,63 @@ const CollectionsPage = () => {
                         </div>
 
                         {/* Modularized Dropdowns */}
-                        <FilterDropdown label="Brand" options={["Asmi", "D'damas", "Nakshatra"]} value={selectedBrand} onChange={setSelectedBrand} />
-                        <FilterDropdown label="Carat" options={["18K", "22K", "24K"]} value={selectedCarat} onChange={setSelectedCarat} />
-                        <FilterDropdown label="Category" options={["Engagement Rings", "Wedding Bands", "Jewellery"]} value={selectedType} onChange={setSelectedType} />
-                        <FilterDropdown label="Sort By" options={["Price: Low to High", "Price: High to Low", "New Arrivals"]} value={sortBy} onChange={setSortBy} />
+                        <FilterDropdown
+                            label="Brand"
+                            options={["Asmi", "D'damas", "Nakshatra"]}
+                            value={selectedBrand}
+                            onChange={setSelectedBrand}
+                        />
+                        <FilterDropdown
+                            label="Carat"
+                            options={["18K", "22K", "24K"]}
+                            value={selectedCarat}
+                            onChange={setSelectedCarat}
+                        />
+                        <FilterDropdown
+                            label="Category"
+                            options={["Engagement Rings", "Wedding Bands", "Jewellery"]}
+                            value={selectedType}
+                            onChange={setSelectedType}
+                        />
+                        <FilterDropdown
+                            label="Sort By"
+                            options={["Price: Low to High", "Price: High to Low", "New Arrivals"]}
+                            value={sortBy}
+                            onChange={setSortBy}
+                        />
 
                         {/* Price Range */}
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">Price Range ($)</h3>
+                            <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                                Price Range ($)
+                            </h3>
                             <div className="flex items-center gap-2">
-                                <input 
-                                    type="number" 
-                                    placeholder="Min" 
-                                    value={minPrice} 
+                                <input
+                                    type="number"
+                                    placeholder="Min"
+                                    value={minPrice}
                                     onChange={(e) => setMinPrice(e.target.value)}
-                                    className="w-full h-10 bg-gray-50 border border-transparent focus:border-gold outline-none px-4 text-[11px] font-bold text-gray-900 rounded-sm transition-colors dark:bg-white/5 dark:text-white"
+                                    className="focus:border-gold h-10 w-full rounded-sm border border-transparent bg-gray-50 px-4 text-[11px] font-bold text-gray-900 transition-colors outline-none dark:bg-white/5 dark:text-white"
                                 />
                                 <span className="text-gray-400">-</span>
-                                <input 
-                                    type="number" 
-                                    placeholder="Max" 
-                                    value={maxPrice} 
+                                <input
+                                    type="number"
+                                    placeholder="Max"
+                                    value={maxPrice}
                                     onChange={(e) => setMaxPrice(e.target.value)}
-                                    className="w-full h-10 bg-gray-50 border border-transparent focus:border-gold outline-none px-4 text-[11px] font-bold text-gray-900 rounded-sm transition-colors dark:bg-white/5 dark:text-white"
+                                    className="focus:border-gold h-10 w-full rounded-sm border border-transparent bg-gray-50 px-4 text-[11px] font-bold text-gray-900 transition-colors outline-none dark:bg-white/5 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* Reset & Availability */}
-                        <div className="pt-8 space-y-4">
+                        <div className="space-y-4 pt-8">
                             <button
                                 onClick={() => setIsReadyOnly(!isReadyOnly)}
                                 className={`flex w-full items-center justify-between rounded-xl px-5 py-4 text-[10px] font-bold tracking-widest uppercase transition-all ${
-                                    isReadyOnly ? "bg-gold text-white shadow-xl shadow-gold/20" : "bg-gray-50 text-gray-400 dark:bg-white/5"
+                                    isReadyOnly
+                                        ? "bg-gold shadow-gold/20 text-white shadow-xl"
+                                        : "bg-gray-50 text-gray-400 dark:bg-white/5"
                                 }`}
                             >
                                 Ready to Ship
@@ -217,10 +263,15 @@ const CollectionsPage = () => {
                             </button>
                             <button
                                 onClick={() => {
-                                    setSelectedBrand("All"); setSelectedCarat("All");
-                                    setSelectedMetal("All"); setSelectedType("All");
-                                    setIsReadyOnly(false); setSearchQuery("");
-                                    setMinPrice(""); setMaxPrice(""); setSortBy("New Arrivals");
+                                    setSelectedBrand("All");
+                                    setSelectedCarat("All");
+                                    setSelectedMetal("All");
+                                    setSelectedType("All");
+                                    setIsReadyOnly(false);
+                                    setSearchQuery("");
+                                    setMinPrice("");
+                                    setMaxPrice("");
+                                    setSortBy("New Arrivals");
                                 }}
                                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-100 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase transition-all hover:bg-gray-50 hover:text-gray-900 dark:border-white/5 dark:hover:bg-white/5"
                             >
@@ -232,11 +283,14 @@ const CollectionsPage = () => {
                     {/* Main Content Area */}
                     <div className="flex-grow">
                         <div className="mb-10 text-[9px] font-bold tracking-[0.3em] text-gray-300 uppercase dark:text-gray-500">
-                            Presenting <span className="text-gray-900 dark:text-white">{filteredProducts.length}</span> Exquisite Pieces
+                            Presenting <span className="text-gray-900 dark:text-white">{filteredProducts.length}</span>{" "}
+                            Exquisite Pieces
                         </div>
 
                         {filteredProducts.length > 0 ? (
-                            <div className={`grid gap-x-8 gap-y-16 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
+                            <div
+                                className={`grid gap-x-8 gap-y-16 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}
+                            >
                                 {filteredProducts.map((product) => (
                                     <ProductCard key={product.sku} {...product} />
                                 ))}
@@ -244,8 +298,12 @@ const CollectionsPage = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center py-40 text-center">
                                 <Search size={64} className="mb-8 text-gray-100 dark:text-white/5" />
-                                <h3 className="mb-3 font-serif text-3xl text-gray-900 dark:text-white">No Pieces Found</h3>
-                                <p className="text-sm text-gray-400">Try adjusting your filters to find your masterpiece.</p>
+                                <h3 className="mb-3 font-serif text-3xl text-gray-900 dark:text-white">
+                                    No Pieces Found
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                    Try adjusting your filters to find your masterpiece.
+                                </p>
                             </div>
                         )}
 
@@ -273,7 +331,9 @@ const CollectionsPage = () => {
                                     onClick={() => setSelectedMetal(selectedMetal === m.name ? "All" : m.name)}
                                     style={{ backgroundColor: m.color }}
                                     className={`h-10 w-10 rounded-full border transition-all ${
-                                        selectedMetal === m.name ? "ring-gold ring-2 ring-offset-4 scale-110" : "border-gray-100 dark:border-white/10"
+                                        selectedMetal === m.name
+                                            ? "ring-gold scale-110 ring-2 ring-offset-4"
+                                            : "border-gray-100 dark:border-white/10"
                                     }`}
                                 />
                             ))}
@@ -281,39 +341,60 @@ const CollectionsPage = () => {
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">Price Range ($)</h3>
+                        <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
+                            Price Range ($)
+                        </h3>
                         <div className="flex items-center gap-2">
-                            <input 
-                                type="number" 
-                                placeholder="Min" 
-                                value={minPrice} 
+                            <input
+                                type="number"
+                                placeholder="Min"
+                                value={minPrice}
                                 onChange={(e) => setMinPrice(e.target.value)}
-                                className="w-full h-12 bg-gray-50 border border-transparent focus:border-gold outline-none px-4 text-[11px] font-bold text-gray-900 rounded-sm transition-colors dark:bg-white/5 dark:text-white"
+                                className="focus:border-gold h-12 w-full rounded-sm border border-transparent bg-gray-50 px-4 text-[11px] font-bold text-gray-900 transition-colors outline-none dark:bg-white/5 dark:text-white"
                             />
                             <span className="text-gray-400">-</span>
-                            <input 
-                                type="number" 
-                                placeholder="Max" 
-                                value={maxPrice} 
+                            <input
+                                type="number"
+                                placeholder="Max"
+                                value={maxPrice}
                                 onChange={(e) => setMaxPrice(e.target.value)}
-                                className="w-full h-12 bg-gray-50 border border-transparent focus:border-gold outline-none px-4 text-[11px] font-bold text-gray-900 rounded-sm transition-colors dark:bg-white/5 dark:text-white"
+                                className="focus:border-gold h-12 w-full rounded-sm border border-transparent bg-gray-50 px-4 text-[11px] font-bold text-gray-900 transition-colors outline-none dark:bg-white/5 dark:text-white"
                             />
                         </div>
                     </div>
 
                     {[
-                        { label: "Sort By", value: sortBy, setter: setSortBy, options: ["Price: Low to High", "Price: High to Low", "New Arrivals"] },
-                        { label: "Brand", value: selectedBrand, setter: setSelectedBrand, options: ["Asmi", "D'damas", "Nakshatra"] },
+                        {
+                            label: "Sort By",
+                            value: sortBy,
+                            setter: setSortBy,
+                            options: ["Price: Low to High", "Price: High to Low", "New Arrivals"],
+                        },
+                        {
+                            label: "Brand",
+                            value: selectedBrand,
+                            setter: setSelectedBrand,
+                            options: ["Asmi", "D'damas", "Nakshatra"],
+                        },
                         { label: "Carat", value: selectedCarat, setter: setSelectedCarat, options: ["18K", "22K"] },
-                        { label: "Category", value: selectedType, setter: setSelectedType, options: ["Engagement Rings", "Jewellery"] }
+                        {
+                            label: "Category",
+                            value: selectedType,
+                            setter: setSelectedType,
+                            options: ["Engagement Rings", "Jewellery"],
+                        },
                     ].map((f) => (
                         <div key={f.label} className="space-y-4">
-                            <h3 className="text-[9px] font-bold tracking-[0.3em] text-gray-400/80 uppercase">{f.label}</h3>
+                            <h3 className="text-[9px] font-bold tracking-[0.3em] text-gray-400/80 uppercase">
+                                {f.label}
+                            </h3>
                             <div className="grid grid-cols-3 gap-2">
                                 <button
                                     onClick={() => f.setter("All")}
-                                    className={`py-3 text-[9px] font-bold tracking-widest uppercase transition-all rounded-sm ${
-                                        f.value === "All" ? "bg-gold text-white shadow-lg shadow-gold/20" : "bg-gray-50 text-gray-400 dark:bg-white/5"
+                                    className={`rounded-sm py-3 text-[9px] font-bold tracking-widest uppercase transition-all ${
+                                        f.value === "All"
+                                            ? "bg-gold shadow-gold/20 text-white shadow-lg"
+                                            : "bg-gray-50 text-gray-400 dark:bg-white/5"
                                     }`}
                                 >
                                     All
@@ -322,8 +403,10 @@ const CollectionsPage = () => {
                                     <button
                                         key={opt}
                                         onClick={() => f.setter(opt)}
-                                        className={`py-3 text-[9px] font-bold tracking-widest uppercase transition-all rounded-sm ${
-                                            f.value === opt ? "bg-gold text-white shadow-lg shadow-gold/20" : "bg-gray-50 text-gray-400 dark:bg-white/5"
+                                        className={`rounded-sm py-3 text-[9px] font-bold tracking-widest uppercase transition-all ${
+                                            f.value === opt
+                                                ? "bg-gold shadow-gold/20 text-white shadow-lg"
+                                                : "bg-gray-50 text-gray-400 dark:bg-white/5"
                                         }`}
                                     >
                                         {opt}
