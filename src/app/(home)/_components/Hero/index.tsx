@@ -27,13 +27,28 @@ export const Hero = () => {
     }, []);
     return (
         <section className="relative flex h-[90vh] min-h-[750px] w-full items-center overflow-hidden bg-black">
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 overflow-hidden">
                 <div className="absolute inset-0 z-10 bg-linear-to-r" />
                 <img
                     src="https://images.pexels.com/photos/266621/pexels-photo-266621.jpeg?auto=compress&cs=tinysrgb&w=1600"
-                    alt="Hero Jewelry"
-                    className="h-full w-full object-cover object-center opacity-70 transition-transform duration-[15s] ease-out hover:scale-105"
+                    alt="Hero Jewelry Background"
+                    className={`h-full w-full object-cover object-center opacity-90 ${styles["bg-animate"]}`}
                 />
+
+                {/* Cinematic Bokeh Atmosphere */}
+                {[...Array(5)].map((_, i) => (
+                    <div
+                        key={i}
+                        className={styles["bokeh"]}
+                        style={{
+                            width: `${200 + i * 100}px`,
+                            height: `${200 + i * 100}px`,
+                            top: `${Math.random() * 80}%`,
+                            left: `${Math.random() * 80}%`,
+                            animationDelay: `${i * -3}s`,
+                        }}
+                    />
+                ))}
             </div>
 
             <div className="relative z-20 container mx-auto flex h-full w-full flex-col items-center px-4 pt-20 lg:flex-row lg:px-12">
@@ -49,7 +64,9 @@ export const Hero = () => {
                             The 2026 Edition
                         </span>
                     </div>
-                    <h2 className="mb-6 font-serif text-5xl leading-[1.15] text-white drop-shadow-md md:text-7xl">
+                    <h2
+                        className={`mb-6 font-serif text-5xl leading-[1.15] text-white drop-shadow-md md:text-7xl ${styles["shimmer-text"]}`}
+                    >
                         Brilliance <span className="text-gold font-light italic">Defined</span>
                     </h2>
                     <p className="mb-10 max-w-lg text-base leading-relaxed font-light text-gray-300">
@@ -88,7 +105,9 @@ export const Hero = () => {
                                 </div>
                                 <span className="mt-1 text-xl font-bold text-white">:</span>
                                 <div className="flex flex-col items-center">
-                                    <span className={`text-gold border-gold/30 ${styles["animate-pulse-glow"]} flex h-10 w-10 items-center justify-center rounded-lg border bg-black text-xl font-bold shadow-inner`}>
+                                    <span
+                                        className={`text-gold border-gold/30 ${styles["animate-pulse-glow"]} flex h-10 w-10 items-center justify-center rounded-lg border bg-black text-xl font-bold shadow-inner`}
+                                    >
                                         {String(timeLeft.seconds).padStart(2, "0")}
                                     </span>
                                     <span className="text-gold mt-1 text-[10px] tracking-widest uppercase">Sec</span>
@@ -142,12 +161,12 @@ export const Hero = () => {
                                     <div
                                         key={`outer-${i}`}
                                         className={styles["orbit-item"]}
-                                        style={{ 
-                                            transform: `translateX(-50%) rotate(${i * 90}deg)`, 
-                                            transformOrigin: "50% 240px" 
+                                        style={{
+                                            transform: `translateX(-50%) rotate(${i * 90}deg)`,
+                                            transformOrigin: "50% 280px", // Half of 560px
                                         }}
                                     >
-                                        <div className={styles["item-content"]} style={{ animationDuration: "25s" }}>
+                                        <div className={styles["item-content"]}>
                                             <img src={url} alt="Jewel" className="w-full drop-shadow-2xl" />
                                         </div>
                                     </div>
@@ -164,12 +183,12 @@ export const Hero = () => {
                                     <div
                                         key={`inner-${i}`}
                                         className={styles["orbit-item"]}
-                                        style={{ 
-                                            transform: `translateX(-50%) rotate(${i * 120}deg)`, 
-                                            transformOrigin: "50% 160px" 
+                                        style={{
+                                            transform: `translateX(-50%) rotate(${i * 120}deg)`,
+                                            transformOrigin: "50% 190px", // Half of 380px
                                         }}
                                     >
-                                        <div className={styles["item-content"]} style={{ animationDuration: "20s", animationDirection: "reverse" }}>
+                                        <div className={styles["item-content"]}>
                                             <img src={url} alt="Jewel" className="w-full drop-shadow-xl" />
                                         </div>
                                     </div>
