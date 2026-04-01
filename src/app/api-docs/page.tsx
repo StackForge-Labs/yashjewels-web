@@ -154,11 +154,11 @@ const coreFeatures = [
   },
   {
     title: "Background Job",
-    description: "Luồng xử lý bất đồng bộ Worker tự động Request cào chuỗi tỷ giá Vàng mỗi 15 phút. Điều chỉnh giá MRP toàn hệ thống thụ động 24/7 mà không cần Admin can thiệp.",
+    description: "Luồng xử lý bất đồng bộ Worker tự động Request cào chuỗi tỷ giá Vàng mỗi 2 giờ. Điều chỉnh giá MRP toàn hệ thống thụ động 24/7 mà không cần Admin can thiệp.",
     icon: Clock,
     color: "from-blue-500/10 to-transparent",
     iconColor: "text-blue-400 border-blue-500/30 bg-blue-500/10",
-    badge: "Every 15 mins",
+    badge: "Every 2 hours",
     badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20"
   },
   {
@@ -217,12 +217,28 @@ export default function ApiDocsPage() {
             </div>
             
             <div className="flex gap-4">
-              <div className="bg-[#111] border border-gray-800 rounded-xl px-5 py-3 flex items-center space-x-4 shadow-[0_0_30px_rgba(245,158,11,0.05)]">
-                <div className="bg-amber-500/20 p-2.5 rounded-lg border border-amber-500/20">
-                  <Box className="w-5 h-5 text-amber-500" />
+              {/* Nút lùi vào Hangfire Dashboard siêu lẹ */}
+              <a 
+                href="http://localhost:5256/hangfire" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-amber-500/10 to-[#111] hover:from-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 rounded-xl px-4 py-3 flex items-center justify-center space-x-3 transition-all cursor-pointer group shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:-translate-y-1"
+              >
+                <div className="bg-amber-500/20 p-2 rounded-lg border border-amber-500/30">
+                  <Activity className="w-5 h-5 text-amber-400 group-hover:text-amber-300 animate-pulse" />
+                </div>
+                <div className="text-left hidden md:block">
+                  <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest">Worker</p>
+                  <p className="text-sm font-semibold text-white leading-none mt-1 group-hover:text-amber-200">Hangfire</p>
+                </div>
+              </a>
+
+              <div className="bg-gradient-to-l from-amber-500/10 to-[#111] border border-amber-500/30 rounded-xl px-5 py-3 flex items-center space-x-4 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                <div className="bg-amber-500/20 p-2.5 rounded-lg border border-amber-500/30">
+                  <Box className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Total Routes</p>
+                  <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest">Total Routes</p>
                   <p className="text-2xl font-semibold text-white leading-none mt-1">{totalEndpoints}</p>
                 </div>
               </div>
