@@ -174,16 +174,17 @@ const coreFeatures = [
 
 const getMethodColor = (method: string) => {
   switch (method) {
-    case "GET": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-    case "POST": return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-    case "PUT": return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-    case "DELETE": return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-    default: return "bg-gray-500/10 text-gray-400 border-gray-500/20";
+    case "GET": return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+    case "POST": return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+    case "PUT": return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+    case "DELETE": return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20";
+    default: return "bg-gray-500/10 text-gray-500 dark:text-gray-400 border-gray-500/20";
   }
 };
 
 export default function ApiDocsPage() {
   const [expandedModules, setExpandedModules] = useState<number[]>([0]); 
+  
   const totalEndpoints = apiModules.reduce((acc, curr) => acc + curr.endpoints.length, 0);
 
   const toggleModule = (index: number) => {
@@ -195,51 +196,51 @@ export default function ApiDocsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-gray-200 font-sans selection:bg-amber-500/30">
+    <div className="min-h-screen bg-[#F8F9FA] text-gray-800 dark:bg-[#0A0A0A] dark:text-gray-200 transition-colors duration-500 font-sans selection:bg-amber-500/30">
+      
       {/* Header section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-amber-500/10 to-transparent pb-10 border-b border-amber-500/10">
+      <div className="relative overflow-hidden transition-colors duration-500 pb-10 border-b border-amber-200 bg-gradient-to-b from-amber-50 to-transparent dark:border-amber-500/10 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent">
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay"></div>
         <div className="max-w-6xl mx-auto px-6 pt-20 relative z-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center space-x-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 px-3 py-1 rounded-full text-sm font-medium mb-6 backdrop-blur-md">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium mb-6 backdrop-blur-md border bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-500 dark:border-amber-500/20">
                 <Server className="w-4 h-4" />
                 <span>Developer Center</span>
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-light text-white mb-4 tracking-tight">
+              <h1 className="text-4xl md:text-5xl font-light mb-4 tracking-tight text-gray-900 dark:text-white">
                 API Documentation <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600 font-semibold">40% Milestone</span>
               </h1>
-              <p className="text-gray-400 text-lg leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
                 Hệ thống tài liệu tích hợp toàn bộ API endpoint của dự án Yash Gems & Jewelleries. 
                 Được xây dựng trên nền tảng .NET 8 với quy chuẩn kiến trúc hiện đại, đảm bảo tính ổn định và khả năng mở rộng cao.
               </p>
             </div>
             
             <div className="flex gap-4">
-              {/* Nút lùi vào Hangfire Dashboard siêu lẹ */}
               <a 
                 href="http://localhost:5256/hangfire" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="bg-gradient-to-r from-amber-500/10 to-[#111] hover:from-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 rounded-xl px-4 py-3 flex items-center justify-center space-x-3 transition-all cursor-pointer group shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:-translate-y-1"
+                className="transition-all duration-300 rounded-xl px-4 py-3 flex items-center justify-center space-x-3 cursor-pointer group shadow-lg hover:-translate-y-1 border bg-white border-amber-200 hover:border-amber-400 shadow-amber-200/20 dark:bg-[#111] dark:border-amber-500/30 dark:hover:border-amber-500/50"
               >
-                <div className="bg-amber-500/20 p-2 rounded-lg border border-amber-500/30">
-                  <Activity className="w-5 h-5 text-amber-400 group-hover:text-amber-300 animate-pulse" />
+                <div className="p-2 rounded-lg border bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20">
+                  <Activity className="w-5 h-5 animate-pulse text-amber-600 dark:text-amber-400" />
                 </div>
                 <div className="text-left hidden md:block">
-                  <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest">Worker</p>
-                  <p className="text-sm font-semibold text-white leading-none mt-1 group-hover:text-amber-200">Hangfire</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Worker</p>
+                  <p className="text-sm font-semibold leading-none mt-1 text-gray-800 dark:text-white">Hangfire</p>
                 </div>
               </a>
 
-              <div className="bg-gradient-to-l from-amber-500/10 to-[#111] border border-amber-500/30 rounded-xl px-5 py-3 flex items-center space-x-4 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
-                <div className="bg-amber-500/20 p-2.5 rounded-lg border border-amber-500/30">
-                  <Box className="w-5 h-5 text-amber-400" />
+              <div className="transition-all duration-300 rounded-xl px-5 py-3 flex items-center space-x-4 shadow-lg border bg-white border-amber-200 shadow-amber-200/20 dark:bg-[#111] dark:border-amber-500/30">
+                <div className="p-2.5 rounded-lg border bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20">
+                  <Box className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest">Total Routes</p>
-                  <p className="text-2xl font-semibold text-white leading-none mt-1">{totalEndpoints}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Total Routes</p>
+                  <p className="text-2xl font-semibold leading-none mt-1 text-gray-800 dark:text-white">{totalEndpoints}</p>
                 </div>
               </div>
             </div>
@@ -252,8 +253,8 @@ export default function ApiDocsPage() {
         {/* Core Infrastructure Features */}
         <div className="mb-16">
           <div className="flex items-center space-x-3 mb-8">
-            <Cpu className="w-6 h-6 text-gray-400" />
-            <h2 className="text-2xl font-light text-white tracking-wide">
+            <Cpu className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <h2 className="text-2xl font-light tracking-wide text-gray-800 dark:text-white">
               Core <span className="font-semibold">Infrastructure</span>
             </h2>
           </div>
@@ -267,7 +268,7 @@ export default function ApiDocsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
                   key={idx} 
-                  className="group relative overflow-hidden bg-[#111] border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 block"
+                  className="group relative overflow-hidden transition-all duration-300 rounded-2xl p-6 shadow-md hover:-translate-y-1 block border bg-white border-gray-100 hover:border-amber-200 hover:shadow-xl dark:bg-[#111] dark:border-gray-800 dark:hover:border-gray-700 dark:hover:shadow-2xl"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
                   
@@ -281,8 +282,8 @@ export default function ApiDocsPage() {
                       </span>
                     </div>
                     
-                    <h3 className="text-lg font-medium text-gray-100 mb-3">{feature.title}</h3>
-                    <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
+                    <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-100">{feature.title}</h3>
+                    <p className="text-sm leading-relaxed transition-colors text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300">
                       {feature.description}
                     </p>
                   </div>
@@ -293,12 +294,12 @@ export default function ApiDocsPage() {
         </div>
 
         {/* Separator */}
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-16"></div>
+        <div className="h-px w-full bg-gradient-to-r from-transparent to-transparent mb-16 via-gray-200 dark:via-gray-800"></div>
 
         {/* API Endpoints List */}
         <div className="flex items-center space-x-3 mb-8">
-          <Database className="w-6 h-6 text-gray-400" />
-          <h2 className="text-2xl font-light text-white tracking-wide">
+          <Database className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-2xl font-light tracking-wide text-gray-800 dark:text-white">
             Endpoint <span className="font-semibold">API</span>
           </h2>
         </div>
@@ -314,22 +315,28 @@ export default function ApiDocsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: mIndex * 0.1 }}
-                className="bg-[#111] border border-gray-800/80 rounded-2xl overflow-hidden transition-all duration-300 hover:border-gray-700/80"
+                className="transition-all duration-300 rounded-2xl overflow-hidden border bg-white border-gray-200 hover:border-amber-200 shadow-sm dark:bg-[#111] dark:border-gray-800/80 dark:hover:border-gray-700/80 dark:shadow-inner"
               >
                 <div 
-                  className="flex items-center justify-between p-5 cursor-pointer bg-gradient-to-r from-[#141414] to-[#111] hover:from-[#181818] select-none"
+                  className="flex items-center justify-between p-5 cursor-pointer select-none transition-colors bg-gradient-to-r from-gray-50 to-white hover:bg-gray-100 dark:from-[#141414] dark:to-[#111] dark:hover:from-[#181818]"
                   onClick={() => toggleModule(mIndex)}
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="bg-gray-800/40 p-2.5 rounded-xl border border-gray-700/50 text-gray-300 shadow-inner">
+                    <div className="p-2.5 rounded-xl border shadow-inner bg-white border-gray-200 text-gray-600 dark:bg-gray-800/40 dark:border-gray-700/50 dark:text-gray-300">
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-[17px] font-medium text-gray-100 tracking-wide">{module.name}</h2>
-                      <p className="text-[13px] text-gray-500 mt-0.5">{module.description} • <span className="text-amber-500/80">{module.endpoints.length} endpoints</span></p>
+                      <h2 className="text-[17px] font-medium tracking-wide text-gray-800 dark:text-gray-100">
+                        {module.name}
+                      </h2>
+                      <p className="text-[13px] mt-0.5 text-gray-500">
+                        {module.description} • <span className="text-amber-500/80 font-medium">{module.endpoints.length} endpoints</span>
+                      </p>
                     </div>
                   </div>
-                  <div className={`text-gray-500 p-2 flex items-center justify-center transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                  <div className={`p-2 flex items-center justify-center transition-all duration-300 ${
+                    isExpanded ? 'rotate-180 text-amber-500' : 'text-gray-400'
+                  }`}>
                     <ChevronDown className="w-5 h-5" />
                   </div>
                 </div>
@@ -342,21 +349,21 @@ export default function ApiDocsPage() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <div className="border-t border-gray-800/50 p-0 bg-[#0c0c0c]">
+                      <div className="border-t p-0 border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#0c0c0c]">
                         {module.endpoints.map((ep, eIndex) => (
                           <div 
                             key={eIndex}
-                            className="flex flex-col md:flex-row md:items-center px-6 py-4 border-b border-gray-800/40 last:border-0 hover:bg-[#131313] transition-colors group"
+                            className="flex flex-col md:flex-row md:items-center px-6 py-4 border-b last:border-0 transition-colors group border-gray-100 hover:bg-white dark:border-gray-800/40 dark:hover:bg-[#131313]"
                           >
                             <div className="flex items-center space-x-5 md:w-5/12 mb-3 md:mb-0">
-                              <span className={`w-[70px] text-center px-2 py-1.5 text-[11px] font-bold tracking-widest rounded border ${getMethodColor(ep.method)} shadow-sm`}>
+                              <span className={`w-[70px] text-center px-2 py-1.5 text-[11px] font-bold tracking-widest rounded border shadow-sm ${getMethodColor(ep.method)}`}>
                                 {ep.method}
                               </span>
-                              <code className="text-[13px] font-mono text-gray-400 group-hover:text-amber-200/90 transition-colors">
+                              <code className="text-[13px] font-mono transition-colors text-gray-600 group-hover:text-amber-600 dark:text-gray-400 dark:group-hover:text-amber-200/90">
                                 {ep.path}
                               </code>
                             </div>
-                            <div className="md:w-7/12 text-gray-400 text-[13px] pl-0 md:pl-6 md:border-l md:border-gray-800/60 leading-relaxed group-hover:text-gray-300 transition-colors">
+                            <div className="md:w-7/12 text-[13px] pl-0 md:pl-6 md:border-l leading-relaxed transition-colors text-gray-600 border-gray-200 group-hover:text-gray-900 dark:text-gray-400 dark:border-gray-800/60 dark:group-hover:text-gray-300">
                               {ep.desc}
                             </div>
                           </div>
@@ -371,10 +378,12 @@ export default function ApiDocsPage() {
         </div>
         
         {/* Footer info */}
-        <div className="mt-20 flex flex-col items-center justify-center text-sm text-gray-600 pb-12">
+        <div className="mt-20 flex flex-col items-center justify-center text-sm pb-12 text-gray-400 dark:text-gray-600">
           <div className="w-12 h-1 bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mb-6"></div>
           <p className="tracking-wide">Designed for Milestone 40% Evaluation</p>
-          <p className="mt-2 font-mono text-xs text-gray-700 uppercase tracking-[0.2em]">Yash Gems & Jewelleries API</p>
+          <p className="mt-2 font-mono text-xs uppercase tracking-[0.2em] text-gray-300 dark:text-gray-700">
+            Yash Gems & Jewelleries API
+          </p>
         </div>
       </div>
     </div>
