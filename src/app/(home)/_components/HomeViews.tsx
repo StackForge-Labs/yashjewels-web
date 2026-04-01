@@ -4,6 +4,8 @@ import ProductCard from "./ProductCard";
 import { ArrowRight, MapPin, Clock, Flame } from "lucide-react";
 import { Hero } from "./Hero";
 import { ScrollDiamond } from "./ScrollDiamond";
+import { TrustMetrics } from "./TrustMetrics";
+import { JewelryLookbook } from "./JewelryLookbook";
 
 interface DiamondData {
     sku: string;
@@ -21,6 +23,9 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
 
             {/* SECTION 1: HERO / BANNER */}
             <Hero />
+
+            {/* NEW SECTION: TRUST METRICS */}
+            <TrustMetrics />
 
             {/* SECTION 2: SHOP BY CATEGORY (Bento Grid) */}
             <section className="bg-white py-24 transition-colors duration-500 dark:bg-[#030303]">
@@ -227,6 +232,9 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                     </div>
                 </div>
             </section>
+
+            {/* NEW SECTION: JEWELRY LOOKBOOK */}
+            <JewelryLookbook />
 
             {/* SECTION 6 & 7: HIS & HERS (Women's & Men's Split Layout) */}
             <section className="bg-white transition-colors duration-500 dark:bg-[#030303]">

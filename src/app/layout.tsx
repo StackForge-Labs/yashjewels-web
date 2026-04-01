@@ -5,7 +5,6 @@ import { AOSInit } from "@/components/AOSInit";
 import { Header } from "./_components/Header";
 import { Footer } from "./_components/Footer";
 
-
 const jost = Jost({
     variable: "--font-jost",
     subsets: ["latin"],
@@ -33,7 +32,7 @@ export default function RootLayout({
             <body className="flex min-h-full flex-col font-sans">
                 <AOSInit />
                 <Header />
-                <main className="grow pb-0 lg:pb-24">{children}</main>
+                <main className="grow pb-0">{children}</main>
                 <Footer />
             </body>
         </html>
