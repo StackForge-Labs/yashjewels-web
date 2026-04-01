@@ -36,8 +36,8 @@ export const Footer = () => {
                             </h2>
                         </div>
                         <p className="mb-8 text-[13px] md:text-sm leading-relaxed text-gray-500 dark:text-gray-400 text-center lg:text-left">
-                            Earth-mined diamonds, high jewelry, and bespoke engagement
-                            rings. Handcrafted with passion, built for eternity.
+                            Natural diamonds, high jewelry, and custom engagement rings. 
+                            Handcrafted, elegant, and made to last.
                         </p>
                         
                         <div className="space-y-4 mb-8">
@@ -64,12 +64,12 @@ export const Footer = () => {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-10 lg:col-span-4 md:px-10 lg:px-0">
                         <div>
                             <h3 className="mb-6 md:mb-8 font-serif text-[13px] md:text-lg font-bold tracking-[0.2em] text-gray-900 uppercase dark:text-white">
-                                Service
+                                Services
                             </h3>
                             <ul className="space-y-3 md:space-y-4 text-[11px] md:text-sm font-medium text-gray-500 dark:text-gray-400">
                                 <li>
                                     <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Contact Us
+                                        <ChevronRight size={12} className="text-gray-300" /> Contact
                                     </Link>
                                 </li>
                                 <li>
@@ -88,8 +88,13 @@ export const Footer = () => {
                                     </Link>
                                 </li>
                                 <li>
+                                    <Link href="/gold-price" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gold" /> Gold Price
+                                    </Link>
+                                </li>
+                                <li>
                                     <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> FAQ
+                                        <ChevronRight size={12} className="text-gray-300" /> Help & FAQ
                                     </Link>
                                 </li>
                             </ul>
@@ -120,8 +125,8 @@ export const Footer = () => {
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/contact" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
-                                        <ChevronRight size={12} className="text-gray-300" /> Boutiques
+                                    <Link href="/careers" className="hover:text-gold flex items-center gap-2 transition-all hover:translate-x-1">
+                                        <ChevronRight size={12} className="text-gold" /> Careers
                                     </Link>
                                 </li>
                             </ul>
@@ -147,7 +152,7 @@ export const Footer = () => {
                         <div className="group relative max-w-md mx-auto lg:mx-0">
                             <input
                                 type="email"
-                                placeholder="Newsletter sign-up"
+                                placeholder="Subscribe to news"
                                 className="block w-full rounded-sm border border-gray-100 bg-white px-5 py-4 text-xs md:text-sm text-gray-900 shadow-sm transition-colors outline-none focus:border-gold dark:border-white/5 dark:bg-white/5 dark:text-white"
                             />
                             <button className="absolute top-0 right-0 bottom-0 flex items-center justify-center px-6 text-gold">
@@ -176,7 +181,7 @@ export const Footer = () => {
                     <div className="flex gap-6 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                         <Link href="/policies/privacy" className="hover:text-gold transition-colors">Privacy</Link>
                         <Link href="/policies/payment-guide" className="hover:text-gold transition-colors">Terms</Link>
-                        <Link href="/" className="hover:text-gold transition-colors">Sitemap</Link>
+                        <Link href="/policies/warranty" className="hover:text-gold transition-colors">Warranty</Link>
                     </div>
                 </div>
             </div>

@@ -15,7 +15,7 @@ interface PageHeroProps {
 
 export const PageHero = ({ title, subtitle, breadcrumbs, backgroundImage }: PageHeroProps) => {
     return (
-        <section className="relative overflow-hidden bg-gray-50 py-16 md:py-24 transition-colors dark:bg-dark-bg">
+        <section className="dark:bg-dark-bg relative overflow-hidden bg-gray-50 py-16 transition-colors md:py-24">
             {/* Background Pattern */}
             <div className="pointer-events-none absolute inset-0 opacity-5 dark:opacity-10">
                 <svg className="absolute top-0 right-0 h-64 w-64" viewBox="0 0 100 100" fill="none">
@@ -28,19 +28,27 @@ export const PageHero = ({ title, subtitle, breadcrumbs, backgroundImage }: Page
 
             {backgroundImage && (
                 <div className="absolute inset-0">
-                    <img src={backgroundImage} alt="" className="h-full w-full object-cover opacity-10 dark:opacity-5" />
+                    <img
+                        src={backgroundImage}
+                        alt=""
+                        className="h-full w-full object-cover opacity-10 dark:opacity-5"
+                    />
                 </div>
             )}
 
-            <div className="container relative mx-auto px-4 lg:px-12">
+            <div className="relative container mx-auto px-4 lg:px-12">
                 {/* Breadcrumbs */}
                 <nav className="mb-6 flex items-center gap-2 text-[11px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                    <Link href="/" className="hover:text-gold transition-colors">Home</Link>
+                    <Link href="/" className="hover:text-gold transition-colors">
+                        Home
+                    </Link>
                     {breadcrumbs.map((crumb, i) => (
                         <span key={i} className="flex items-center gap-2">
                             <ChevronRight size={10} />
                             {crumb.href ? (
-                                <Link href={crumb.href} className="hover:text-gold transition-colors">{crumb.label}</Link>
+                                <Link href={crumb.href} className="hover:text-gold transition-colors">
+                                    {crumb.label}
+                                </Link>
                             ) : (
                                 <span className="text-gray-900 dark:text-white">{crumb.label}</span>
                             )}
@@ -49,19 +57,19 @@ export const PageHero = ({ title, subtitle, breadcrumbs, backgroundImage }: Page
                 </nav>
 
                 {/* Title */}
-                <h1 className="font-serif text-3xl md:text-5xl tracking-tight text-gray-900 dark:text-white">
+                <h1 className="font-serif text-3xl tracking-tight text-gray-900 md:text-5xl dark:text-white">
                     {title}
                 </h1>
                 {subtitle && (
-                    <p className="mt-4 max-w-xl text-sm md:text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                    <p className="mt-4 max-w-xl text-sm leading-relaxed text-gray-500 md:text-base dark:text-gray-400">
                         {subtitle}
                     </p>
                 )}
 
                 {/* Decorative line */}
                 <div className="mt-8 flex items-center gap-4">
-                    <div className="h-px w-12 bg-gold" />
-                    <div className="h-1.5 w-1.5 rounded-full bg-gold" />
+                    <div className="bg-gold h-px w-12" />
+                    <div className="bg-gold h-1.5 w-1.5 rounded-full" />
                 </div>
             </div>
         </section>

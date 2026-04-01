@@ -1,4 +1,4 @@
-import { PageHero } from "../_components/PageHero";
+import { PageHero } from "../../_components/PageHero";
 import { ShieldCheck, RefreshCcw, Clock, CheckCircle, XCircle, ArrowRight, Award, Settings, Gem, Phone } from "lucide-react";
 import Link from "next/link";
 
