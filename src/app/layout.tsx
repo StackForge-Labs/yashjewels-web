@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Jost, Playfair_Display } from "next/font/google";
+import { Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
 import { AOSInit } from "@/components/AOSInit";
 import { Header } from "./_components/Header";
 import { Footer } from "./_components/Footer";
 
-const jost = Jost({
-    variable: "--font-jost",
+const cormorant = Cormorant_Garamond({
+    variable: "--font-cormorant",
     subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
     display: "swap",
 });
 
-const playfair = Playfair_Display({
-    variable: "--font-playfair",
+const outfit = Outfit({
+    variable: "--font-outfit",
     subsets: ["latin"],
     display: "swap",
 });
@@ -28,8 +29,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={`${jost.variable} ${playfair.variable} h-full antialiased`} suppressHydrationWarning>
-            <body className="flex min-h-full flex-col font-sans">
+        <html
+            lang="en"
+            className={`${cormorant.variable} ${outfit.variable} h-full antialiased`}
+            suppressHydrationWarning
+        >
+            <body className="flex min-h-full flex-col bg-white font-sans dark:bg-[#030303]">
                 <AOSInit />
                 <Header />
                 <main className="grow pb-0">{children}</main>
