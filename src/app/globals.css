@@ -9,8 +9,8 @@
   --color-dark-card: #121212;
   --color-dark-border: #222222;
   
-  --font-sans: var(--font-jost), sans-serif;
-  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-outfit), sans-serif;
+  --font-serif: var(--font-cormorant), Georgia, serif;
 }
 
 body {
