@@ -158,23 +158,6 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                     ))}
                 </div>
             </nav>
-
-            {/* Bottom area (user snapshot) */}
-            <div className="border-t border-gray-100 p-6 dark:border-gray-800/50">
-                <div className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50/50 px-3 py-3 transition-all hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800/30 dark:hover:bg-gray-800/50">
-                    <div className="font-plus-jakarta flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        AS
-                    </div>
-                    <div className="flex flex-col truncate">
-                        <span className="font-plus-jakarta truncate text-sm font-bold text-gray-900 dark:text-white">
-                            Admin System
-                        </span>
-                        <span className="font-plus-jakarta truncate text-[10px] font-medium tracking-tight text-gray-400 uppercase dark:text-gray-500">
-                            System Director
-                        </span>
-                    </div>
-                </div>
-            </div>
         </aside>
     );
 }
