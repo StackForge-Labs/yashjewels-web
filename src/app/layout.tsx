@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import { Cormorant_Garamond, Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AOSInit } from "@/components/AOSInit";
-import { Header } from "./_components/Header";
-import { Footer } from "./_components/Footer";
+import { PublicLayoutWrapper } from "./_components/PublicLayoutWrapper";
 
 const cormorant = Cormorant_Garamond({
     variable: "--font-cormorant",
@@ -14,6 +13,12 @@ const cormorant = Cormorant_Garamond({
 
 const outfit = Outfit({
     variable: "--font-outfit",
+    subsets: ["latin"],
+    display: "swap",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+    variable: "--font-plus-jakarta",
     subsets: ["latin"],
     display: "swap",
 });
@@ -31,14 +36,14 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`${cormorant.variable} ${outfit.variable} h-full antialiased`}
+            className={`${cormorant.variable} ${outfit.variable} ${plusJakartaSans.variable} h-full antialiased`}
             suppressHydrationWarning
         >
             <body className="flex min-h-full flex-col bg-white font-sans dark:bg-[#030303]">
                 <AOSInit />
-                <Header />
-                <main className="grow pb-0">{children}</main>
-                <Footer />
+                <PublicLayoutWrapper>
+                    {children}
+                </PublicLayoutWrapper>
             </body>
         </html>
     );
