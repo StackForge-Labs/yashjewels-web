@@ -2,14 +2,72 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingBag, Users, Settings, Package, ChevronRight, Gem } from "lucide-react";
+import {
+    LayoutDashboard,
+    ShoppingBag,
+    Users,
+    Settings,
+    Package,
+    ChevronRight,
+    Gem,
+    Layers,
+    Receipt,
+    ArrowLeftRight,
+    ShieldCheck,
+    CreditCard,
+    Ticket,
+    Store,
+    ShieldAlert,
+    Wallet,
+    TrendingUp,
+    HandHeart,
+} from "lucide-react";
 
-const navItems = [
-    { name: "Overview", href: "/admin", icon: LayoutDashboard },
-    { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
-    { name: "Products", href: "/admin/products", icon: Package },
-    { name: "Customers", href: "/admin/customers", icon: Users },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+const navGroups = [
+    {
+        title: "Overview",
+        items: [{ name: "Dashboard", href: "/admin", icon: LayoutDashboard }],
+    },
+    {
+        title: "Sales & Fulfillment",
+        items: [
+            { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+            { name: "Invoices", href: "/admin/invoices", icon: Receipt },
+            { name: "Returns & Incidents", href: "/admin/returns", icon: ArrowLeftRight },
+        ],
+    },
+    {
+        title: "Catalog",
+        items: [
+            { name: "Products", href: "/admin/products", icon: Package },
+            { name: "Categories & Brands", href: "/admin/categories", icon: Layers },
+            { name: "Jewelry Attributes", href: "/admin/attributes", icon: Gem },
+        ],
+    },
+    {
+        title: "CRM & Services",
+        items: [
+            { name: "Customers", href: "/admin/customers", icon: Users },
+            { name: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
+            { name: "Warranties & Claims", href: "/admin/services", icon: HandHeart },
+        ],
+    },
+    {
+        title: "Finance & Marketing",
+        items: [
+            { name: "Payments & Ledger", href: "/admin/finance", icon: Wallet },
+            { name: "Gold Rate History", href: "/admin/gold-rates", icon: TrendingUp },
+            { name: "Coupons & Promos", href: "/admin/marketing", icon: Ticket },
+        ],
+    },
+    {
+        title: "System & B2B",
+        items: [
+            { name: "Vendors", href: "/admin/vendors", icon: Store },
+            { name: "Audit & API", href: "/admin/system", icon: ShieldAlert },
+            { name: "Settings", href: "/admin/settings", icon: Settings },
+        ],
+    },
 ];
 
 interface AdminSidebarProps {
@@ -34,9 +92,9 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                 <ChevronRight className="h-4 w-4 rotate-180" />
             </button>
             {/* Logo area */}
-            <div className="flex h-20 items-center px-8">
+            <div className="flex h-20 shrink-0 items-center border-b border-gray-100/50 px-8 dark:border-gray-800/30">
                 <Link href="/admin" className="group mx-auto flex cursor-pointer flex-col items-center py-4 md:py-0">
-                    <div className="text-gold mb-1 scale-75 transform transition-transform duration-500 group-hover:rotate-180 md:scale-100">
+                    <div className="mb-1 scale-75 transform text-blue-600 transition-transform duration-500 group-hover:rotate-180 md:scale-100">
                         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path
                                 d="M12 2L2 9L12 22L22 9L12 2Z"
@@ -50,47 +108,55 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                             <path d="M12 2L17 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                         </svg>
                     </div>
-                    <h1 className="font-serif text-sm leading-none tracking-[0.2em] text-gray-900 uppercase md:text-xl dark:text-white">
+                    <h1 className="font-serif text-sm leading-none font-bold tracking-[0.2em] text-blue-600 uppercase md:text-xl dark:text-white">
                         Yash Jewels
                     </h1>
-                    <span className="text-gold mt-1 text-[6px] font-bold tracking-[0.3em] uppercase md:text-[8px]">
+                    <span className="mt-1 text-[6px] font-bold tracking-[0.3em] text-blue-600 uppercase md:text-[8px]">
                         High Jewelry
                     </span>
                 </Link>
             </div>
 
             {/* Navigation links */}
-            <nav className="flex-1 overflow-y-auto px-4 py-6">
-                <div className="font-plus-jakarta mb-4 px-4 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase dark:text-gray-500">
-                    Main Menu
+            <nav className="scrollbar-hide flex-1 overflow-y-auto px-4 py-6">
+                <div className="flex flex-col gap-6">
+                    {navGroups.map((group) => (
+                        <div key={group.title}>
+                            <div className="font-plus-jakarta mb-2.5 px-4 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase dark:text-gray-500">
+                                {group.title}
+                            </div>
+                            <ul className="space-y-1">
+                                {group.items.map((item) => {
+                                    const isActive =
+                                        pathname === item.href ||
+                                        (item.href !== "/admin" && pathname.startsWith(`${item.href}/`));
+                                    return (
+                                        <li key={item.name}>
+                                            <Link
+                                                href={item.href}
+                                                className={`group font-plus-jakarta flex items-center justify-between rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200 ${
+                                                    isActive
+                                                        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
+                                                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-white"
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <item.icon
+                                                        className={`h-4 w-4 transition-colors ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"}`}
+                                                    />
+                                                    <span>{item.name}</span>
+                                                </div>
+                                                {isActive && (
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
+                                                )}
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
-                <ul className="space-y-1.5">
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                        return (
-                            <li key={item.name}>
-                                <Link
-                                    href={item.href}
-                                    className={`group font-plus-jakarta flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-                                        isActive
-                                            ? "bg-blue-50 text-blue-600 dark:bg-blue-600/10 dark:text-blue-400"
-                                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-white"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3.5">
-                                        <item.icon
-                                            className={`h-5 w-5 transition-colors ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"}`}
-                                        />
-                                        <span>{item.name}</span>
-                                    </div>
-                                    {isActive && (
-                                        <div className="h-1.5 w-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
-                                    )}
-                                </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
             </nav>
 
             {/* Bottom area (user snapshot) */}
