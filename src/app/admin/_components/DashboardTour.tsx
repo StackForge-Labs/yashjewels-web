@@ -4,104 +4,73 @@ import { useEffect, useRef } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
-const TOUR_KEY = "yash_admin_tour_done";
+const TOUR_KEY = "yash_admin_tour_done_v2";
 
 interface DashboardTourProps {
-    forced?: boolean;
-    onDone?: () => void;
+    runTour: boolean;
+    setRunTour: (val: boolean) => void;
 }
 
-export function DashboardTour({ forced = false, onDone }: DashboardTourProps) {
-    const ran = useRef(false);
+export function DashboardTour({ runTour, setRunTour }: DashboardTourProps) {
+    const isFirstMount = useRef(true);
 
     useEffect(() => {
-        if (ran.current) return;
+        // Always run if explicitly requested, OR if it's the first mount and never done before
         const done = localStorage.getItem(TOUR_KEY);
-        if (done && !forced) return;
+        
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            // Auto trigger once
+            if (!done) {
+                setRunTour(true);
+            }
+        }
 
-        ran.current = true;
-
-        const driverObj = driver({
-            showProgress: true,
-            animate: true,
-            overlayOpacity: 0.55,
-            smoothScroll: true,
-            allowClose: true,
-            nextBtnText: "Next →",
-            prevBtnText: "← Back",
-            doneBtnText: "Get Started!",
-            onDestroyStarted: () => {
-                localStorage.setItem(TOUR_KEY, "1");
-                driverObj.destroy();
-                onDone?.();
-            },
-            steps: [
-                {
-                    element: "#tour-dashboard-header",
-                    popover: {
-                        title: "👋 Welcome to Yash Admin ERP",
-                        description: "This is your command center. You can monitor revenue, orders, and team actions from here.",
-                        side: "bottom",
-                        align: "start",
-                    },
+        if (runTour) {
+            const driverObj = driver({
+                showProgress: true,
+                animate: true,
+                overlayOpacity: 0.55,
+                smoothScroll: true,
+                allowClose: true,
+                nextBtnText: "Next →",
+                prevBtnText: "← Back",
+                doneBtnText: "Get Started!",
+                onDestroyStarted: () => {
+                    localStorage.setItem(TOUR_KEY, "1");
+                    driverObj.destroy();
+                    setRunTour(false);
                 },
-                {
-                    element: "#tour-stat-revenue",
-                    popover: {
-                        title: "📊 Revenue Overview",
-                        description: "Track total revenue at a glance with trend indicators showing change vs. last period.",
-                        side: "bottom",
+                steps: [
+                    {
+                        element: "#tour-dashboard-header",
+                        popover: { title: "👋 Welcome to Yash ERP", description: "This represents your central nervous system.", side: "bottom" },
                     },
-                },
-                {
-                    element: "#tour-pending-alerts",
-                    popover: {
-                        title: "🔔 Pending Alerts",
-                        description: "Critical items requiring your attention — KYC verifications, returns, and low-stock products.",
-                        side: "right",
+                    {
+                        element: "#tour-stats-row",
+                        popover: { title: "📊 Key Metrics", description: "The most important stats: Revenue and User base are at the very top.", side: "bottom" },
                     },
-                },
-                {
-                    element: "#tour-gold-rate",
-                    popover: {
-                        title: "🏅 Live Gold Rate",
-                        description: "The current gold price feeds directly into all product pricing calculations.",
-                        side: "left",
+                    {
+                        element: "#tour-revenue-chart",
+                        popover: { title: "📈 Market Trends", description: "Large data visual. Contains Date filtering for dynamic reporting.", side: "top" },
                     },
-                },
-                {
-                    element: "#tour-revenue-chart",
-                    popover: {
-                        title: "📈 Revenue Chart",
-                        description: "Use the date range filters to compare sales performance across different time periods.",
-                        side: "top",
+                    {
+                        element: "#tour-sidebar-widgets",
+                        popover: { title: "💡 Auxiliary Data", description: "Secondary but critical info like live Gold Rate and pending action items grouped here.", side: "left" },
                     },
-                },
-                {
-                    element: "#tour-recent-orders",
-                    popover: {
-                        title: "🛍️ Recent Orders",
-                        description: "Monitor the latest customer orders. Click 'View All' to manage them in the Orders module.",
-                        side: "top",
+                    {
+                        element: "#tour-recent-orders",
+                        popover: { title: "🛍️ Operations", description: "Daily operations monitor. Look left for wide data tables.", side: "top" },
                     },
-                },
-                {
-                    element: "#tour-sidebar-nav",
-                    popover: {
-                        title: "🗂️ Navigation",
-                        description: "Access all 15 management modules from the sidebar — grouped by domain for quick navigation.",
-                        side: "right",
+                    {
+                        element: "#tour-sidebar-nav",
+                        popover: { title: "🗂️ Navigation", description: "Access all 15 core functions down this side pane.", side: "right" },
                     },
-                },
-            ],
-        });
-
-        driverObj.drive();
-    }, [forced, onDone]);
+                ],
+            });
+            driverObj.drive();
+        }
+    }, [runTour, setRunTour]);
 
     return null;
-}
-
-export function retriggerTour() {
-    localStorage.removeItem(TOUR_KEY);
 }
