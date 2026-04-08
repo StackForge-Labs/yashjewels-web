@@ -18,6 +18,7 @@ body {
   color: var(--color-foreground, #111111);
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
 }
 
 :root {
@@ -32,14 +33,17 @@ body {
 
 /* Custom scrollbar for premium feel */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+  background: #dbdbdb;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bbbbbb;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gold);
