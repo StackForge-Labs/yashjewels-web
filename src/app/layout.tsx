@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
 import { AOSInit } from "@/components/AOSInit";
-import { Header } from "./_components/Header";
-import { Footer } from "./_components/Footer";
+import { PublicLayoutWrapper } from "./_components/PublicLayoutWrapper";
 
 const cormorant = Cormorant_Garamond({
     variable: "--font-cormorant",
@@ -36,9 +35,9 @@ export default function RootLayout({
         >
             <body className="flex min-h-full flex-col bg-white font-sans dark:bg-[#030303]">
                 <AOSInit />
-                <Header />
-                <main className="grow pb-0">{children}</main>
-                <Footer />
+                <PublicLayoutWrapper>
+                    {children}
+                </PublicLayoutWrapper>
             </body>
         </html>
     );
