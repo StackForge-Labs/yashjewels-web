@@ -16,6 +16,7 @@ import {
     UserCircle,
     ShoppingBag,
     Bell,
+    Search,
 } from "lucide-react";
 import ThemeToggle from "../(home)/_components/ThemeToggle";
 import SearchModal from "../(home)/_components/SearchModal";
@@ -110,7 +111,7 @@ export const Header = () => {
                         </p>
                     </Link>
 
-                    {/* Right Actions (Social & Profile) */}
+                    {/* Right Actions Panel */}
                     <div className="flex flex-1 items-center justify-end gap-2 md:gap-5">
                         {/* Profile Section */}
                         <div className="relative" ref={menuRef}>
@@ -129,7 +130,7 @@ export const Header = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex flex-col items-start leading-tight">
+                                    <div className="hidden flex-col items-start leading-tight xl:flex">
                                         <span className="max-w-[100px] truncate text-[11px] font-bold tracking-wider text-gray-900 uppercase dark:text-white">
                                             {user.fullName.split(" ")[0]}
                                         </span>
@@ -147,7 +148,7 @@ export const Header = () => {
                                 </Link>
                             )}
 
-                            {/* Luxury User Dropdown */}
+                            {/* User Dropdown Menu */}
                             {isAuthenticated && user && (
                                 <div
                                     onMouseEnter={() => setIsUserMenuOpen(true)}
@@ -158,104 +159,149 @@ export const Header = () => {
                                             : "invisible translate-y-4 opacity-0 scale-95"
                                     }`}
                                 >
-                                    {/* Profile Header */}
-                                    <div className="relative mb-2 overflow-hidden rounded-xl bg-gray-50 p-5 dark:bg-white/5">
-                                        <div className="absolute top-0 right-0 p-3 text-gold/20">
-                                            <Diamond size={48} strokeWidth={0.5} />
+                                    <div className="mb-2 flex items-center gap-3 rounded-xl bg-gray-50 p-4 dark:bg-white/5">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-gold/30 bg-white font-serif text-lg font-bold text-gold dark:bg-[#111]">
+                                            {getInitials(user.fullName)}
                                         </div>
-                                        <div className="relative flex items-center gap-4">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-gold/30 bg-white font-serif text-lg font-bold text-gold dark:bg-[#111]">
-                                                {getInitials(user.fullName)}
-                                            </div>
-                                            <div className="flex flex-col overflow-hidden">
-                                                <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{user.fullName}</p>
-                                                <p className="truncate text-[10px] tracking-wide text-gray-400 uppercase">{user.email}</p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 flex gap-2">
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[8px] font-bold text-gold uppercase tracking-widest">
-                                                Verified Member
-                                            </span>
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-200/50 px-2 py-0.5 text-[8px] font-bold text-gray-500 uppercase tracking-widest dark:bg-white/10">
-                                                {user.kycStatus === "VERIFIED" ? "KYC Approved" : "Standard"}
-                                            </span>
+                                        <div className="flex flex-col overflow-hidden">
+                                            <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{user.fullName}</p>
+                                            <p className="truncate text-[10px] tracking-wide text-gray-400 uppercase">{user.email}</p>
                                         </div>
                                     </div>
-                                    
-                                    {/* Menu Actions */}
                                     <div className="space-y-1 p-1">
-                                        <Link
-                                            href="/profile"
-                                            className="group/item flex items-center justify-between rounded-xl px-4 py-3.5 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <UserCircle size={18} strokeWidth={1.5} className="group-hover/item:text-gold" /> My Account
-                                            </div>
+                                        <Link href="/profile" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
+                                            <div className="flex items-center gap-3"><UserCircle size={16} strokeWidth={1.5}/> My Account</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
-                                        <Link
-                                            href="/orders"
-                                            className="group/item flex items-center justify-between rounded-xl px-4 py-3.5 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <ShoppingBag size={18} strokeWidth={1.5} className="group-hover/item:text-gold" /> Order Gallery
-                                            </div>
+                                        <Link href="/orders" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
+                                            <div className="flex items-center gap-3"><ShoppingBag size={16} strokeWidth={1.5}/> My Orders</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
-                                        <Link
-                                            href="/settings"
-                                            className="group/item flex items-center justify-between rounded-xl px-4 py-3.5 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <Settings size={18} strokeWidth={1.5} className="group-hover/item:text-gold" /> Personalize
-                                            </div>
+                                        <Link href="/settings" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
+                                            <div className="flex items-center gap-3"><Settings size={16} strokeWidth={1.5}/> Settings</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
                                     </div>
-
                                     <div className="mx-4 my-2 border-t border-gray-100 dark:border-white/5"></div>
-                                    
-                                    <button
-                                        onClick={handleLogout}
-                                        className="mb-1 flex w-full items-center gap-3 rounded-xl px-5 py-4 text-xs font-bold text-red-500 transition-all hover:bg-red-50 dark:hover:bg-red-950/20"
-                                    >
-                                        <LogOut size={18} strokeWidth={1.5} /> Sign Out of Maison
+                                    <button onClick={handleLogout} className="mb-1 flex w-full items-center gap-3 rounded-xl px-5 py-4 text-xs font-bold text-red-500 transition-all hover:bg-red-50 dark:hover:bg-red-950/20">
+                                        <LogOut size={18} strokeWidth={1.5} /> Sign Out
                                     </button>
                                 </div>
                             )}
                         </div>
 
-                        {/* Social Actions */}
-                        <Link
-                            href="/wishlist"
-                            className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5"
-                        >
+                        <Link href="/wishlist" className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5">
                             <Heart size={22} strokeWidth={1.5} />
                         </Link>
 
-                        <Link
-                            href="/cart"
-                            className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5"
-                        >
+                        <Link href="/cart" className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5">
                             <ShoppingCart size={22} strokeWidth={1.5} />
-                            <span className="bg-gold absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white dark:border-[#050505] dark:text-black">
-                                4
-                            </span>
+                            <span className="bg-gold absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white dark:border-[#050505] dark:text-black">3</span>
                         </Link>
                     </div>
                 </div>
 
-                {/* Main Navigation Menu (Centered) */}
+                {/* RESTORED: Main Navigation Menu with Dropdowns */}
                 <nav className="container mx-auto hidden h-14 items-center justify-center gap-12 lg:flex">
-                    {["High Jewelry", "Wedding", "Collections", "Services", "About"].map((item) => (
-                        <Link
-                            key={item}
-                            href={`/${item.toLowerCase().replace(" ", "-")}`}
-                            className="relative py-4 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase transition-all hover:text-gold dark:text-gray-200"
-                        >
-                            {item}
+                    {/* 1. High Jewelry (Mega Menu) */}
+                    <div className="group flex h-full items-center">
+                        <Link href="/collections" className="hover:text-gold relative py-4 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase transition-all dark:text-gray-200">
+                            High Jewelry
                         </Link>
-                    ))}
+                        {/* THE MEGA MENU */}
+                        <div className="invisible absolute top-full left-0 z-[60] w-full border-t border-gray-100 bg-white/95 opacity-0 shadow-2xl backdrop-blur-xl transition-all duration-500 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#050505]/95">
+                            <div className="mx-auto flex max-w-[1500px] gap-8 px-8 py-16 text-left">
+                                <div className="w-[15%]">
+                                    <h4 className="mb-8 border-b border-gray-100 pb-3 font-serif text-lg text-gray-900 dark:border-white/10 dark:text-white">Category</h4>
+                                    <ul className="space-y-5 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        {["Engagement Rings", "Fine Necklaces", "Diamond Earrings", "Luxury Bracelets", "Men's Collection"].map(item => (
+                                            <li key={item}><a href="#" className="group/link hover:text-gold flex items-center justify-between transition-colors">{item}<ChevronRight size={14} className="-translate-x-2 opacity-0 transition-all group-hover/link:translate-x-0 group-hover/link:opacity-100" /></a></li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="w-[15%]">
+                                    <h4 className="mb-8 border-b border-gray-100 pb-3 font-serif text-lg text-gray-900 dark:border-white/10 dark:text-white">Material</h4>
+                                    <ul className="space-y-5 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        {["Yellow Gold 18K", "White Gold 18K", "Rose Gold 18K", "Platinum 950"].map(m => (
+                                            <li key={m}><a href="#" className="hover:text-gold flex items-center gap-3 transition-colors"><span className={`block h-4 w-4 rounded-full border border-white shadow-sm ${m.includes('Yellow') ? 'bg-yellow-500' : m.includes('White') ? 'bg-gray-200' : m.includes('Rose') ? 'bg-rose-300' : 'bg-slate-300'}`}></span>{m}</a></li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="w-[40%] grid grid-cols-2 gap-6 border-l border-gray-100 pl-8 dark:border-white/5">
+                                    <div className="group/img relative cursor-pointer overflow-hidden rounded-xl shadow-lg">
+                                        <img src="https://images.pexels.com/photos/1733604/pexels-photo-1733604.jpeg?auto=compress&cs=tinysrgb&w=600" alt="New" className="h-64 w-full object-cover transition-transform duration-[1.5s] group-hover/img:scale-110" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
+                                            <span className="text-gold text-[10px] font-bold tracking-widest uppercase mb-1">New Arrivals</span>
+                                            <p className="font-serif text-xl text-white">The Imperial</p>
+                                        </div>
+                                    </div>
+                                    <div className="group/img relative cursor-pointer overflow-hidden rounded-xl shadow-lg">
+                                        <img src="https://images.pexels.com/photos/2735970/pexels-photo-2735970.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Bridal" className="h-64 w-full object-cover transition-transform duration-[1.5s] group-hover/img:scale-110" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
+                                            <span className="text-gold text-[10px] font-bold tracking-widest uppercase mb-1">Bridal Edit</span>
+                                            <p className="font-serif text-xl text-white">Classic Elegance</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. Wedding (Standard Dropdown) */}
+                    <div className="group relative flex h-full items-center">
+                        <Link href="/collections" className="hover:text-gold relative py-4 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase transition-all dark:text-gray-200">
+                            Wedding
+                        </Link>
+                        <div className="invisible absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 overflow-hidden rounded-b-xl border border-gray-100 bg-white opacity-0 shadow-2xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
+                            <ul className="flex flex-col text-xs font-bold tracking-widest text-gray-600 dark:text-gray-400">
+                                {["Engagement Rings", "Wedding Bands Her", "Wedding Bands Him", "Bridal Sets"].map(item => (
+                                    <li key={item}><Link href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5 uppercase">{item}</Link></li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* 3. Collections */}
+                    <div className="group relative flex h-full items-center">
+                        <Link href="/collections" className="hover:text-gold relative py-4 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase transition-all dark:text-gray-200">
+                            Collections
+                        </Link>
+                        <div className="invisible absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 overflow-hidden rounded-b-xl border border-gray-100 bg-white opacity-0 shadow-2xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
+                            <ul className="flex flex-col text-xs font-bold tracking-widest text-gray-600 dark:text-gray-400">
+                                {["The Imperial", "Aura Solitaire", "Modern Essentials", "Everyday Elegance"].map(item => (
+                                    <li key={item}><Link href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5 uppercase">{item}</Link></li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* 4. Services */}
+                    <div className="group relative flex h-full items-center">
+                        <Link href="/contact" className="hover:text-gold relative py-4 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase transition-all dark:text-gray-200">
+                            Services
+                        </Link>
+                        <div className="invisible absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 overflow-hidden rounded-b-xl border border-gray-100 bg-white opacity-0 shadow-2xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
+                            <ul className="flex flex-col text-xs font-bold tracking-widest text-gray-600 dark:text-gray-400">
+                                {["Diamond Guide", "Gold Price", "Size Guide", "Bespoke Service"].map(item => (
+                                    <li key={item}><Link href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5 uppercase">{item}</Link></li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* 5. About */}
+                    <div className="group relative flex h-full items-center">
+                        <Link href="/about" className="hover:text-gold relative py-4 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase transition-all dark:text-gray-200">
+                            About
+                        </Link>
+                        <div className="invisible absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 overflow-hidden rounded-b-xl border border-gray-100 bg-white opacity-0 shadow-2xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#0a0a0a]">
+                            <ul className="flex flex-col text-xs font-bold tracking-widest text-gray-600 dark:text-gray-400">
+                                {["Our History", "Our Craft", "News", "Careers"].map(item => (
+                                    <li key={item}><Link href="#" className="hover:text-gold block px-6 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5 uppercase">{item}</Link></li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
                 </nav>
             </header>
         </>
