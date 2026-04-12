@@ -1,14 +1,44 @@
 import apiClient, { getErrorMessage } from "@/lib/api-client";
 import { Product, ProductCreateRequest, ProductUpdateRequest } from "@/types/product.types";
 
+export interface GetProductsParams {
+  page?: number;
+  pageSize?: number;
+  categoryId?: string;
+  brandId?: string;
+  searchQuery?: string;
+  sortBy?: string;
+  inStock?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const productService = {
-  getAll: async (): Promise<Product[]> => {
+  getAll: async (params?: GetProductsParams): Promise<PaginatedResponse<Product> | null> => {
     try {
-      const { data } = await apiClient.get("/products");
-      return data.success ? data.data : [];
+      const { data } = await apiClient.get("/products", { params });
+      return data.success ? data : null;
     } catch (error) {
       console.error("Failed to fetch products", getErrorMessage(error));
-      return [];
+      return null;
+    }
+  },
+
+  getBySlug: async (slug: string): Promise<Product | null> => {
+    try {
+      const { data } = await apiClient.get(`/products/slug/${slug}`);
+      return data.success ? data.data : null;
+    } catch (error) {
+      console.error(`Failed to fetch product with slug: ${slug}`, getErrorMessage(error));
+      return null;
     }
   },
 

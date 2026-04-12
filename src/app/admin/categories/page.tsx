@@ -51,7 +51,7 @@ export default function CategoriesPage() {
         fetchCategories();
     }, []);
 
-    const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm<CategoryFormData>({
+    const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(categorySchema),
         defaultValues: { name: "", slug: "", parentId: "", sortOrder: 1, isActive: true }
     });

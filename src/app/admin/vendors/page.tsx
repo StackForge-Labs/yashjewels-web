@@ -7,6 +7,18 @@ import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
 import { FormField, inputCls, selectCls } from "../_components/ui/FormField";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const vendorSchema = z.object({
+    business_name: z.string().min(2, "Business name is required"),
+    tax_code: z.string().min(5, "Valid tax code is required"),
+    commission_rate: z.coerce.number().min(0, "Must be positive"),
+    vendor_level: z.coerce.number().min(1),
+    max_sub_vendors: z.coerce.number().min(0),
+});
+type VendorFormData = z.infer<typeof vendorSchema>;
 
 type Vendor = {
     id: string; business_name: string; tax_code: string; commission_rate: number;
@@ -29,12 +41,16 @@ export default function VendorsPage() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isSuspendOpen, setIsSuspendOpen] = useState(false);
-    const [form, setForm] = useState<FormData>(emptyForm);
 
-    const handleCreate = () => {
-        setVendors([{ ...form, id: Date.now().toString(), kyc_status: "pending", status: "inactive", sla_violations: 0, joined: new Date().toISOString().split("T")[0] }, ...vendors]);
+    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+        resolver: zodResolver(vendorSchema),
+        defaultValues: { business_name: "", tax_code: "", commission_rate: 10, vendor_level: 1, max_sub_vendors: 5 }
+    });
+
+    const handleCreate = (data: VendorFormData) => {
+        setVendors([{ ...data, id: Date.now().toString(), kyc_status: "pending", status: "inactive", sla_violations: 0, joined: new Date().toISOString().split("T")[0] }, ...vendors]);
         setIsDrawerOpen(false);
-        setForm(emptyForm);
+        reset();
     };
 
     const handleToggle = () => {
@@ -47,7 +63,7 @@ export default function VendorsPage() {
         <div className="flex flex-col gap-8">
             <PageHeader title="Vendor Management" description="Manage B2B partners, supplier commissions, and business KYC."
                 actions={
-                    <button onClick={() => { setForm(emptyForm); setIsDrawerOpen(true); }} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] hover:bg-blue-700">
+                    <button onClick={() => { reset(emptyForm as any); setIsDrawerOpen(true); }} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] hover:bg-blue-700">
                         <Plus className="h-4 w-4" /> Add Vendor
                     </button>
                 }
@@ -100,31 +116,33 @@ export default function VendorsPage() {
             <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="Add New Vendor" subtitle="Register a new B2B business partner"
                 footer={<>
                     <button onClick={() => setIsDrawerOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
-                    <button onClick={handleCreate} disabled={!form.business_name} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">Add Vendor</button>
+                    <button onClick={handleSubmit(handleCreate)} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">Add Vendor</button>
                 </>}>
-                <div className="flex flex-col gap-4">
+                <form onSubmit={handleSubmit(handleCreate)} className="flex flex-col gap-4">
                     <FormField label="Business Name" required>
-                        <input className={inputCls} placeholder="e.g. Premium Gems Ltd" value={form.business_name} onChange={e => setForm({ ...form, business_name: e.target.value })} />
+                        <input className={inputCls} placeholder="e.g. Premium Gems Ltd" {...register("business_name")} />
+                        {errors.business_name && <p className="text-rose-500 text-xs mt-1">{errors.business_name.message}</p>}
                     </FormField>
-                    <FormField label="Tax Code (MST)">
-                        <input className={inputCls} placeholder="MST-0123456789" value={form.tax_code} onChange={e => setForm({ ...form, tax_code: e.target.value })} />
+                    <FormField label="Tax Code (MST)" required>
+                        <input className={inputCls} placeholder="MST-0123456789" {...register("tax_code")} />
+                        {errors.tax_code && <p className="text-rose-500 text-xs mt-1">{errors.tax_code.message}</p>}
                     </FormField>
                     <div className="grid grid-cols-2 gap-4">
                         <FormField label="Vendor Level">
-                            <select className={selectCls} value={form.vendor_level} onChange={e => setForm({ ...form, vendor_level: Number(e.target.value) })}>
+                            <select className={selectCls} {...register("vendor_level")}>
                                 <option value={1}>Level 1 (Primary)</option>
                                 <option value={2}>Level 2 (Sub)</option>
                                 <option value={3}>Level 3 (Sub-sub)</option>
                             </select>
                         </FormField>
                         <FormField label="Commission Rate (%)">
-                            <input type="number" step="0.5" className={inputCls} placeholder="10" value={form.commission_rate} onChange={e => setForm({ ...form, commission_rate: Number(e.target.value) })} />
+                            <input type="number" step="0.5" className={inputCls} placeholder="10" {...register("commission_rate")} />
                         </FormField>
                     </div>
                     <FormField label="Max Sub-Vendors">
-                        <input type="number" className={inputCls} placeholder="5" value={form.max_sub_vendors} onChange={e => setForm({ ...form, max_sub_vendors: Number(e.target.value) })} />
+                        <input type="number" className={inputCls} placeholder="5" {...register("max_sub_vendors")} />
                     </FormField>
-                </div>
+                </form>
             </Drawer>
 
             {/* Detail Modal */}
