@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Loader2, KeyRound, MailCheck } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useResetPassword } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { getErrorMessage, apiClient } from "@/lib/api-client";
+import { getErrorMessage } from "@/lib/api-client";
 import { AuthAlert } from "../_components/AuthAlert";
 
 const resetPasswordSchema = z.object({
@@ -24,29 +24,43 @@ const resetPasswordSchema = z.object({
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 const ResetPasswordPage = () => {
-    const searchParams = useSearchParams();
-    const emailFromUrl = searchParams.get("email") || "";
-
+    const router = useRouter();
+    const [email, setEmail] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const reset = useResetPassword();
 
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<ResetPasswordFormValues>({
         resolver: zodResolver(resetPasswordSchema),
-        defaultValues: {
-            email: emailFromUrl,
-        },
     });
 
+    useEffect(() => {
+        const stored = sessionStorage.getItem("reset_email");
+        if (stored) {
+            setEmail(stored);
+            setValue("email", stored);
+        }
+    }, [setValue]);
+
     const onSubmit = (data: ResetPasswordFormValues) => {
-        reset.mutate({
-            email: data.email,
-            otp: data.otp,
-            newPassword: data.newPassword,
-        });
+        reset.mutate(
+            {
+                email: data.email,
+                otp: data.otp,
+                newPassword: data.newPassword,
+            },
+            {
+                onSuccess: (res) => {
+                    if (res.success) {
+                        sessionStorage.removeItem("reset_email");
+                    }
+                },
+            },
+        );
     };
 
     const errorMessage = getErrorMessage(reset.error) || (reset.data && !reset.data.success ? reset.data.errors?.[0] : null);
@@ -104,10 +118,11 @@ const ResetPasswordPage = () => {
                                         type="email"
                                         {...register("email")}
                                         placeholder="your@email.com"
+                                        readOnly={!!email}
                                         className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
                                             errors.email ? "border-red-500" : "border-gray-100 dark:border-white/5"
-                                        }`}
-                                        disabled={reset.isPending || !!emailFromUrl}
+                                        } ${email ? "cursor-not-allowed opacity-70" : ""}`}
+                                        disabled={reset.isPending}
                                     />
                                 </div>
                                 {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
@@ -146,7 +161,7 @@ const ResetPasswordPage = () => {
                                         type={showPassword ? "text" : "password"}
                                         {...register("newPassword")}
                                         placeholder="••••••••"
-                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-10 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
                                             errors.newPassword ? "border-red-500" : "border-gray-100 dark:border-white/5"
                                         }`}
                                         disabled={reset.isPending}
@@ -154,9 +169,9 @@ const ResetPasswordPage = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 text-gray-400"
+                                        className="absolute right-3 text-gray-400"
                                     >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
                                 {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
@@ -173,7 +188,7 @@ const ResetPasswordPage = () => {
                                         type={showPassword ? "text" : "password"}
                                         {...register("confirmPassword")}
                                         placeholder="••••••••"
-                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-10 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
                                             errors.confirmPassword ? "border-red-500" : "border-gray-100 dark:border-white/5"
                                         }`}
                                         disabled={reset.isPending}
@@ -212,10 +227,4 @@ const ResetPasswordPage = () => {
     );
 };
 
-export default function ResetPasswordPageWrapper() {
-    return (
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="text-gold h-8 w-8 animate-spin" /></div>}>
-            <ResetPasswordPage />
-        </Suspense>
-    );
-}
+export default ResetPasswordPage;

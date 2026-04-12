@@ -2,23 +2,40 @@
 
 import React, { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { ArrowRight, Loader2, MailCheck, RotateCcw } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useVerifyEmail, useResendOtp } from "@/hooks/useAuth";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60; // seconds
 
-const VerifyEmailPage = () => {
-    const searchParams = useSearchParams();
-    const email = searchParams.get("email") || "";
+const maskEmail = (email: string) => {
+    if (!email) return "";
+    const [name, domain] = email.split("@");
+    if (!name || !domain) return email;
+    if (name.length <= 3) return `***@${domain}`;
+    return `${name.substring(0, 2)}***${name.substring(name.length - 2)}@${domain}`;
+};
 
+const VerifyEmailPage = () => {
+    const router = useRouter();
+    const [email, setEmail] = useState("");
     const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
     const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     const verify = useVerifyEmail();
     const resend = useResendOtp();
+
+    // Init: Check session storage for email
+    useEffect(() => {
+        const stored = sessionStorage.getItem("verify_email");
+        if (!stored) {
+            router.push("/auth/register");
+            return;
+        }
+        setEmail(stored);
+    }, [router]);
 
     // Countdown timer
     useEffect(() => {
@@ -71,7 +88,16 @@ const VerifyEmailPage = () => {
             e?.preventDefault();
             const code = otp.join("");
             if (code.length !== OTP_LENGTH || !email) return;
-            verify.mutate({ email, code });
+            verify.mutate(
+                { email, code },
+                {
+                    onSuccess: (res) => {
+                        if (res.success) {
+                            sessionStorage.removeItem("verify_email");
+                        }
+                    },
+                },
+            );
         },
         [otp, email, verify],
     );
@@ -93,6 +119,8 @@ const VerifyEmailPage = () => {
         verify.error?.message ||
         (verify.data && !verify.data.success ? verify.data.errors?.[0] || verify.data.message : null);
 
+    if (!email) return null;
+
     return (
         <section className="min-h-screen bg-white py-20 transition-colors dark:bg-[#050505]">
             <div className="container mx-auto px-4">
@@ -100,33 +128,12 @@ const VerifyEmailPage = () => {
                     {/* Header */}
                     <div className="mb-10 flex flex-col items-center">
                         <div className="text-gold mb-3">
-                            <svg
-                                width="48"
-                                height="48"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M12 2L2 9L12 22L22 9L12 2Z"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 9L12 22L22 9L12 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                                 <path d="M2 9H22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                                 <path d="M12 22V9" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                                <path
-                                    d="M12 2L7 9L12 22"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
-                                <path
-                                    d="M12 2L17 9L12 22"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
+                                <path d="M12 2L7 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                                <path d="M12 2L17 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <h1 className="font-serif text-2xl tracking-[0.2em] text-gray-900 uppercase dark:text-white">
@@ -145,7 +152,7 @@ const VerifyEmailPage = () => {
                             </div>
                             <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Enter OTP Code</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                We've sent a 6-digit code to <span className="text-gold font-semibold">{email}</span>
+                                We've sent a 6-digit code to <span className="font-semibold text-gold">{maskEmail(email)}</span>
                             </p>
                         </div>
 
@@ -213,7 +220,7 @@ const VerifyEmailPage = () => {
 
                     <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
                         Wrong email?{" "}
-                        <Link href="/auth/register" className="text-gold font-bold hover:underline">
+                        <Link href="/auth/register" className="font-bold text-gold hover:underline">
                             Register again
                         </Link>
                     </p>
@@ -223,16 +230,4 @@ const VerifyEmailPage = () => {
     );
 };
 
-export default function VerifyEmailPageWrapper() {
-    return (
-        <Suspense
-            fallback={
-                <div className="flex min-h-screen items-center justify-center">
-                    <Loader2 className="text-gold h-8 w-8 animate-spin" />
-                </div>
-            }
-        >
-            <VerifyEmailPage />
-        </Suspense>
-    );
-}
+export default VerifyEmailPage;

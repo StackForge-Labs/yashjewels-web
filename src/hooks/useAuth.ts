@@ -54,7 +54,8 @@ export function useRegister() {
         mutationFn: registerApi,
         onSuccess: (res, variables) => {
             if (res.success) {
-                router.push(`/auth/verify-email?email=${encodeURIComponent(variables.email)}`);
+                sessionStorage.setItem("verify_email", variables.email);
+                router.push("/auth/verify-email");
             }
         },
     });
@@ -91,7 +92,8 @@ export function useForgotPassword() {
         mutationFn: forgotPasswordApi,
         onSuccess: (res, variables) => {
             if (res.success) {
-                router.push(`/auth/reset-password?email=${encodeURIComponent(variables.email)}`);
+                sessionStorage.setItem("reset_email", variables.email);
+                router.push("/auth/reset-password");
             }
         },
     });
