@@ -3,6 +3,8 @@ import { Cormorant_Garamond, Outfit, Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css";
 import { AOSInit } from "@/components/AOSInit";
 import { PublicLayoutWrapper } from "./_components/PublicLayoutWrapper";
+import { ReduxProvider } from "@/wrapper/ReduxProvider";
+import QueryProvider from "@/wrapper/QueryProvider";
 
 const cormorant = Cormorant_Garamond({
     variable: "--font-cormorant",
@@ -41,9 +43,11 @@ export default function RootLayout({
         >
             <body className="flex min-h-full flex-col bg-white font-sans dark:bg-[#030303]">
                 <AOSInit />
-                <PublicLayoutWrapper>
-                    {children}
-                </PublicLayoutWrapper>
+                <ReduxProvider>
+                    <QueryProvider>
+                        <PublicLayoutWrapper>{children}</PublicLayoutWrapper>
+                    </QueryProvider>
+                </ReduxProvider>
             </body>
         </html>
     );

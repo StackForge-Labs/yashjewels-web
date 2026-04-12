@@ -1,15 +1,29 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { Facebook } from "../../_components/icon/Facebook";
-import { Instagram } from "../../_components/icon/Instagram";
-import { Youtube } from "../../_components/icon/Youtube";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { SocicalLogin } from "../_components/SocicalLogin";
+import { SocialLogin } from "../_components/SocialLogin";
+import { useLogin } from "@/hooks/useAuth";
+import { useRedirectIfAuthenticated } from "@/hooks/useAuthGuard";
 
 const LoginPage = () => {
+    useRedirectIfAuthenticated();
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+
+    const login = useLogin();
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        login.mutate({ email, password });
+    };
+
+    const errorMessage =
+        login.error?.message ||
+        (login.data && !login.data.success ? login.data.errors?.[0] || login.data.message : null);
 
     return (
         <section className="min-h-screen bg-white py-20 transition-colors dark:bg-[#050505]">
@@ -62,7 +76,13 @@ const LoginPage = () => {
                             Please enter your details to sign in
                         </p>
 
-                        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+                        {errorMessage && (
+                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400">
+                                {errorMessage}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
                                     Email Address
@@ -71,9 +91,12 @@ const LoginPage = () => {
                                     <Mail className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         placeholder="name@example.com"
                                         className="focus:border-gold w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
                                         required
+                                        disabled={login.isPending}
                                     />
                                 </div>
                             </div>
@@ -86,9 +109,12 @@ const LoginPage = () => {
                                     <Lock className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
                                         className="focus:border-gold w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
                                         required
+                                        disabled={login.isPending}
                                     />
                                     <button
                                         type="button"
@@ -112,9 +138,16 @@ const LoginPage = () => {
 
                             <button
                                 type="submit"
-                                className="bg-gold flex w-full items-center justify-center rounded-xl py-4 text-sm font-bold tracking-widest text-white uppercase transition-all hover:brightness-110 active:scale-[0.98]"
+                                disabled={login.isPending}
+                                className="bg-gold flex w-full items-center justify-center rounded-xl py-4 text-sm font-bold tracking-widest text-white uppercase transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Sign In <ArrowRight size={18} className="ml-2" />
+                                {login.isPending ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    <>
+                                        Sign In <ArrowRight size={18} className="ml-2" />
+                                    </>
+                                )}
                             </button>
                         </form>
 
@@ -126,7 +159,7 @@ const LoginPage = () => {
                             <div className="h-px flex-grow bg-gray-100 dark:bg-white/5"></div>
                         </div>
 
-                        <SocicalLogin />
+                        <SocialLogin />
                     </div>
 
                     <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
