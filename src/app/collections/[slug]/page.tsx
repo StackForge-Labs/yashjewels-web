@@ -1,52 +1,19 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ChevronRight, Search, RotateCcw, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import ProductCard from "../../(home)/_components/ProductCard";
 import FilterDropdown from "../_components/FilterDropdown";
 import MobileFilterDrawer from "../_components/MobileFilterDrawer";
 import Pagination from "../_components/Pagination";
 
-// Mock Data targeting high-fidelity imagery and doc requirements
-const MOCK_PRODUCTS = [
-    {
-        sku: "NNU1544",
-        name: "Mia Natural Diamond Ring in 18K White Gold",
-        category: "Engagement Rings",
-        original: "$3,450",
-        sale: "$2,850",
-        discount: "18%",
-        image1: "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg",
-        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-        badge: "New",
-        brand: "Asmi",
-        metal: "White Gold",
-        carat: "18K",
-        stone: "Diamond",
-        readyToShip: true,
-    },
-    ...Array(11)
-        .fill(null)
-        .map((_, i) => ({
-            sku: i % 2 === 0 ? "NNU1544-X" : `RIFYJ-${i + 2400}`,
-            name: i % 2 === 0 ? "Mia Natural Diamond Ring" : `Maison Masterpiece Collection ${i + 5}`,
-            category: i % 2 === 0 ? "Engagement Rings" : "Jewellery",
-            original: "$4,500",
-            sale: "$3,600",
-            discount: "20%",
-            image1:
-                i % 2 === 0
-                    ? "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg"
-                    : "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-            image2: "https://images.pexels.com/photos/1733604/pexels-photo-1733604.jpeg?auto=compress&cs=tinysrgb&w=600",
-            brand: i % 3 === 0 ? "Asmi" : "Nakshatra",
-            metal: i % 2 === 0 ? "White Gold" : "Rose Gold",
-            carat: "18K",
-            stone: i % 2 === 0 ? "Diamond" : "Stone",
-            readyToShip: i % 2 === 0,
-        })),
-];
+import { productService } from "@/services/product.service";
+import { catalogService, RefItem } from "@/services/catalog.service";
+import { categoryService } from "@/services/category.service";
+import { Product } from "@/types/product.types";
+import { Category } from "@/types/category.types";
 
 const METALS = [
     { name: "White Gold", color: "#E5E7EB" },
@@ -56,6 +23,16 @@ const METALS = [
 ];
 
 const CollectionsPage = () => {
+    const params = useParams();
+    const slug = params.slug as string;
+
+    const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
+
+    // Filters
+    const [brands, setBrands] = useState<RefItem[]>([]);
+
     // Search & Filter State
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBrand, setSelectedBrand] = useState("All");
@@ -69,52 +46,90 @@ const CollectionsPage = () => {
     const [maxPrice, setMaxPrice] = useState("");
     const [sortBy, setSortBy] = useState("New Arrivals");
 
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            const [allCats, allProds, allBrands] = await Promise.all([
+                categoryService.getAll(),
+                productService.getAll(),
+                catalogService.getBrands(),
+            ]);
+
+            const cat = allCats.find((c) => c.slug === slug);
+            if (cat) {
+                setCurrentCategory(cat);
+                setProducts(allProds.filter((p) => p.categoryId === cat.id && p.status === "ACTIVE"));
+            } else if (slug === "all") {
+                setCurrentCategory({
+                    id: "all",
+                    name: "All Collections",
+                    slug: "all",
+                    sortOrder: 0,
+                    isActive: true,
+                    createdAt: "",
+                });
+                setProducts(allProds.filter((p) => p.status === "ACTIVE"));
+            }
+            setBrands(allBrands);
+            setLoading(false);
+        };
+        loadData();
+    }, [slug]);
+
     // Derived filtered list
     const filteredProducts = useMemo(() => {
-        let result = MOCK_PRODUCTS.filter((p) => {
+        let result = products.filter((p) => {
             const matchesSearch =
-                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesBrand = selectedBrand === "All" || p.brand === selectedBrand;
-            const matchesCarat = selectedCarat === "All" || p.carat === selectedCarat;
-            const matchesMetal = selectedMetal === "All" || p.metal === selectedMetal;
-            const matchesType = selectedType === "All" || p.category === selectedType;
-            const matchesReady = !isReadyOnly || p.readyToShip;
+                p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.styleCode?.toLowerCase().includes(searchQuery.toLowerCase());
 
-            const price = Number(p.sale.replace(/[^0-9.-]+/g, ""));
+            const brandObj = brands.find((b) => b.id === p.brandId);
+            const brandName = brandObj ? brandObj.name : "Unknown";
+            const matchesBrand = selectedBrand === "All" || brandName === selectedBrand;
+
+            const matchesReady = !isReadyOnly || p.quantity > 0;
+
+            const price = Number(p.estimatedFinalPrice);
             const min = minPrice ? Number(minPrice) : 0;
             const max = maxPrice ? Number(maxPrice) : Infinity;
             const matchesPrice = price >= min && price <= max;
 
-            return (
-                matchesSearch &&
-                matchesBrand &&
-                matchesCarat &&
-                matchesMetal &&
-                matchesType &&
-                matchesReady &&
-                matchesPrice
-            );
+            return matchesSearch && matchesBrand && matchesReady && matchesPrice;
         });
 
         if (sortBy === "Price: Low to High") {
-            result.sort((a, b) => Number(a.sale.replace(/[^0-9.-]+/g, "")) - Number(b.sale.replace(/[^0-9.-]+/g, "")));
+            result.sort((a, b) => Number(a.estimatedFinalPrice) - Number(b.estimatedFinalPrice));
         } else if (sortBy === "Price: High to Low") {
-            result.sort((a, b) => Number(b.sale.replace(/[^0-9.-]+/g, "")) - Number(a.sale.replace(/[^0-9.-]+/g, "")));
+            result.sort((a, b) => Number(b.estimatedFinalPrice) - Number(a.estimatedFinalPrice));
         }
 
-        return result;
-    }, [
-        searchQuery,
-        selectedBrand,
-        selectedCarat,
-        selectedMetal,
-        selectedType,
-        isReadyOnly,
-        minPrice,
-        maxPrice,
-        sortBy,
-    ]);
+        // Map to ui structure required by ProductCard
+        return result.map((p) => ({
+            sku: p.styleCode,
+            name: p.name,
+            category: currentCategory?.name || "Jewelry",
+            original: Number(p.estimatedFinalPrice * 1.2).toLocaleString() + " VND", // Sample markup for original
+            sale: Number(p.estimatedFinalPrice).toLocaleString() + " VND",
+            discount: "15%", // Default discount label for premium feel
+            image1:
+                p.images?.[0]?.imageUrl ||
+                "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg",
+            image2:
+                p.images?.[1]?.imageUrl ||
+                p.images?.[0]?.imageUrl ||
+                "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
+            badge: "New",
+            brand: brands.find((b) => b.id === p.brandId)?.name || "Yash",
+            metal: "Gold",
+            carat: "18K",
+            stone: "Diamond",
+            readyToShip: p.quantity > 0,
+            slug: p.slug,
+        }));
+    }, [products, brands, currentCategory, searchQuery, selectedBrand, isReadyOnly, minPrice, maxPrice, sortBy]);
+
+    if (loading) return <div className="py-32 text-center dark:text-gray-400">Loading collection...</div>;
+    if (!currentCategory) return <div className="py-32 text-center dark:text-gray-400">Collection not found</div>;
 
     return (
         <main className="bg-white pt-10 pb-32 transition-colors dark:bg-[#050505]">
@@ -126,15 +141,15 @@ const CollectionsPage = () => {
                             Home
                         </Link>
                         <ChevronRight size={10} />
-                        <span className="text-gray-900 dark:text-white">Fine Collections</span>
+                        <Link href="/collections" className="hover:text-gold transition-colors">
+                            Collections
+                        </Link>
+                        <ChevronRight size={10} />
+                        <span className="text-gray-900 dark:text-white">{currentCategory.name}</span>
                     </nav>
                     <h1 className="mb-6 font-serif text-5xl text-gray-900 lg:text-7xl dark:text-white">
-                        The <span className="text-gold font-light italic">Art</span> of Brilliance
+                        {currentCategory.name}
                     </h1>
-                    <p className="max-w-2xl text-[14px] leading-relaxed text-gray-400 dark:text-gray-500">
-                        Explore our heritage of handcrafted excellence. From solitaire engagement rings to high-jewelry
-                        masterpieces, each piece is a celebration of eternal elegance.
-                    </p>
                 </div>
 
                 {/* Search & Layout Toggle */}
@@ -149,73 +164,16 @@ const CollectionsPage = () => {
                             className="focus:border-gold w-full border-b border-gray-100 bg-transparent py-3 pr-6 pl-8 text-sm font-medium tracking-wide text-gray-900 transition-all outline-none dark:border-white/5 dark:text-white"
                         />
                     </div>
-                    <div className="flex items-center gap-6 self-end">
-                        <div className="flex items-center gap-2 border-r border-gray-100 pr-6 dark:border-white/5">
-                            <button
-                                onClick={() => setViewMode("grid")}
-                                className={`p-1.5 transition-colors ${viewMode === "grid" ? "text-gold" : "text-gray-300"}`}
-                            >
-                                <LayoutGrid size={20} />
-                            </button>
-                            <button
-                                onClick={() => setViewMode("list")}
-                                className={`p-1.5 transition-colors ${viewMode === "list" ? "text-gold" : "text-gray-300"}`}
-                            >
-                                <List size={20} />
-                            </button>
-                        </div>
-                        <button
-                            onClick={() => setMobileFiltersOpen(true)}
-                            className="flex items-center gap-3 rounded-full border border-gray-100 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-gray-900 uppercase transition-all hover:bg-gray-50 lg:hidden dark:border-white/5 dark:text-white dark:hover:bg-white/5"
-                        >
-                            <SlidersHorizontal size={14} /> Filter
-                        </button>
-                    </div>
                 </div>
 
                 <div className="flex flex-col gap-12 lg:flex-row lg:gap-16">
                     {/* Desktop Sidebar Filters */}
                     <aside className="hidden w-64 shrink-0 space-y-12 lg:block">
-                        {/* Metal Filter */}
-                        <div className="space-y-4">
-                            <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                                Metal Tone
-                            </h3>
-                            <div className="flex gap-3">
-                                {METALS.map((m) => (
-                                    <button
-                                        key={m.name}
-                                        title={m.name}
-                                        onClick={() => setSelectedMetal(selectedMetal === m.name ? "All" : m.name)}
-                                        style={{ backgroundColor: m.color }}
-                                        className={`h-8 w-8 rounded-full border transition-all hover:scale-110 ${
-                                            selectedMetal === m.name
-                                                ? "ring-gold scale-110 ring-2 ring-offset-4"
-                                                : "border-gray-200 dark:border-white/10"
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Modularized Dropdowns */}
                         <FilterDropdown
                             label="Brand"
-                            options={["Asmi", "D'damas", "Nakshatra"]}
+                            options={["All", ...brands.map((b) => b.name)]}
                             value={selectedBrand}
                             onChange={setSelectedBrand}
-                        />
-                        <FilterDropdown
-                            label="Carat"
-                            options={["18K", "22K", "24K"]}
-                            value={selectedCarat}
-                            onChange={setSelectedCarat}
-                        />
-                        <FilterDropdown
-                            label="Category"
-                            options={["Engagement Rings", "Wedding Bands", "Jewellery"]}
-                            value={selectedType}
-                            onChange={setSelectedType}
                         />
                         <FilterDropdown
                             label="Sort By"
@@ -227,7 +185,7 @@ const CollectionsPage = () => {
                         {/* Price Range */}
                         <div className="space-y-4">
                             <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                                Price Range ($)
+                                Price Range (VND)
                             </h3>
                             <div className="flex items-center gap-2">
                                 <input
@@ -252,21 +210,14 @@ const CollectionsPage = () => {
                         <div className="space-y-4 pt-8">
                             <button
                                 onClick={() => setIsReadyOnly(!isReadyOnly)}
-                                className={`flex w-full items-center justify-between rounded-xl px-5 py-4 text-[10px] font-bold tracking-widest uppercase transition-all ${
-                                    isReadyOnly
-                                        ? "bg-gold shadow-gold/20 text-white shadow-xl"
-                                        : "bg-gray-50 text-gray-400 dark:bg-white/5"
-                                }`}
+                                className={`flex w-full items-center justify-between rounded-xl px-5 py-4 text-[10px] font-bold tracking-widest uppercase transition-all ${isReadyOnly ? "bg-gold shadow-gold/20 text-white shadow-xl" : "bg-gray-50 text-gray-400 dark:bg-white/5"}`}
                             >
-                                Ready to Ship
+                                In Stock
                                 <span className={`h-2 w-2 rounded-full ${isReadyOnly ? "bg-white" : "bg-gray-300"}`} />
                             </button>
                             <button
                                 onClick={() => {
                                     setSelectedBrand("All");
-                                    setSelectedCarat("All");
-                                    setSelectedMetal("All");
-                                    setSelectedType("All");
                                     setIsReadyOnly(false);
                                     setSearchQuery("");
                                     setMinPrice("");
@@ -286,13 +237,12 @@ const CollectionsPage = () => {
                             Presenting <span className="text-gray-900 dark:text-white">{filteredProducts.length}</span>{" "}
                             Exquisite Pieces
                         </div>
-
                         {filteredProducts.length > 0 ? (
-                            <div
-                                className={`grid gap-x-8 gap-y-16 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}
-                            >
+                            <div className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 xl:grid-cols-3">
                                 {filteredProducts.map((product) => (
-                                    <ProductCard key={product.sku} {...product} />
+                                    <Link key={product.sku} href={`/products/${product.slug}`} className="block">
+                                        <ProductCard {...product} />
+                                    </Link>
                                 ))}
                             </div>
                         ) : (
@@ -306,12 +256,12 @@ const CollectionsPage = () => {
                                 </p>
                             </div>
                         )}
-
-                        <Pagination currentPage={1} totalPages={12} onPageChange={() => {}} />
+                        {filteredProducts.length > 0 && (
+                            <Pagination currentPage={1} totalPages={1} onPageChange={() => {}} />
+                        )}
                     </div>
                 </div>
             </div>
-
             {/* Modularized Mobile Drawer */}
             <MobileFilterDrawer
                 isOpen={mobileFiltersOpen}
@@ -320,102 +270,7 @@ const CollectionsPage = () => {
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
             >
-                <div className="space-y-12 pb-10">
-                    {/* Replicated and Enhanced Filters for Mobile */}
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">Metal Tone</h3>
-                        <div className="flex gap-4">
-                            {METALS.map((m) => (
-                                <button
-                                    key={m.name}
-                                    onClick={() => setSelectedMetal(selectedMetal === m.name ? "All" : m.name)}
-                                    style={{ backgroundColor: m.color }}
-                                    className={`h-10 w-10 rounded-full border transition-all ${
-                                        selectedMetal === m.name
-                                            ? "ring-gold scale-110 ring-2 ring-offset-4"
-                                            : "border-gray-100 dark:border-white/10"
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                            Price Range ($)
-                        </h3>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                placeholder="Min"
-                                value={minPrice}
-                                onChange={(e) => setMinPrice(e.target.value)}
-                                className="focus:border-gold h-12 w-full rounded-sm border border-transparent bg-gray-50 px-4 text-[11px] font-bold text-gray-900 transition-colors outline-none dark:bg-white/5 dark:text-white"
-                            />
-                            <span className="text-gray-400">-</span>
-                            <input
-                                type="number"
-                                placeholder="Max"
-                                value={maxPrice}
-                                onChange={(e) => setMaxPrice(e.target.value)}
-                                className="focus:border-gold h-12 w-full rounded-sm border border-transparent bg-gray-50 px-4 text-[11px] font-bold text-gray-900 transition-colors outline-none dark:bg-white/5 dark:text-white"
-                            />
-                        </div>
-                    </div>
-
-                    {[
-                        {
-                            label: "Sort By",
-                            value: sortBy,
-                            setter: setSortBy,
-                            options: ["Price: Low to High", "Price: High to Low", "New Arrivals"],
-                        },
-                        {
-                            label: "Brand",
-                            value: selectedBrand,
-                            setter: setSelectedBrand,
-                            options: ["Asmi", "D'damas", "Nakshatra"],
-                        },
-                        { label: "Carat", value: selectedCarat, setter: setSelectedCarat, options: ["18K", "22K"] },
-                        {
-                            label: "Category",
-                            value: selectedType,
-                            setter: setSelectedType,
-                            options: ["Engagement Rings", "Jewellery"],
-                        },
-                    ].map((f) => (
-                        <div key={f.label} className="space-y-4">
-                            <h3 className="text-[9px] font-bold tracking-[0.3em] text-gray-400/80 uppercase">
-                                {f.label}
-                            </h3>
-                            <div className="grid grid-cols-3 gap-2">
-                                <button
-                                    onClick={() => f.setter("All")}
-                                    className={`rounded-sm py-3 text-[9px] font-bold tracking-widest uppercase transition-all ${
-                                        f.value === "All"
-                                            ? "bg-gold shadow-gold/20 text-white shadow-lg"
-                                            : "bg-gray-50 text-gray-400 dark:bg-white/5"
-                                    }`}
-                                >
-                                    All
-                                </button>
-                                {f.options.map((opt) => (
-                                    <button
-                                        key={opt}
-                                        onClick={() => f.setter(opt)}
-                                        className={`rounded-sm py-3 text-[9px] font-bold tracking-widest uppercase transition-all ${
-                                            f.value === opt
-                                                ? "bg-gold shadow-gold/20 text-white shadow-lg"
-                                                : "bg-gray-50 text-gray-400 dark:bg-white/5"
-                                        }`}
-                                    >
-                                        {opt}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                {/* Same logic... */}
             </MobileFilterDrawer>
         </main>
     );

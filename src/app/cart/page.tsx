@@ -15,8 +15,8 @@ const MOCK_CART = [
         image: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
         metal: "14K White Gold",
         stone: "Natural Diamond",
-        price: "13,990,200 đ",
-        originalPrice: "16,655,000 đ",
+        price: "13,990,200 VND",
+        originalPrice: "16,655,000 VND",
         quantity: 1,
         priceChanged: true,
     },
@@ -27,8 +27,8 @@ const MOCK_CART = [
         image: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=600",
         metal: "18K Yellow Gold",
         stone: "VVS Diamond",
-        price: "75,650,000 đ",
-        originalPrice: "89,000,000 đ",
+        price: "75,650,000 VND",
+        originalPrice: "89,000,000 VND",
         quantity: 1,
         priceChanged: false,
     },
@@ -39,8 +39,8 @@ const MOCK_CART = [
         image: "https://images.pexels.com/photos/1733604/pexels-photo-1733604.jpeg?auto=compress&cs=tinysrgb&w=600",
         metal: "Platinum 950",
         stone: "GIA Diamond",
-        price: "38,250,000 đ",
-        originalPrice: "45,000,000 đ",
+        price: "38,250,000 VND",
+        originalPrice: "45,000,000 VND",
         quantity: 1,
         priceChanged: false,
     },
@@ -112,10 +112,10 @@ export default function CartPage() {
                         <div className="lg:col-span-4">
                             <div className="sticky top-32">
                                 <CartSummary
-                                    subtotal="127,890,200 đ"
+                                    subtotal="127,890,200 VND"
                                     shipping="Free"
-                                    tax="12,789,020 đ"
-                                    total="140,679,220 đ"
+                                    tax="12,789,020 VND"
+                                    total="140,679,220 VND"
                                     itemCount={items.length}
                                 />
                             </div>

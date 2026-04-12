@@ -1,58 +1,137 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Edit3, Trash2, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Edit3, Trash2, Search, AlertCircle, RefreshCw } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Modal } from "../_components/ui/Modal";
 import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
 import { FormField, inputCls, selectCls } from "../_components/ui/FormField";
 
-type Category = { id: string; name: string; slug: string; parent_id: string | null; parent_name: string; sort_order: number; is_active: boolean };
-const initialCategories: Category[] = [
-    { id: "1", name: "Rings", slug: "rings", parent_id: null, parent_name: "—", sort_order: 1, is_active: true },
-    { id: "2", name: "Engagement Rings", slug: "engagement-rings", parent_id: "1", parent_name: "Rings", sort_order: 2, is_active: true },
-    { id: "3", name: "Necklaces", slug: "necklaces", parent_id: null, parent_name: "—", sort_order: 3, is_active: true },
-    { id: "4", name: "Pendants", slug: "pendants", parent_id: "3", parent_name: "Necklaces", sort_order: 4, is_active: true },
-    { id: "5", name: "Bracelets", slug: "bracelets", parent_id: null, parent_name: "—", sort_order: 5, is_active: true },
-    { id: "6", name: "Earrings", slug: "earrings", parent_id: null, parent_name: "—", sort_order: 6, is_active: true },
-    { id: "7", name: "Custom Collections", slug: "custom-collections", parent_id: null, parent_name: "—", sort_order: 7, is_active: false },
-];
-type FormData = { name: string; slug: string; parent_id: string; sort_order: number; is_active: boolean };
-const emptyForm: FormData = { name: "", slug: "", parent_id: "", sort_order: 1, is_active: true };
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Category } from "@/types/category.types";
+import { categoryService } from "@/services/category.service";
+
+const categorySchema = z.object({
+    name: z.string().min(2, "Category name must be at least 2 characters"),
+    slug: z.string().min(2, "Slug must be at least 2 characters"),
+    parentId: z.string().optional().nullable(),
+    sortOrder: z.coerce.number().min(0, "Sort order must be at least 0"),
+    isActive: z.boolean().default(true),
+});
+type CategoryFormData = z.infer<typeof categorySchema>;
+
 function toSlug(name: string) { return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""); }
 
 export default function CategoriesPage() {
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [search, setSearch] = useState("");
     const [selected, setSelected] = useState<Category | null>(null);
     const [mode, setMode] = useState<"create" | "edit">("create");
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [form, setForm] = useState<FormData>(emptyForm);
+    const [isRestoreOpen, setIsRestoreOpen] = useState(false);
+
+    const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const filtered = categories.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
-    const openCreate = () => { setForm(emptyForm); setMode("create"); setIsModalOpen(true); };
+    const fetchCategories = async () => {
+        setLoading(true);
+        const data = await categoryService.getAll();
+        setCategories(data);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm<CategoryFormData>({
+        resolver: zodResolver(categorySchema),
+        defaultValues: { name: "", slug: "", parentId: "", sortOrder: 1, isActive: true }
+    });
+
+    // Auto-generate slug when name changes for create mode
+    const watchedName = watch("name");
+    useEffect(() => {
+        if (mode === "create" && watchedName) {
+            setValue("slug", toSlug(watchedName), { shouldValidate: true });
+        }
+    }, [watchedName, mode, setValue]);
+
+    const openCreate = () => {
+        reset({ name: "", slug: "", parentId: "", sortOrder: 1, isActive: true });
+        setErrorMsg(null);
+        setMode("create");
+        setIsModalOpen(true);
+    };
+
     const openEdit = (c: Category) => {
         setSelected(c);
-        setForm({ name: c.name, slug: c.slug, parent_id: c.parent_id ?? "", sort_order: c.sort_order, is_active: c.is_active });
-        setMode("edit"); setIsModalOpen(true);
+        reset({ 
+            name: c.name, 
+            slug: c.slug, 
+            parentId: c.parentId ?? "", 
+            sortOrder: c.sortOrder, 
+            isActive: c.isActive 
+        });
+        setErrorMsg(null);
+        setMode("edit");
+        setIsModalOpen(true);
     };
-    const handleSave = () => {
-        const parent = categories.find(c => c.id === form.parent_id);
+
+    const onSubmit = async (data: CategoryFormData) => {
+        setErrorMsg(null);
+        const payload = {
+            ...data,
+            parentId: data.parentId === "" ? null : data.parentId
+        };
+
+        let res;
         if (mode === "create") {
-            setCategories([...categories, { id: Date.now().toString(), ...form, parent_name: parent?.name ?? "—", parent_id: form.parent_id || null }]);
+            res = await categoryService.create(payload);
         } else if (selected) {
-            setCategories(categories.map(c => c.id === selected.id ? { ...c, ...form, parent_name: parent?.name ?? "—", parent_id: form.parent_id || null } : c));
+            res = await categoryService.update(selected.id, payload);
         }
-        setIsModalOpen(false);
+
+        if (res?.success) {
+            fetchCategories();
+            setIsModalOpen(false);
+        } else {
+            setErrorMsg(res?.message || "A system error occurred.");
+        }
     };
-    const handleDelete = () => { if (selected) setCategories(categories.filter(c => c.id !== selected.id)); setIsDeleteOpen(false); };
+
+    const handleDelete = async () => {
+        if (!selected) return;
+        const res = await categoryService.delete(selected.id);
+        if (res.success) {
+            fetchCategories();
+            setIsDeleteOpen(false);
+        } else {
+            alert(res.message);
+        }
+    };
+
+    const handleRestore = async () => {
+        if (!selected) return;
+        const res = await categoryService.restore(selected.id);
+        if (res.success) {
+            fetchCategories();
+            setIsRestoreOpen(false);
+        } else {
+            alert(res.message);
+        }
+    };
 
     return (
         <div className="flex flex-col gap-8">
-            <PageHeader title="Categories & Brands" description="Manage your product taxonomy and navigation hierarchy."
+            <PageHeader title="Categories Dashboard" description="Manage product category structure (edit, soft delete, prevent DB breakage)."
                 actions={
                     <button onClick={openCreate} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] hover:bg-blue-700">
                         <Plus className="h-4 w-4" /> Add Category
@@ -64,26 +143,44 @@ export default function CategoriesPage() {
                 <div className="border-b border-gray-100 p-6 dark:border-gray-800/50">
                     <div className="flex max-w-sm items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/5 dark:border-gray-800 dark:bg-[#1a1a1a]/50">
                         <Search className="h-4 w-4 shrink-0 text-gray-400" />
-                        <input type="text" placeholder="Find category..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-transparent font-plus-jakarta text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500" />
+                        <input type="text" placeholder="Search categories..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-transparent font-plus-jakarta text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500" />
                     </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto min-h-[300px]">
                     <table className="w-full whitespace-nowrap text-left text-sm">
                         <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                            <tr>{["Name", "Slug", "Parent", "Sort", "Status", ""].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
+                            <tr>{["Name", "Slug", "Parent Category", "Sort Order", "Status", "Actions"].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                            {filtered.map(cat => (
+                            {loading ? (
+                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">Loading data...</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">No categories found.</td></tr>
+                            ) : filtered.map(cat => (
                                 <tr key={cat.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                                    <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{cat.name}</td>
+                                    <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
+                                        <div className="flex items-center gap-2">
+                                            {cat.name}
+                                            {/* {cat.deletedAt && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">DELETED</span>} */}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">/{cat.slug}</td>
-                                    <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{cat.parent_name}</td>
-                                    <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{cat.sort_order}</td>
-                                    <td className="px-6 py-4"><StatusBadge status={cat.is_active ? "active" : "inactive"} /></td>
+                                    <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">
+                                        {cat.parentId ? categories.find(c => c.id === cat.parentId)?.name || cat.parentId : "—"}
+                                    </td>
+                                    <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{cat.sortOrder}</td>
+                                    <td className="px-6 py-4"><StatusBadge status={cat.isActive ? "active" : "inactive"} /></td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-end gap-1">
-                                            <button onClick={() => openEdit(cat)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
-                                            <button onClick={() => { setSelected(cat); setIsDeleteOpen(true); }} className="rounded-lg p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+                                            {/* Restore button if deleted, but our global query filter hides deleted ones by default unless fetched directly */}
+                                            {cat.isActive ? (
+                                                <>
+                                                    <button onClick={() => openEdit(cat)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
+                                                    <button onClick={() => { setSelected(cat); setIsDeleteOpen(true); }} className="rounded-lg p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+                                                </>
+                                            ) : (
+                                                <button onClick={() => { setSelected(cat); setIsRestoreOpen(true); }} className="rounded-lg p-2 text-emerald-500 hover:bg-emerald-50"><RefreshCw className="h-4 w-4" /></button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -93,40 +190,58 @@ export default function CategoriesPage() {
                 </div>
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={mode === "create" ? "Add Category" : "Edit Category"} size="md"
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={mode === "create" ? "Create New Category" : "Edit Category"} size="md"
                 footer={<>
                     <button onClick={() => setIsModalOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
-                    <button onClick={handleSave} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700">{mode === "create" ? "Create" : "Save"}</button>
+                    <button onClick={handleSubmit(onSubmit)} disabled={isSubmitting} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50">
+                        {isSubmitting ? "Processing..." : mode === "create" ? "Create" : "Save Changes"}
+                    </button>
                 </>}>
-                <div className="flex flex-col gap-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+                    {errorMsg && (
+                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-4 text-sm font-medium text-rose-800 dark:bg-rose-500/10 dark:text-rose-400">
+                            <AlertCircle className="h-4 w-4" /> {errorMsg}
+                        </div>
+                    )}
                     <FormField label="Category Name" required>
-                        <input className={inputCls} placeholder="e.g. Engagement Rings" value={form.name} onChange={e => setForm({ ...form, name: e.target.value, slug: toSlug(e.target.value) })} />
+                        <input className={inputCls} placeholder="e.g. Wedding Jewelry" {...register("name")} />
+                        {errors.name && <p className="text-rose-500 text-xs mt-1">{errors.name.message}</p>}
                     </FormField>
-                    <FormField label="Slug" hint="Auto-generated from name">
-                        <input className={inputCls} value={form.slug} onChange={e => setForm({ ...form, slug: toSlug(e.target.value) })} />
+                    
+                    <FormField label="Slug Path" hint="Auto-generated from name, but editable">
+                        <input className={inputCls} {...register("slug")} />
+                        {errors.slug && <p className="text-rose-500 text-xs mt-1">{errors.slug.message}</p>}
                     </FormField>
+
                     <FormField label="Parent Category">
-                        <select className={selectCls} value={form.parent_id} onChange={e => setForm({ ...form, parent_id: e.target.value })}>
-                            <option value="">None (root)</option>
-                            {categories.filter(c => !c.parent_id && c.id !== selected?.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        <select className={selectCls} {...register("parentId")}>
+                            <option value="">None (Root)</option>
+                            {categories.filter(c => c.id !== selected?.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </FormField>
+
                     <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Sort Order">
-                            <input type="number" className={inputCls} value={form.sort_order} onChange={e => setForm({ ...form, sort_order: Number(e.target.value) })} />
+                        <FormField label="Display Order">
+                            <input type="number" className={inputCls} {...register("sortOrder")} />
+                            {errors.sortOrder && <p className="text-rose-500 text-xs mt-1">{errors.sortOrder.message}</p>}
                         </FormField>
-                        <FormField label="Status">
-                            <select className={selectCls} value={form.is_active ? "active" : "inactive"} onChange={e => setForm({ ...form, is_active: e.target.value === "active" })}>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
+                        <FormField label="Display Status">
+                            <select className={selectCls} {...register("isActive", {
+                                setValueAs: (v) => v === "true" || v === true
+                            })}>
+                                <option value="true">Show</option>
+                                <option value="false">Hide</option>
                             </select>
                         </FormField>
                     </div>
-                </div>
+                </form>
             </Modal>
 
             <ConfirmDialog isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={handleDelete} title="Delete Category"
-                description={`Delete "${selected?.name}"? Sub-categories must be re-assigned first.`} confirmLabel="Delete" />
+                description={`Are you sure you want to delete category "${selected?.name}"? The system will block this if there are products inside.`} confirmLabel="Delete" />
+                
+            <ConfirmDialog isOpen={isRestoreOpen} onClose={() => setIsRestoreOpen(false)} onConfirm={handleRestore} title="Restore Category"
+                description={`Restore visibility for "${selected?.name}"?`} confirmLabel="Restore" />
         </div>
     );
 }
