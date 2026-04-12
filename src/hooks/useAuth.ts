@@ -26,6 +26,9 @@ function useAuthSuccess() {
 
     return (authData: AuthResponse) => {
         setTokens(authData.accessToken, authData.refreshToken);
+        if (authData.user) {
+            dispatch(setUser(authData.user));
+        }
         queryClient.invalidateQueries({ queryKey: ["profile"] });
     };
 }
