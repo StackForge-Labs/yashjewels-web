@@ -1,22 +1,38 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Mail, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useForgotPassword } from "@/hooks/useAuth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { getErrorMessage } from "@/lib/api-client";
+import { AuthAlert } from "../_components/AuthAlert";
+
+const forgotPasswordSchema = z.object({
+    email: z.string().min(1, "Email is required").email("Invalid email format"),
+});
+
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPasswordPage = () => {
-    const [email, setEmail] = useState("");
     const forgot = useForgotPassword();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        forgot.mutate({ email });
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<ForgotPasswordFormValues>({
+        resolver: zodResolver(forgotPasswordSchema),
+    });
+
+    const onSubmit = (data: ForgotPasswordFormValues) => {
+        forgot.mutate(data);
     };
 
-    const errorMessage =
-        forgot.error?.message ||
-        (forgot.data && !forgot.data.success ? forgot.data.errors?.[0] || forgot.data.message : null);
+    const errorMessage = getErrorMessage(forgot.error) || (forgot.data && !forgot.data.success ? forgot.data.errors?.[0] : null);
+    const successMessage = forgot.data?.success ? forgot.data.message || "OTP has been sent to your email." : null;
 
     return (
         <section className="min-h-screen bg-white py-20 transition-colors dark:bg-[#050505]">
@@ -25,33 +41,12 @@ const ForgotPasswordPage = () => {
                     {/* Header */}
                     <div className="mb-10 flex flex-col items-center">
                         <div className="text-gold mb-3">
-                            <svg
-                                width="48"
-                                height="48"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M12 2L2 9L12 22L22 9L12 2Z"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 9L12 22L22 9L12 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                                 <path d="M2 9H22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                                 <path d="M12 22V9" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                                <path
-                                    d="M12 2L7 9L12 22"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
-                                <path
-                                    d="M12 2L17 9L12 22"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
+                                <path d="M12 2L7 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                                <path d="M12 2L17 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <h1 className="font-serif text-2xl tracking-[0.2em] text-gray-900 uppercase dark:text-white">
@@ -76,13 +71,10 @@ const ForgotPasswordPage = () => {
                             </p>
                         </div>
 
-                        {errorMessage && (
-                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400">
-                                {errorMessage}
-                            </div>
-                        )}
+                        <AuthAlert message={errorMessage} type="error" />
+                        <AuthAlert message={successMessage} type="success" />
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
                                     Email Address
@@ -91,14 +83,15 @@ const ForgotPasswordPage = () => {
                                     <Mail className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        {...register("email")}
                                         placeholder="your@email.com"
-                                        className="w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                        required
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.email ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                                        }`}
                                         disabled={forgot.isPending}
                                     />
                                 </div>
+                                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                             </div>
 
                             <button

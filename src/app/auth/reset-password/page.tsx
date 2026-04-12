@@ -1,37 +1,56 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
-import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Loader2, KeyRound } from "lucide-react";
+import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Loader2, KeyRound, MailCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useResetPassword } from "@/hooks/useAuth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { getErrorMessage, apiClient } from "@/lib/api-client";
+import { AuthAlert } from "../_components/AuthAlert";
+
+const resetPasswordSchema = z.object({
+    email: z.string().min(1, "Email is required").email("Invalid email format"),
+    otp: z.string().length(6, "OTP code must be 6 digits"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+});
+
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 const ResetPasswordPage = () => {
     const searchParams = useSearchParams();
     const emailFromUrl = searchParams.get("email") || "";
 
-    const [email, setEmail] = useState(emailFromUrl);
-    const [otp, setOtp] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-
     const reset = useResetPassword();
 
-    const passwordsMatch = newPassword === confirmPassword;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<ResetPasswordFormValues>({
+        resolver: zodResolver(resetPasswordSchema),
+        defaultValues: {
+            email: emailFromUrl,
+        },
+    });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!passwordsMatch) return;
-        reset.mutate({ email, otp, newPassword });
+    const onSubmit = (data: ResetPasswordFormValues) => {
+        reset.mutate({
+            email: data.email,
+            otp: data.otp,
+            newPassword: data.newPassword,
+        });
     };
 
-    const errorMessage =
-        reset.error?.message ||
-        (reset.data && !reset.data.success ? reset.data.errors?.[0] || reset.data.message : null);
-
-    const successMessage =
-        reset.data?.success ? reset.data.message || reset.data.data || "Password reset successful!" : null;
+    const errorMessage = getErrorMessage(reset.error) || (reset.data && !reset.data.success ? reset.data.errors?.[0] : null);
+    const successMessage = reset.data?.success ? reset.data.message || "Password reset successful!" : null;
 
     return (
         <section className="min-h-screen bg-white py-20 transition-colors dark:bg-[#050505]">
@@ -40,33 +59,12 @@ const ResetPasswordPage = () => {
                     {/* Header */}
                     <div className="mb-10 flex flex-col items-center">
                         <div className="text-gold mb-3">
-                            <svg
-                                width="48"
-                                height="48"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M12 2L2 9L12 22L22 9L12 2Z"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 9L12 22L22 9L12 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                                 <path d="M2 9H22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                                 <path d="M12 22V9" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                                <path
-                                    d="M12 2L7 9L12 22"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
-                                <path
-                                    d="M12 2L17 9L12 22"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    strokeLinejoin="round"
-                                />
+                                <path d="M12 2L7 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                                <path d="M12 2L17 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <h1 className="font-serif text-2xl tracking-[0.2em] text-gray-900 uppercase dark:text-white">
@@ -91,39 +89,29 @@ const ResetPasswordPage = () => {
                             </p>
                         </div>
 
-                        {errorMessage && (
-                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400">
-                                {errorMessage}
-                            </div>
-                        )}
+                        <AuthAlert message={errorMessage} type="error" />
+                        <AuthAlert message={successMessage} type="success" />
 
-                        {successMessage && (
-                            <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400">
-                                {successMessage} Redirecting to login...
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Email (pre-filled from URL, editable if needed) */}
-                            {!emailFromUrl && (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
-                                        Email Address
-                                    </label>
-                                    <div className="relative flex items-center">
-                                        <Lock className="absolute left-4 text-gray-400" size={18} />
-                                        <input
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="your@email.com"
-                                            className="w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                            required
-                                            disabled={reset.isPending}
-                                        />
-                                    </div>
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                            {/* Email */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
+                                    Email Address
+                                </label>
+                                <div className="relative flex items-center">
+                                    <MailCheck className="absolute left-4 text-gray-400" size={18} />
+                                    <input
+                                        type="email"
+                                        {...register("email")}
+                                        placeholder="your@email.com"
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.email ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                                        }`}
+                                        disabled={reset.isPending || !!emailFromUrl}
+                                    />
                                 </div>
-                            )}
+                                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                            </div>
 
                             {/* OTP Code */}
                             <div className="space-y-2">
@@ -136,14 +124,15 @@ const ResetPasswordPage = () => {
                                         type="text"
                                         inputMode="numeric"
                                         maxLength={6}
-                                        value={otp}
-                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                                        {...register("otp")}
                                         placeholder="123456"
-                                        className="w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm tracking-[0.3em] text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                        required
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm tracking-[0.3em] text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.otp ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                                        }`}
                                         disabled={reset.isPending}
                                     />
                                 </div>
+                                {errors.otp && <p className="text-xs text-red-500">{errors.otp.message}</p>}
                             </div>
 
                             {/* New Password */}
@@ -155,12 +144,11 @@ const ResetPasswordPage = () => {
                                     <Lock className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type={showPassword ? "text" : "password"}
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        {...register("newPassword")}
                                         placeholder="••••••••"
-                                        minLength={8}
-                                        className="w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                        required
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.newPassword ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                                        }`}
                                         disabled={reset.isPending}
                                     />
                                     <button
@@ -171,6 +159,7 @@ const ResetPasswordPage = () => {
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
+                                {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
                             </div>
 
                             {/* Confirm Password */}
@@ -182,26 +171,20 @@ const ResetPasswordPage = () => {
                                     <Lock className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type={showPassword ? "text" : "password"}
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        {...register("confirmPassword")}
                                         placeholder="••••••••"
-                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:bg-white dark:bg-[#111] dark:text-white ${
-                                            confirmPassword && !passwordsMatch
-                                                ? "border-red-300 focus:border-red-400 dark:border-red-800"
-                                                : "border-gray-100 focus:border-gold dark:border-white/5"
+                                        className={`w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 transition-all outline-hidden focus:border-gold focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.confirmPassword ? "border-red-500" : "border-gray-100 dark:border-white/5"
                                         }`}
-                                        required
                                         disabled={reset.isPending}
                                     />
                                 </div>
-                                {confirmPassword && !passwordsMatch && (
-                                    <p className="text-xs text-red-500">Passwords do not match</p>
-                                )}
+                                {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={reset.isPending || !passwordsMatch || otp.length !== 6}
+                                disabled={reset.isPending}
                                 className="bg-gold flex w-full items-center justify-center rounded-xl py-4 text-sm font-bold tracking-widest text-white uppercase transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {reset.isPending ? (
@@ -214,7 +197,6 @@ const ResetPasswordPage = () => {
                             </button>
                         </form>
 
-                        {/* Back to forgot password */}
                         <div className="mt-6 text-center">
                             <Link
                                 href="/auth/forgot-password"

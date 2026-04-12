@@ -4,26 +4,39 @@ import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { SocialLogin } from "../_components/SocialLogin";
+import { AuthAlert } from "../_components/AuthAlert";
 import { useLogin } from "@/hooks/useAuth";
 import { useRedirectIfAuthenticated } from "@/hooks/useAuthGuard";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { getErrorMessage } from "@/lib/api-client";
+
+const loginSchema = z.object({
+    email: z.string().min(1, "Email is required").email("Invalid email format"),
+    password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
     useRedirectIfAuthenticated();
-
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-
     const login = useLogin();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        login.mutate({ email, password });
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
+    });
+
+    const onSubmit = (data: LoginFormValues) => {
+        login.mutate(data);
     };
 
-    const errorMessage =
-        login.error?.message ||
-        (login.data && !login.data.success ? login.data.errors?.[0] || login.data.message : null);
+    const errorMessage = getErrorMessage(login.error) || (login.data && !login.data.success ? login.data.errors?.[0] : null);
 
     return (
         <section className="min-h-screen bg-white py-20 transition-colors dark:bg-[#050505]">
@@ -76,13 +89,9 @@ const LoginPage = () => {
                             Please enter your details to sign in
                         </p>
 
-                        {errorMessage && (
-                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400">
-                                {errorMessage}
-                            </div>
-                        )}
+                        <AuthAlert message={errorMessage} />
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
                                     Email Address
@@ -91,14 +100,15 @@ const LoginPage = () => {
                                     <Mail className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        {...register("email")}
                                         placeholder="name@example.com"
-                                        className="focus:border-gold w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                        required
+                                        className={`focus:border-gold w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.email ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                                        }`}
                                         disabled={login.isPending}
                                     />
                                 </div>
+                                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                             </div>
 
                             <div className="space-y-2">
@@ -109,11 +119,11 @@ const LoginPage = () => {
                                     <Lock className="absolute left-4 text-gray-400" size={18} />
                                     <input
                                         type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        {...register("password")}
                                         placeholder="••••••••"
-                                        className="focus:border-gold w-full rounded-xl border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                        required
+                                        className={`focus:border-gold w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
+                                            errors.password ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                                        }`}
                                         disabled={login.isPending}
                                     />
                                     <button
@@ -124,6 +134,7 @@ const LoginPage = () => {
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
+                                {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                             </div>
 
                             <div className="flex items-center justify-between text-sm">

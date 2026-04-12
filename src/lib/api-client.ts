@@ -112,4 +112,24 @@ apiClient.interceptors.response.use(
     },
 );
 
+export const getErrorMessage = (error: any): string | null => {
+    if (!error) return null;
+
+    // Handle standard ApiResponse from .NET Backend
+    const apiResponse = error?.response?.data;
+    if (apiResponse) {
+        if (apiResponse.errors && apiResponse.errors.length > 0) {
+            return apiResponse.errors[0];
+        }
+        if (apiResponse.message) {
+            return apiResponse.message;
+        }
+    }
+
+    // Handle generic axios error
+    if (error.message) return error.message;
+
+    return "An error occurred. Please try again.";
+};
+
 export default apiClient;
