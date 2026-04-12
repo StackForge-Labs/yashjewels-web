@@ -1,9 +1,23 @@
-import { ShoppingCart, User, Heart, ChevronRight, Phone, ArrowRight } from "lucide-react";
+"use client";
+
+import { ShoppingCart, User, Heart, ChevronRight, Phone, ArrowRight, LogOut, Package, Settings } from "lucide-react";
 import ThemeToggle from "../(home)/_components/ThemeToggle";
 import SearchModal from "../(home)/_components/SearchModal";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useLogout } from "@/hooks/useAuth";
+import { useState } from "react";
 
 export const Header = () => {
+    const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
+    const logout = useLogout();
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+    const handleLogout = () => {
+        logout.mutate();
+    };
+
     return (
         <>
             {/* Top Notification Bar */}
@@ -486,12 +500,75 @@ export const Header = () => {
 
                         <SearchModal />
 
-                        <Link
-                            href="/auth/login"
-                            className="hover:text-gold hidden transform transition-colors duration-300 hover:scale-110 sm:block"
-                        >
-                            <User size={22} strokeWidth={1.5} />
-                        </Link>
+                        {/* Auth / Profile Section */}
+                        <div className="relative">
+                            {isAuthenticated ? (
+                                <button
+                                    onMouseEnter={() => setIsUserMenuOpen(true)}
+                                    className="flex items-center gap-2 transition-all hover:text-gold"
+                                >
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/10 text-gold border border-gold/20">
+                                        <User size={18} strokeWidth={1.5} />
+                                    </div>
+                                    <span className="hidden text-xs font-bold tracking-wider xl:block">
+                                        {user?.fullName?.split(" ")[0] || "Account"}
+                                    </span>
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/auth/login"
+                                    className="hover:text-gold flex items-center gap-2 transform transition-all duration-300 hover:scale-105"
+                                >
+                                    <User size={22} strokeWidth={1.5} />
+                                </Link>
+                            )}
+
+                            {/* User Dropdown */}
+                            {isAuthenticated && (
+                                <div
+                                    onMouseEnter={() => setIsUserMenuOpen(true)}
+                                    onMouseLeave={() => setIsUserMenuOpen(false)}
+                                    className={`absolute top-full right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl transition-all duration-300 dark:border-white/10 dark:bg-[#0a0a0a] ${
+                                        isUserMenuOpen ? "visible translate-y-0 opacity-100" : "invisible translate-y-2 opacity-0"
+                                    }`}
+                                >
+                                    <div className="border-b border-gray-50 p-4 dark:border-white/5">
+                                        <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Signed in as</p>
+                                        <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{user?.fullName}</p>
+                                        <p className="truncate text-[10px] text-gray-500">{user?.email}</p>
+                                    </div>
+                                    <div className="p-2">
+                                        <Link
+                                            href="/profile"
+                                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gold dark:text-gray-400 dark:hover:bg-white/5"
+                                        >
+                                            <User size={14} /> My Profile
+                                        </Link>
+                                        <Link
+                                            href="/orders"
+                                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gold dark:text-gray-400 dark:hover:bg-white/5"
+                                        >
+                                            <Package size={14} /> My Orders
+                                        </Link>
+                                        <Link
+                                            href="/settings"
+                                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gold dark:text-gray-400 dark:hover:bg-white/5"
+                                        >
+                                            <Settings size={14} /> Settings
+                                        </Link>
+                                        <div className="my-2 border-t border-gray-50 dark:border-white/5"></div>
+                                        <button
+                                            onClick={handleLogout}
+                                            disabled={logout.isPending}
+                                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-bold text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/20"
+                                        >
+                                            {logout.isPending ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />}
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         <Link
                             href="/wishlist"

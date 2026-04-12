@@ -5,6 +5,7 @@ import { AOSInit } from "@/components/AOSInit";
 import { PublicLayoutWrapper } from "./_components/PublicLayoutWrapper";
 import { ReduxProvider } from "@/wrapper/ReduxProvider";
 import QueryProvider from "@/wrapper/QueryProvider";
+import { ProfileWatcher } from "./_components/ProfileWatcher";
 
 const cormorant = Cormorant_Garamond({
     variable: "--font-cormorant",
@@ -45,6 +46,7 @@ export default function RootLayout({
                 <AOSInit />
                 <ReduxProvider>
                     <QueryProvider>
+                        <ProfileWatcher />
                         <PublicLayoutWrapper>{children}</PublicLayoutWrapper>
                     </QueryProvider>
                 </ReduxProvider>

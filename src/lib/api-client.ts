@@ -2,25 +2,39 @@ import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5066/api/v1";
 
-// ── Token helpers ──────────────────────────────────────────────
-export const getAccessToken = () => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("access_token");
+// ── Cookie Helpers ──────────────────────────────────────────────
+const getCookie = (name: string) => {
+    if (typeof document === "undefined") return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift();
+    return null;
 };
 
-export const getRefreshToken = () => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("refresh_token");
+const setCookie = (name: string, value: string, days: number = 7) => {
+    if (typeof document === "undefined") return;
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    // SameSite=Lax is safer for social logins, Secure for production
+    document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax; Secure`;
 };
+
+const deleteCookie = (name: string) => {
+    if (typeof document === "undefined") return;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
+// ── Token helpers ──────────────────────────────────────────────
+export const getAccessToken = () => getCookie("access_token");
+export const getRefreshToken = () => getCookie("refresh_token");
 
 export const setTokens = (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
+    setCookie("access_token", accessToken, 1); // 1 day for access token
+    setCookie("refresh_token", refreshToken, 7); // 7 days for refresh token
 };
 
 export const clearTokens = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    deleteCookie("access_token");
+    deleteCookie("refresh_token");
 };
 
 // ── Axios instance ─────────────────────────────────────────────
@@ -103,6 +117,7 @@ apiClient.interceptors.response.use(
             processQueue(refreshError, null);
             clearTokens();
             if (typeof window !== "undefined") {
+                // To avoid infinite loops or confusing UX, only redirect on hard failures
                 window.location.href = "/auth/login";
             }
             return Promise.reject(refreshError);
@@ -115,7 +130,6 @@ apiClient.interceptors.response.use(
 export const getErrorMessage = (error: any): string | null => {
     if (!error) return null;
 
-    // Handle standard ApiResponse from .NET Backend
     const apiResponse = error?.response?.data;
     if (apiResponse) {
         if (apiResponse.errors && apiResponse.errors.length > 0) {
@@ -126,7 +140,6 @@ export const getErrorMessage = (error: any): string | null => {
         }
     }
 
-    // Handle generic axios error
     if (error.message) return error.message;
 
     return "An error occurred. Please try again.";
