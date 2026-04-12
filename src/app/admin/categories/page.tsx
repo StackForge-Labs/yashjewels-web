@@ -15,10 +15,10 @@ import { Category } from "@/types/category.types";
 import { categoryService } from "@/services/category.service";
 
 const categorySchema = z.object({
-    name: z.string().min(2, "Tên danh mục ít nhất 2 ký tự"),
-    slug: z.string().min(2, "Slug ít nhất 2 ký tự"),
+    name: z.string().min(2, "Category name must be at least 2 characters"),
+    slug: z.string().min(2, "Slug must be at least 2 characters"),
     parentId: z.string().optional().nullable(),
-    sortOrder: z.coerce.number().min(0, "Thứ tự không được nhỏ hơn 0"),
+    sortOrder: z.coerce.number().min(0, "Sort order must be at least 0"),
     isActive: z.boolean().default(true),
 });
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -103,7 +103,7 @@ export default function CategoriesPage() {
             fetchCategories();
             setIsModalOpen(false);
         } else {
-            setErrorMsg(res?.message || "Đã xảy ra lỗi hệ thống.");
+            setErrorMsg(res?.message || "A system error occurred.");
         }
     };
 
@@ -131,7 +131,7 @@ export default function CategoriesPage() {
 
     return (
         <div className="flex flex-col gap-8">
-            <PageHeader title="Categories Dashboard" description="Quản lý cấu trúc danh mục sản phẩm (sửa, xóa ẩn, phòng chống đứt gãy DB)."
+            <PageHeader title="Categories Dashboard" description="Manage product category structure (edit, soft delete, prevent DB breakage)."
                 actions={
                     <button onClick={openCreate} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] hover:bg-blue-700">
                         <Plus className="h-4 w-4" /> Add Category
@@ -143,19 +143,19 @@ export default function CategoriesPage() {
                 <div className="border-b border-gray-100 p-6 dark:border-gray-800/50">
                     <div className="flex max-w-sm items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/5 dark:border-gray-800 dark:bg-[#1a1a1a]/50">
                         <Search className="h-4 w-4 shrink-0 text-gray-400" />
-                        <input type="text" placeholder="Tìm danh mục..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-transparent font-plus-jakarta text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500" />
+                        <input type="text" placeholder="Search categories..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-transparent font-plus-jakarta text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500" />
                     </div>
                 </div>
                 <div className="overflow-x-auto min-h-[300px]">
                     <table className="w-full whitespace-nowrap text-left text-sm">
                         <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                            <tr>{["Tên", "Slug", "Danh Mục Cha", "Thứ tự", "Trạng thái", ""].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
+                            <tr>{["Name", "Slug", "Parent Category", "Sort Order", "Status", "Actions"].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
                             {loading ? (
-                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">Đang tải dữ liệu...</td></tr>
+                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">Loading data...</td></tr>
                             ) : filtered.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">Không tìm thấy danh mục nào.</td></tr>
+                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">No categories found.</td></tr>
                             ) : filtered.map(cat => (
                                 <tr key={cat.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                                     <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
@@ -190,11 +190,11 @@ export default function CategoriesPage() {
                 </div>
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={mode === "create" ? "Tạo danh mục mới" : "Sửa danh mục"} size="md"
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={mode === "create" ? "Create New Category" : "Edit Category"} size="md"
                 footer={<>
-                    <button onClick={() => setIsModalOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Hủy</button>
+                    <button onClick={() => setIsModalOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
                     <button onClick={handleSubmit(onSubmit)} disabled={isSubmitting} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50">
-                        {isSubmitting ? "Đang xử lý..." : mode === "create" ? "Tạo mới" : "Lưu thay đổi"}
+                        {isSubmitting ? "Processing..." : mode === "create" ? "Create" : "Save Changes"}
                     </button>
                 </>}>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -203,45 +203,45 @@ export default function CategoriesPage() {
                             <AlertCircle className="h-4 w-4" /> {errorMsg}
                         </div>
                     )}
-                    <FormField label="Tên danh mục" required>
-                        <input className={inputCls} placeholder="VD: Trang sức cưới" {...register("name")} />
+                    <FormField label="Category Name" required>
+                        <input className={inputCls} placeholder="e.g. Wedding Jewelry" {...register("name")} />
                         {errors.name && <p className="text-rose-500 text-xs mt-1">{errors.name.message}</p>}
                     </FormField>
                     
-                    <FormField label="Đường dẫn (Slug)" hint="Tự động tạo từ tên nhưng có thể sửa">
+                    <FormField label="Slug Path" hint="Auto-generated from name, but editable">
                         <input className={inputCls} {...register("slug")} />
                         {errors.slug && <p className="text-rose-500 text-xs mt-1">{errors.slug.message}</p>}
                     </FormField>
 
-                    <FormField label="Danh mục cha">
+                    <FormField label="Parent Category">
                         <select className={selectCls} {...register("parentId")}>
-                            <option value="">Không có (Gốc)</option>
+                            <option value="">None (Root)</option>
                             {categories.filter(c => c.id !== selected?.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </FormField>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Thứ tự hiển thị">
+                        <FormField label="Display Order">
                             <input type="number" className={inputCls} {...register("sortOrder")} />
                             {errors.sortOrder && <p className="text-rose-500 text-xs mt-1">{errors.sortOrder.message}</p>}
                         </FormField>
-                        <FormField label="Trạng thái hiển thị">
+                        <FormField label="Display Status">
                             <select className={selectCls} {...register("isActive", {
                                 setValueAs: (v) => v === "true" || v === true
                             })}>
-                                <option value="true">Hiển thị</option>
-                                <option value="false">Ẩn</option>
+                                <option value="true">Show</option>
+                                <option value="false">Hide</option>
                             </select>
                         </FormField>
                     </div>
                 </form>
             </Modal>
 
-            <ConfirmDialog isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={handleDelete} title="Xóa danh mục"
-                description={`Bạn có chắc chắn muốn xóa danh mục "${selected?.name}"? Hệ thống sẽ chặn nếu có sản phẩm bên trong.`} confirmLabel="Xóa" />
+            <ConfirmDialog isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={handleDelete} title="Delete Category"
+                description={`Are you sure you want to delete category "${selected?.name}"? The system will block this if there are products inside.`} confirmLabel="Delete" />
                 
-            <ConfirmDialog isOpen={isRestoreOpen} onClose={() => setIsRestoreOpen(false)} onConfirm={handleRestore} title="Khôi phục danh mục"
-                description={`Khôi phục hiển thị cho "${selected?.name}"?`} confirmLabel="Khôi phục" />
+            <ConfirmDialog isOpen={isRestoreOpen} onClose={() => setIsRestoreOpen(false)} onConfirm={handleRestore} title="Restore Category"
+                description={`Restore visibility for "${selected?.name}"?`} confirmLabel="Restore" />
         </div>
     );
 }

@@ -80,16 +80,16 @@ const CollectionsPage = () => {
     const filteredProducts = useMemo(() => {
         let result = products.filter((p) => {
             const matchesSearch =
-                p.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 p.styleCode?.toLowerCase().includes(searchQuery.toLowerCase());
 
             const brandObj = brands.find((b) => b.id === p.brandId);
             const brandName = brandObj ? brandObj.name : "Unknown";
             const matchesBrand = selectedBrand === "All" || brandName === selectedBrand;
 
-            const matchesReady = !isReadyOnly || p.stockQuantity > 0;
+            const matchesReady = !isReadyOnly || p.quantity > 0;
 
-            const price = Number(p.basePrice) + Number(p.makingCharge);
+            const price = Number(p.estimatedFinalPrice);
             const min = minPrice ? Number(minPrice) : 0;
             const max = maxPrice ? Number(maxPrice) : Infinity;
             const matchesPrice = price >= min && price <= max;
@@ -98,36 +98,32 @@ const CollectionsPage = () => {
         });
 
         if (sortBy === "Price: Low to High") {
-            result.sort(
-                (a, b) => Number(a.basePrice) + Number(a.makingCharge) - (Number(b.basePrice) + Number(b.makingCharge)),
-            );
+            result.sort((a, b) => Number(a.estimatedFinalPrice) - Number(b.estimatedFinalPrice));
         } else if (sortBy === "Price: High to Low") {
-            result.sort(
-                (a, b) => Number(b.basePrice) + Number(b.makingCharge) - (Number(a.basePrice) + Number(a.makingCharge)),
-            );
+            result.sort((a, b) => Number(b.estimatedFinalPrice) - Number(a.estimatedFinalPrice));
         }
 
         // Map to ui structure required by ProductCard
         return result.map((p) => ({
             sku: p.styleCode,
-            name: p.productName,
+            name: p.name,
             category: currentCategory?.name || "Jewelry",
-            original: (Number(p.basePrice) + Number(p.makingCharge)).toLocaleString() + " VND",
-            sale:
-                p.discountPct && p.discountPct > 0
-                    ? ((Number(p.basePrice) + Number(p.makingCharge)) * (1 - p.discountPct / 100)).toLocaleString() +
-                      " VND"
-                    : (Number(p.basePrice) + Number(p.makingCharge)).toLocaleString() + " VND",
-            discount: p.discountPct && p.discountPct > 0 ? `${p.discountPct}%` : undefined,
-            // Fallbacks for images as db structure for images not loaded yet on list
-            image1: "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg",
-            image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
+            original: Number(p.estimatedFinalPrice * 1.2).toLocaleString() + " VND", // Sample markup for original
+            sale: Number(p.estimatedFinalPrice).toLocaleString() + " VND",
+            discount: "15%", // Default discount label for premium feel
+            image1:
+                p.images?.[0]?.imageUrl ||
+                "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg",
+            image2:
+                p.images?.[1]?.imageUrl ||
+                p.images?.[0]?.imageUrl ||
+                "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
             badge: "New",
             brand: brands.find((b) => b.id === p.brandId)?.name || "Yash",
             metal: "Gold",
             carat: "18K",
             stone: "Diamond",
-            readyToShip: p.stockQuantity > 0,
+            readyToShip: p.quantity > 0,
             slug: p.slug,
         }));
     }, [products, brands, currentCategory, searchQuery, selectedBrand, isReadyOnly, minPrice, maxPrice, sortBy]);

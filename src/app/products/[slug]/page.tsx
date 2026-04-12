@@ -42,7 +42,7 @@ const ProductDetailPage = () => {
             const found = allProducts.find((p) => p.slug === slug);
             if (found) {
                 setProduct(found);
-                setMainImage(fallbackImages[0]);
+                setMainImage(found.images?.[0]?.imageUrl || fallbackImages[0]);
                 
                 // Fetch references to show real names
                 catalogService.getBrands().then(brands => {
@@ -62,10 +62,8 @@ const ProductDetailPage = () => {
     if(loading) return <div className="text-center py-32 dark:text-gray-400">Loading masterpiece...</div>;
     if(!product) return <div className="text-center py-32 dark:text-gray-400">Masterpiece not found</div>;
 
-    const basePrice = Number(product.basePrice) + Number(product.makingCharge);
-    const finalPrice = product.discountPct && product.discountPct > 0 
-        ? basePrice * (1 - product.discountPct/100) 
-        : basePrice;
+    const basePrice = Number(product.estimatedFinalPrice) * 1.2; // Sample markup
+    const finalPrice = Number(product.estimatedFinalPrice);
 
     return (
         <main className="dark:bg-dark-bg relative overflow-hidden bg-white pt-10 pb-32 transition-colors">
@@ -84,7 +82,7 @@ const ProductDetailPage = () => {
                     <Link href="/collections" className="hover:text-gold transition-colors">Collections</Link>
                     <ChevronRight size={10} />
                     <span className="line-clamp-1 tracking-widest text-gray-900 uppercase dark:text-white">
-                        {product.productName}
+                        {product.name}
                     </span>
                 </nav>
 
@@ -94,7 +92,7 @@ const ProductDetailPage = () => {
                         <div className="group/gallery sticky top-32 flex gap-2">
                             {/* Vertically Stacked Thumbnails */}
                             <div className="flex h-full w-20 shrink-0 flex-col gap-3 md:w-24">
-                                {fallbackImages.map((img, i) => (
+                                {(product.images && product.images.length > 0 ? product.images.map(i => i.imageUrl) : fallbackImages).map((img, i) => (
                                     <button
                                         key={i}
                                         onClick={() => setMainImage(img)}
@@ -116,7 +114,7 @@ const ProductDetailPage = () => {
                             <div className="relative aspect-4/5 grow overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 text-gray-900 shadow-2xl shadow-black/5 dark:border-white/5 dark:bg-[#111] dark:text-white dark:shadow-black/40">
                                 <img
                                     src={mainImage}
-                                    alt={product.productName}
+                                    alt={product.name}
                                     className="h-full w-full object-cover transition-transform duration-1000 group-hover/gallery:scale-110"
                                 />
                                 <div className="absolute top-6 left-6 z-10">
@@ -133,7 +131,7 @@ const ProductDetailPage = () => {
                         <div className="space-y-8">
                             <div className="relative">
                                 <h1 className="mb-4 font-serif text-3xl leading-snug tracking-tight text-gray-900 uppercase md:text-4xl dark:text-white">
-                                    {product.productName}
+                                    {product.name}
                                 </h1>
                                 <div className="flex items-center gap-4">
                                     <p className="text-[11px] font-bold tracking-[0.3em] text-gray-400 uppercase">
@@ -173,8 +171,8 @@ const ProductDetailPage = () => {
                                         <span className="bg-gold h-1.5 w-1.5 rounded-full" /> Status:
                                     </h3>
                                     <div className="flex gap-2">
-                                        <span className={`px-4 py-2 rounded-full font-bold text-xs ${product.stockQuantity > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20" : "bg-red-50 text-red-600 border border-red-200"}`}>
-                                            {product.stockQuantity > 0 ? "In Stock" : "Out of Stock"}
+                                        <span className={`px-4 py-2 rounded-full font-bold text-xs ${product.quantity > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                                            {product.quantity > 0 ? "In Stock" : "Out of Stock"}
                                         </span>
                                     </div>
                                 </div>
@@ -203,8 +201,8 @@ const ProductDetailPage = () => {
                                             <Plus size={16} />
                                         </button>
                                     </div>
-                                    <button disabled={product.stockQuantity === 0} className="bg-gold group flex h-14 grow items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {product.stockQuantity > 0 ? "Add to Treasure Bag" : "Out of Stock"}
+                                    <button disabled={product.quantity === 0} className="bg-gold group flex h-14 grow items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {product.quantity > 0 ? "Add to Treasure Bag" : "Out of Stock"}
                                         <ArrowRight size={16} />
                                     </button>
                                 </div>
@@ -251,11 +249,11 @@ const ProductDetailPage = () => {
                                         </div>
                                         <div className="flex flex-col gap-1.5 border-b border-gray-100 pb-2 dark:border-white/5">
                                             <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Gold Weight</span>
-                                            <span className="text-[13px] font-bold text-gray-900 dark:text-white">{product.netGoldWeightGrams} gm</span>
+                                            <span className="text-[13px] font-bold text-gray-900 dark:text-white">{product.netGoldGm} gm</span>
                                         </div>
                                         <div className="flex flex-col gap-1.5 border-b border-gray-100 pb-2 dark:border-white/5">
                                             <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Total Weight</span>
-                                            <span className="text-[13px] font-bold text-gray-900 dark:text-white">{product.weightGrams} gm</span>
+                                            <span className="text-[13px] font-bold text-gray-900 dark:text-white">{product.totalGrossWeightGm} gm</span>
                                         </div>
                                     </div>
                                 )}

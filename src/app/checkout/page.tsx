@@ -11,8 +11,8 @@ import Link from "next/link";
 const STEPS = ["Address", "Insurance", "Payment", "Review"];
 
 const MOCK_ITEMS = [
-    { name: "Mia Diamond Heart Earrings", sku: "ERFNJ2504921", price: "13,990,200 đ", qty: 1, image: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=200" },
-    { name: "Classic Tennis Bracelet", sku: "BRJ2504800", price: "75,650,000 đ", qty: 1, image: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=200" },
+    { name: "Mia Diamond Heart Earrings", sku: "ERFNJ2504921", price: "13,990,200 VND", qty: 1, image: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=200" },
+    { name: "Classic Tennis Bracelet", sku: "BRJ2504800", price: "75,650,000 VND", qty: 1, image: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=200" },
 ];
 
 export default function CheckoutPage() {
@@ -102,8 +102,8 @@ export default function CheckoutPage() {
 
                                     {[
                                         { id: "none", title: "No Insurance", desc: "Standard delivery without additional coverage", price: "Free", icon: Package },
-                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit (48h claim window)", price: "+449,318 đ", icon: Truck },
-                                        { id: "full", title: "Full Coverage", desc: "Shipping + 30-day product protection after delivery", price: "+1,347,955 đ", icon: ShieldCheck },
+                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit (48h claim window)", price: "+449,318 VND", icon: Truck },
+                                        { id: "full", title: "Full Coverage", desc: "Shipping + 30-day product protection after delivery", price: "+1,347,955 VND", icon: ShieldCheck },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
@@ -138,7 +138,7 @@ export default function CheckoutPage() {
                                     {[
                                         { id: "card", title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX" },
                                         { id: "bank", title: "Bank Transfer", desc: "Direct bank transfer with auto-verification" },
-                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 đ" },
+                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 VND" },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
@@ -174,7 +174,7 @@ export default function CheckoutPage() {
                                     <div className="mt-4 rounded-xl bg-gold/5 border border-gold/10 p-5">
                                         <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Deposit Options</p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                            For orders above 10,000,000 đ, you may choose to pay a deposit (30%-50%) and complete the remaining payment after vendor confirms your order.
+                                            For orders above 10,000,000 VND, you may choose to pay a deposit (30%-50%) and complete the remaining payment after vendor confirms your order.
                                         </p>
                                     </div>
                                 </div>
@@ -191,7 +191,7 @@ export default function CheckoutPage() {
                                                 <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
                                                 <div className="flex-1">
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">REF: {item.sku} · QTY: {item.qty}</p>
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">REF: {item.sku} • QTY: {item.qty}</p>
                                                 </div>
                                                 <p className="text-gold text-sm font-bold">{item.price}</p>
                                             </div>
@@ -253,15 +253,15 @@ export default function CheckoutPage() {
                                 </div>
 
                                 <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">89,640,200 đ</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">89,640,200 VND</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "—" : insurance === "shipping" ? "449,318 đ" : "1,347,955 đ"}</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">8,964,020 đ</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : insurance === "shipping" ? "449,318 VND" : "1,347,955 VND"}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">8,964,020 VND</span></div>
                                 </div>
 
                                 <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
                                     <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
-                                    <span className="text-gold text-xl font-bold">98,604,220 đ</span>
+                                    <span className="text-gold text-xl font-bold">98,604,220 VND</span>
                                 </div>
                             </div>
                         </div>

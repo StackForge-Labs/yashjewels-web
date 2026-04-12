@@ -8,25 +8,39 @@ export interface Product {
   certificationId: string;
   vendorId: string;
   styleCode: string;
-  productName: string;
+  name: string; // From backend 'Name'
   slug: string;
   description: string;
-  shortDescription: string;
-  weightGrams: number;
-  netGoldWeightGrams: number;
-  sizeLength: string;
-  unitOfMeasure: string;
-  isCustomizable: boolean;
-  basePrice: number;
-  makingCharge: number;
-  discountPct: number;
-  taxPct: number;
-  stockQuantity: number;
-  minStockLevel: number;
-  isAvailable: boolean;
-  status: string; // ACTIVE, INACTIVE, IMPORTED
+  prodQuality: string;
+  
+  goldWeightGm: number;
+  stoneWeightGm: number;
+  netGoldGm: number;
+  wastagePct: number;
+  wastageGm: number;
+  totalGrossWeightGm: number;
+  
+  goldMakingCharge: number;
+  stoneMakingCharge: number;
+  otherMakingCharge: number;
+  vatRate: number;
+  
+  quantity: number; // From backend 'Quantity'
+  status: string; // ACTIVE, INACTIVE, SOLD_OUT, COMING_SOON
+  viewCount: number;
+  soldCount: number;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
+
+  estimatedFinalPrice: number;
+  images: {
+    id: string;
+    imageUrl: string;
+    altText?: string;
+    isPrimary: boolean;
+    sortOrder: number;
+  }[];
 }
 
 export interface ProductCreateRequest {
@@ -38,22 +52,21 @@ export interface ProductCreateRequest {
   certificationId: string;
   vendorId: string;
   styleCode: string;
-  productName: string;
+  name: string;
   slug: string;
   description?: string;
-  shortDescription?: string;
-  weightGrams: number;
-  netGoldWeightGrams: number;
-  sizeLength?: string;
-  unitOfMeasure: string;
-  isCustomizable?: boolean;
-  basePrice: number;
-  makingCharge: number;
-  discountPct?: number;
-  taxPct?: number;
-  stockQuantity: number;
-  minStockLevel?: number;
-  isAvailable?: boolean;
+  prodQuality: string;
+  goldWeightGm: number;
+  stoneWeightGm: number;
+  netGoldGm: number;
+  wastagePct: number;
+  wastageGm: number;
+  totalGrossWeightGm: number;
+  goldMakingCharge: number;
+  stoneMakingCharge: number;
+  otherMakingCharge: number;
+  vatRate: number;
+  quantity: number;
 }
 
 export interface ProductUpdateRequest extends Partial<ProductCreateRequest> {}
