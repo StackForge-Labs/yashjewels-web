@@ -145,8 +145,7 @@ const VerifyEmailPage = () => {
                             </div>
                             <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Enter OTP Code</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                We've sent a 6-digit code to{" "}
-                                <span className="text-gold font-semibold">{email}</span>
+                                We've sent a 6-digit code to <span className="text-gold font-semibold">{email}</span>
                             </p>
                         </div>
 
@@ -168,7 +167,9 @@ const VerifyEmailPage = () => {
                                 {otp.map((digit, idx) => (
                                     <input
                                         key={idx}
-                                        ref={(el) => { inputRefs.current[idx] = el; }}
+                                        ref={(el) => {
+                                            inputRefs.current[idx] = el;
+                                        }}
                                         type="text"
                                         inputMode="numeric"
                                         maxLength={1}
@@ -224,7 +225,13 @@ const VerifyEmailPage = () => {
 
 export default function VerifyEmailPageWrapper() {
     return (
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="text-gold h-8 w-8 animate-spin" /></div>}>
+        <Suspense
+            fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                    <Loader2 className="text-gold h-8 w-8 animate-spin" />
+                </div>
+            }
+        >
             <VerifyEmailPage />
         </Suspense>
     );

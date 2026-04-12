@@ -21,8 +21,10 @@ export interface LoginRequest {
 export interface RegisterRequest {
     email: string;
     password: string;
-    firstName: string;
-    lastName: string;
+    confirmPassword: string;
+    fullName: string;
+    phone: string;
+    dateOfBirth: string;
 }
 
 export interface ForgotPasswordRequest {
@@ -47,8 +49,7 @@ export interface ResendOtpRequest {
 // ── User Profile ───────────────────────────────────────────────
 export interface UserProfile {
     id: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     email: string;
     phone: string | null;
     kycStatus: string;
