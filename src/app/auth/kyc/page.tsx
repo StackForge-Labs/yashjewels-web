@@ -89,7 +89,8 @@ export default function KycPage() {
     if (isProfileLoading || !profile) return null;
 
     // Check if already pending or approved
-    if (profile.kycStatus === "Approved") {
+    const kycStatus = profile.kycStatus?.toLowerCase();
+    if (kycStatus === "verified" || kycStatus === "approved") {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center p-4 text-center">
                 <div className="mb-6 rounded-full bg-emerald-50 p-6 dark:bg-emerald-500/10">

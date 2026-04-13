@@ -30,12 +30,13 @@ export default function ProfilePage() {
     const getKycStatusConfig = (status: string) => {
         switch (status?.toLowerCase()) {
             case "approved":
+            case "verified":
                 return {
-                    label: "Verified Customer",
+                    label: "Verified Premium Member",
                     icon: CheckCircle2,
                     color: "text-emerald-500",
                     bgColor: "bg-emerald-500/10",
-                    description: "You have full access to our exclusive collections and bespoke services.",
+                    description: "Your identity is verified. You now have full access to our private salon and high-value bespoke collections.",
                 };
             case "pending":
                 return {
@@ -139,7 +140,7 @@ export default function ProfilePage() {
                                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                                                     {kycConfig.label}
                                                 </h3>
-                                                {profile.kycStatus === "Approved" && (
+                                                {(profile.kycStatus?.toLowerCase() === "verified" || profile.kycStatus?.toLowerCase() === "approved") && (
                                                     <span className="bg-emerald-500/20 text-emerald-500 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">
                                                         Premium Member
                                                     </span>
@@ -149,7 +150,7 @@ export default function ProfilePage() {
                                                 {kycConfig.description}
                                             </p>
                                         </div>
-                                        {profile.kycStatus !== "Approved" && profile.kycStatus !== "Pending" && (
+                                        {(profile.kycStatus?.toLowerCase() !== "verified" && profile.kycStatus?.toLowerCase() !== "approved") && profile.kycStatus?.toLowerCase() !== "pending" && (
                                             <Link href="/auth/kyc" className="bg-gold group flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105 active:scale-95">
                                                 Verify Identity <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                                             </Link>

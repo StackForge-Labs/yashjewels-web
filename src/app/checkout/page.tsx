@@ -26,7 +26,8 @@ export default function CheckoutPage() {
     const [isGift, setIsGift] = useState(false);
 
     // KYC Check Enforcement
-    const isKycApproved = user?.kycStatus === "Approved";
+    const kycStatus = user?.kycStatus?.toLowerCase();
+    const isKycApproved = kycStatus === "verified" || kycStatus === "approved";
 
     if (!isKycApproved) {
         return (
