@@ -4,9 +4,12 @@ import { useState } from "react";
 import { PageHero } from "../_components/PageHero";
 import {
     MapPin, CreditCard, Shield, ChevronRight, Check,
-    Truck, ShieldCheck, ArrowRight, Package, Gift
+    Truck, ShieldCheck, ArrowRight, Package, Gift,
+    AlertTriangle, Lock
 } from "lucide-react";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 const STEPS = ["Address", "Insurance", "Payment", "Review"];
 
@@ -16,10 +19,52 @@ const MOCK_ITEMS = [
 ];
 
 export default function CheckoutPage() {
+    const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
     const [payment, setPayment] = useState("card");
     const [isGift, setIsGift] = useState(false);
+
+    // KYC Check Enforcement
+    const isKycApproved = user?.kycStatus === "Approved";
+
+    if (!isKycApproved) {
+        return (
+            <>
+                <PageHero
+                    title="Action Required"
+                    subtitle="Identity verification is required for high-value jewelry checkout."
+                    breadcrumbs={[{ label: "Cart", href: "/cart" }, { label: "Verification Required" }]}
+                />
+                <section className="bg-white py-24 transition-colors dark:bg-[#050505]">
+                    <div className="container mx-auto px-4 text-center">
+                        <div className="mx-auto max-w-lg rounded-3xl border border-gold/20 bg-gold/5 p-12 shadow-2xl backdrop-blur-sm">
+                            <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl dark:bg-[#111]">
+                                <Lock className="text-gold" size={40} />
+                            </div>
+                            <h2 className="font-serif text-3xl text-gray-900 dark:text-white">Security Check</h2>
+                            <p className="mt-4 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                                To protect our clients and maintain the integrity of our Maison, we require identity verification for all jewelry purchases over <span className="font-bold text-gray-900 dark:text-white">5,000,000 VND</span>.
+                            </p>
+                            
+                            <div className="mt-10 flex flex-col gap-4">
+                                <Link href="/auth/kyc" className="bg-gold rounded-xl py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 shadow-lg shadow-gold/20">
+                                    Verify My Identity Now
+                                </Link>
+                                <Link href="/cart" className="rounded-xl border border-gray-100 py-4 text-xs font-bold tracking-[0.2em] text-gray-500 uppercase transition-all hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">
+                                    Return to Shopping Bag
+                                </Link>
+                            </div>
+
+                            <p className="mt-8 flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
+                                <ShieldCheck size={14} /> Bank Grade Encryption Protected
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </>
+        );
+    }
 
     return (
         <>
