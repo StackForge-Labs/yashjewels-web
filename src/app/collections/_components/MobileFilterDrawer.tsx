@@ -5,7 +5,7 @@ import { X, Search } from "lucide-react";
 interface MobileFilterDrawerProps {
     isOpen: boolean;
     onClose: () => void;
-    children: React.ReactNode;
+    children?: React.ReactNode;
     resultsCount: number;
     searchQuery: string;
     onSearchChange: (query: string) => void;

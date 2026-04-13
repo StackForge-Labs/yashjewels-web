@@ -29,14 +29,20 @@ const productSchema = z.object({
     goldKaratId: z.string().min(1, "Gold karat is required"),
     certificationId: z.string().min(1, "Certification is required"),
     vendorId: z.string().min(1, "Vendor is required"),
-    totalGrossWeightGm: z.coerce.number().min(0, "Must be greater than 0"),
+    goldWeightGm: z.coerce.number().min(0),
+    stoneWeightGm: z.coerce.number().min(0),
     netGoldGm: z.coerce.number().min(0),
+    wastagePct: z.coerce.number().min(0).default(0),
+    wastageGm: z.coerce.number().min(0).default(0),
+    totalGrossWeightGm: z.coerce.number().min(0, "Must be greater than 0"),
     quantity: z.coerce.number().min(0),
     goldMakingCharge: z.coerce.number().min(0),
     stoneMakingCharge: z.coerce.number().min(0),
+    otherMakingCharge: z.coerce.number().min(0).default(0),
     prodQuality: z.string().default("Premium"),
     vatRate: z.coerce.number().default(10),
-    description: z.string().optional(),
+    status: z.enum(["ACTIVE", "DRAFT", "INACTIVE"]).default("ACTIVE"),
+    description: z.string().optional().nullable(),
 });
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -73,8 +79,10 @@ export default function ProductsPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await productService.getAll();
-            setProducts(data);
+            const res = await productService.getAll({ pageSize: 100 });
+            if (res && res.success) {
+                setProducts(res.data);
+            }
 
             // Fetch refs if not loaded
             if (categories.length === 0) {
@@ -104,12 +112,13 @@ export default function ProductsPage() {
         fetchData();
     }, []);
 
-    const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
+    const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(productSchema),
         defaultValues: {
             name: "", styleCode: "", slug: "", categoryId: "", brandId: "",
             productTypeId: "", jewelTypeId: "", goldKaratId: "", certificationId: "", vendorId: "",
-            totalGrossWeightGm: 0, netGoldGm: 0, quantity: 1, goldMakingCharge: 0, stoneMakingCharge: 0,
+            goldWeightGm: 0, stoneWeightGm: 0, netGoldGm: 0, wastagePct: 0, wastageGm: 0,
+            totalGrossWeightGm: 0, quantity: 1, goldMakingCharge: 0, stoneMakingCharge: 0, otherMakingCharge: 0,
             prodQuality: "Premium", vatRate: 10, description: ""
         }
     });
@@ -125,7 +134,8 @@ export default function ProductsPage() {
         reset({
             name: "", styleCode: "", slug: "", categoryId: "", brandId: "",
             productTypeId: "", jewelTypeId: "", goldKaratId: "", certificationId: "", vendorId: "",
-            totalGrossWeightGm: 0, netGoldGm: 0, quantity: 1, goldMakingCharge: 0, stoneMakingCharge: 0,
+            goldWeightGm: 0, stoneWeightGm: 0, netGoldGm: 0, wastagePct: 0, wastageGm: 0,
+            totalGrossWeightGm: 0, quantity: 1, goldMakingCharge: 0, stoneMakingCharge: 0, otherMakingCharge: 0,
             prodQuality: "Premium", vatRate: 10, description: ""
         });
         setErrorMsg(null);
@@ -135,7 +145,6 @@ export default function ProductsPage() {
 
     const openEdit = (p: Product) => {
         setSelectedProduct(p);
-        reset({
         reset({
             name: p.name || "",
             styleCode: p.styleCode || "",
@@ -147,11 +156,16 @@ export default function ProductsPage() {
             goldKaratId: p.goldKaratId,
             certificationId: p.certificationId,
             vendorId: p.vendorId,
-            totalGrossWeightGm: p.totalGrossWeightGm,
+            goldWeightGm: p.goldWeightGm,
+            stoneWeightGm: p.stoneWeightGm,
             netGoldGm: p.netGoldGm,
+            wastagePct: p.wastagePct,
+            wastageGm: p.wastageGm,
+            totalGrossWeightGm: p.totalGrossWeightGm,
             quantity: p.quantity,
             goldMakingCharge: p.goldMakingCharge,
             stoneMakingCharge: p.stoneMakingCharge,
+            otherMakingCharge: p.otherMakingCharge,
             prodQuality: p.prodQuality,
             vatRate: p.vatRate,
             description: p.description
@@ -246,7 +260,7 @@ export default function ProductsPage() {
                                                 <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                             </div>
                                             <div>
-                                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-white">{p.productName}</p>
+                                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-white">{p.name}</p>
                                                 <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">{p.styleCode}</p>
                                             </div>
                                         </div>
@@ -428,7 +442,7 @@ export default function ProductsPage() {
                                 <Package className="h-8 w-8 text-blue-500" />
                             </div>
                             <div>
-                                <h3 className="font-plus-jakarta text-xl font-bold text-gray-900 dark:text-white">{selectedProduct.productName}</h3>
+                                <h3 className="font-plus-jakarta text-xl font-bold text-gray-900 dark:text-white">{selectedProduct.name}</h3>
                                 <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest text-gray-400">{selectedProduct.styleCode}</p>
                             </div>
                             <div className="ml-auto"><StatusBadge status={selectedProduct.status.toLowerCase() as any} /></div>
@@ -462,7 +476,7 @@ export default function ProductsPage() {
                 onClose={() => setIsDeleteOpen(false)}
                 onConfirm={handleDelete}
                 title="Delete Product"
-                description={`Are you sure you want to delete product "${selectedProduct?.productName}" (${selectedProduct?.styleCode})? The system will return a business error if this product has already been involved in transactions/orders.`}
+                description={`Are you sure you want to delete product "${selectedProduct?.name}" (${selectedProduct?.styleCode})? The system will return a business error if this product has already been involved in transactions/orders.`}
                 confirmLabel="Delete Product"
             />
         </div>

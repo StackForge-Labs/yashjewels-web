@@ -5,6 +5,16 @@ import { Plus, TrendingUp, Edit3, Search } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { Modal } from "../_components/ui/Modal";
 import { FormField, inputCls, selectCls } from "../_components/ui/FormField";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const rateSchema = z.object({
+    gold_rate_vnd: z.coerce.number().min(0, "Price must be positive"),
+    gold_rate_per_gm: z.coerce.number().min(0, "USD rate must be positive"),
+    source: z.string().min(1, "Source is required"),
+});
+type RateFormData = z.infer<typeof rateSchema>;
 
 type GoldRate = { id: string; gold_rate_vnd: number; gold_rate_per_gm: number; source: string; recorded_at: string };
 
@@ -19,12 +29,17 @@ type FormData = { gold_rate_vnd: number; gold_rate_per_gm: number; source: strin
 export default function GoldRatesPage() {
     const [rates, setRates] = useState<GoldRate[]>(initialRates);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [form, setForm] = useState<FormData>({ gold_rate_vnd: 0, gold_rate_per_gm: 0, source: "SJC Global" });
 
-    const handleSave = () => {
+    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+        resolver: zodResolver(rateSchema),
+        defaultValues: { gold_rate_vnd: 0, gold_rate_per_gm: 0, source: "SJC Global" }
+    });
+
+    const handleSave = (data: RateFormData) => {
         const now = new Date().toISOString().replace("T", " ").substring(0, 16);
-        setRates([{ id: Date.now().toString(), ...form, recorded_at: now }, ...rates]);
+        setRates([{ id: Date.now().toString(), ...data, recorded_at: now }, ...rates]);
         setIsModalOpen(false);
+        reset();
     };
 
     const current = rates[0];
@@ -98,23 +113,23 @@ export default function GoldRatesPage() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Update Gold Rate" subtitle="This rate will be used for all product price calculations" size="md"
                 footer={<>
                     <button onClick={() => setIsModalOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
-                    <button onClick={handleSave} disabled={!form.gold_rate_vnd || !form.gold_rate_per_gm} className="rounded-xl bg-amber-500 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-40">Save Rate</button>
+                    <button onClick={handleSubmit(handleSave)} className="rounded-xl bg-amber-500 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-amber-600">Save Rate</button>
                 </>}>
-                <div className="flex flex-col gap-4">
+                <form onSubmit={handleSubmit(handleSave)} className="flex flex-col gap-4">
                     <FormField label="Rate (VND per gram)" required>
-                        <input type="number" className={inputCls} placeholder="8500000" value={form.gold_rate_vnd || ""}
-                            onChange={e => setForm({ ...form, gold_rate_vnd: Number(e.target.value) })} />
+                        <input type="number" className={inputCls} placeholder="8500000" {...register("gold_rate_vnd")} />
+                        {errors.gold_rate_vnd && <p className="text-rose-500 text-xs mt-1">{errors.gold_rate_vnd.message}</p>}
                     </FormField>
                     <FormField label="Rate (USD per gram)" required>
-                        <input type="number" step="0.01" className={inputCls} placeholder="82.00" value={form.gold_rate_per_gm || ""}
-                            onChange={e => setForm({ ...form, gold_rate_per_gm: Number(e.target.value) })} />
+                        <input type="number" step="0.01" className={inputCls} placeholder="82.00" {...register("gold_rate_per_gm")} />
+                        {errors.gold_rate_per_gm && <p className="text-rose-500 text-xs mt-1">{errors.gold_rate_per_gm.message}</p>}
                     </FormField>
                     <FormField label="Source">
-                        <select className={selectCls} value={form.source} onChange={e => setForm({ ...form, source: e.target.value })}>
-                            {["SJC Global", "Doji Exchange", "WGC Data", "Manual Entry"].map(s => <option key={s}>{s}</option>)}
+                        <select className={selectCls} {...register("source")}>
+                            {["SJC Global", "Doji Exchange", "WGC Data", "Manual Entry"].map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </FormField>
-                </div>
+                </form>
             </Modal>
         </div>
     );

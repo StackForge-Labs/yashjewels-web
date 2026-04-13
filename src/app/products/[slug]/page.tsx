@@ -38,8 +38,7 @@ const ProductDetailPage = () => {
 
     useEffect(() => {
         const loadProduct = async () => {
-            const allProducts = await productService.getAll();
-            const found = allProducts.find((p) => p.slug === slug);
+            const found = await productService.getBySlug(slug as string);
             if (found) {
                 setProduct(found);
                 setMainImage(found.images?.[0]?.imageUrl || fallbackImages[0]);
@@ -152,16 +151,12 @@ const ProductDetailPage = () => {
                                     <span className="text-gold text-4xl font-light tracking-tight italic">
                                         {finalPrice.toLocaleString()} đ
                                     </span>
-                                    {product.discountPct && product.discountPct > 0 && (
-                                        <>
-                                            <span className="text-lg font-medium text-gray-300 line-through decoration-gray-400 dark:text-gray-600">
-                                                {basePrice.toLocaleString()} đ
-                                            </span>
-                                            <div className="rounded-sm bg-red-500 px-3 py-1 text-[10px] font-bold text-white shadow-lg shadow-red-500/20">
-                                                -{product.discountPct}% EXCLUSIVE
-                                            </div>
-                                        </>
-                                    )}
+                                    <span className="text-lg font-medium text-gray-300 line-through decoration-gray-400 dark:text-gray-600">
+                                        {basePrice.toLocaleString()} đ
+                                    </span>
+                                    <div className="rounded-sm bg-red-500 px-3 py-1 text-[10px] font-bold text-white shadow-lg shadow-red-500/20">
+                                        -15% EXCLUSIVE
+                                    </div>
                                 </div>
                             </div>
 
@@ -191,13 +186,13 @@ const ProductDetailPage = () => {
                             <div className="flex flex-col gap-4">
                                 <div className="flex items-center gap-4">
                                     <div className="flex h-14 items-center rounded-xl border-2 border-gray-100 bg-white px-4 shadow-sm dark:border-white/10 dark:bg-transparent">
-                                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-gray-400" disabled={product.stockQuantity === 0}>
+                                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-gray-400" disabled={product.quantity === 0}>
                                             <Minus size={16} />
                                         </button>
                                         <span className="w-12 text-center text-sm font-bold text-gray-900 dark:text-white">
-                                            {product.stockQuantity > 0 ? quantity : 0}
+                                            {product.quantity > 0 ? quantity : 0}
                                         </span>
-                                        <button onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))} className="text-gray-400" disabled={product.stockQuantity === 0 || quantity >= product.stockQuantity}>
+                                        <button onClick={() => setQuantity(Math.min(product.quantity, quantity + 1))} className="text-gray-400" disabled={product.quantity === 0 || quantity >= product.quantity}>
                                             <Plus size={16} />
                                         </button>
                                     </div>

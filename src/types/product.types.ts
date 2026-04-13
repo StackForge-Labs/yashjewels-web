@@ -54,7 +54,7 @@ export interface ProductCreateRequest {
   styleCode: string;
   name: string;
   slug: string;
-  description?: string;
+  description?: string | null;
   prodQuality: string;
   goldWeightGm: number;
   stoneWeightGm: number;
