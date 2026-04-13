@@ -90,7 +90,7 @@ export const Header = () => {
             </div>
 
             {/* Main Navigation Header */}
-            <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md transition-all dark:border-white/5 dark:bg-[#050505]/95">
+            <header className="sticky top-0 z-[100] border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md transition-all dark:border-white/5 dark:bg-[#050505]/95">
                 <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:h-24">
                     {/* Left Actions (Theme & Search) */}
                     <div className="hidden flex-1 items-center gap-6 lg:flex">
@@ -153,11 +153,10 @@ export const Header = () => {
                                 <div
                                     onMouseEnter={() => setIsUserMenuOpen(true)}
                                     onMouseLeave={() => setIsUserMenuOpen(false)}
-                                    className={`absolute top-full right-0 z-50 mt-4 w-72 origin-top-right overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] dark:border-white/10 dark:bg-[#0a0a0a] ${
-                                        isUserMenuOpen
+                                    className={`absolute top-full right-0 z-[110] mt-4 w-72 origin-top-right overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] dark:border-white/10 dark:bg-[#0a0a0a] ${isUserMenuOpen
                                             ? "visible translate-y-0 opacity-100 scale-100"
                                             : "invisible translate-y-4 opacity-0 scale-95"
-                                    }`}
+                                        }`}
                                 >
                                     <div className="mb-2 flex items-center gap-3 rounded-xl bg-gray-50 p-4 dark:bg-white/5">
                                         <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-gold/30 bg-white font-serif text-lg font-bold text-gold dark:bg-[#111]">
@@ -170,15 +169,15 @@ export const Header = () => {
                                     </div>
                                     <div className="space-y-1 p-1">
                                         <Link href="/profile" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
-                                            <div className="flex items-center gap-3"><UserCircle size={16} strokeWidth={1.5}/> My Account</div>
+                                            <div className="flex items-center gap-3"><UserCircle size={16} strokeWidth={1.5} /> My Account</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
                                         <Link href="/orders" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
-                                            <div className="flex items-center gap-3"><ShoppingBag size={16} strokeWidth={1.5}/> My Orders</div>
+                                            <div className="flex items-center gap-3"><ShoppingBag size={16} strokeWidth={1.5} /> My Orders</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
                                         <Link href="/settings" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
-                                            <div className="flex items-center gap-3"><Settings size={16} strokeWidth={1.5}/> Settings</div>
+                                            <div className="flex items-center gap-3"><Settings size={16} strokeWidth={1.5} /> Settings</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
                                     </div>
