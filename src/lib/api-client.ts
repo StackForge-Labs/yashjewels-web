@@ -41,7 +41,7 @@ export const clearTokens = () => {
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
     headers: { "Content-Type": "application/json" },
-    timeout: 15000,
+    timeout: 60000,
 });
 
 // Request interceptor — attach Bearer token
