@@ -61,5 +61,17 @@ export interface UserProfile {
     createdAt: string;
 }
 
+// ── Admin KYC ───────────────────────────────────────────────────
+export interface PendingKycDto {
+    userId: string;
+    fullName: string;
+    email: string;
+    idCardFrontUrl: string | null;
+    idCardBackUrl: string | null;
+    facePhotoUrl: string | null;
+    kycSimilarityScore: number;
+    kycStatus: string;
+}
+
 // Keep backward compat alias
 export type UserType = UserProfile;

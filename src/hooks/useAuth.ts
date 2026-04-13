@@ -16,6 +16,8 @@ import {
     facebookLoginApi,
     logoutApi,
     getProfileApi,
+    uploadKycApi,
+    updateProfileApi,
 } from "@/lib/auth";
 import type { AuthResponse } from "@/types/user.types";
 
@@ -185,5 +187,33 @@ export function useProfile() {
         enabled: typeof window !== "undefined" && !!getAccessToken(),
         retry: false,
         staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+}
+
+// ── Update Profile ─────────────────────────────────────────────
+export function useUpdateProfile() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: updateProfileApi,
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }
+        },
+    });
+}
+
+// ── Upload KYC ─────────────────────────────────────────────────
+export function useUploadKyc() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (formData: FormData) => uploadKycApi(formData),
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }
+        },
     });
 }

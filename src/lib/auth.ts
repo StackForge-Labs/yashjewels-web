@@ -26,7 +26,7 @@ export const loginApi = (data: LoginRequest) =>
     apiClient.post<ApiResponse<AuthResponse>>("/auth/login", data).then((r) => r.data);
 
 export const refreshTokenApi = (refreshToken: string) =>
-    apiClient.post<ApiResponse<AuthResponse>>("/auth/refresh", { refreshToken }).then((r) => r.data);
+    apiClient.post<ApiResponse<AuthResponse>>("/auth/refresh-token", { refreshToken }).then((r) => r.data);
 
 export const logoutApi = (refreshToken: string) =>
     apiClient.post<ApiResponse<string>>("/auth/logout", { refreshToken }).then((r) => r.data);
@@ -45,6 +45,14 @@ export const googleLoginApi = (idToken: string) =>
 export const facebookLoginApi = (accessToken: string) =>
     apiClient.post<ApiResponse<AuthResponse>>("/auth/facebook", { accessToken }).then((r) => r.data);
 
-// ── User Profile ───────────────────────────────────────────────
+// ── User Profile & KYC ──────────────────────────────────────────
 export const getProfileApi = () =>
-    apiClient.get<ApiResponse<UserProfile>>("/auth/profile").then((r) => r.data);
+    apiClient.get<ApiResponse<UserProfile>>("/user/profile").then((r) => r.data);
+
+export const updateProfileApi = (data: any) =>
+    apiClient.put<ApiResponse<UserProfile>>("/user/profile", data).then((r) => r.data);
+
+export const uploadKycApi = (formData: FormData) =>
+    apiClient.post<ApiResponse<string>>("/user/kyc", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+    }).then((r) => r.data);
