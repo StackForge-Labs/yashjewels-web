@@ -54,17 +54,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 )}
 
                 {/* Wishlist Icon */}
-                <div className="absolute top-4 right-4 transform rounded-full bg-white/90 p-2 text-gray-400 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:scale-110 hover:text-red-500 dark:bg-black/80 dark:text-gray-500 dark:hover:text-red-500">
+                <div 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log("Added to wishlist"); }}
+                    className="absolute top-4 right-4 z-30 transform rounded-full bg-white/90 p-2 text-gray-400 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:scale-110 hover:text-red-500 dark:bg-black/80 dark:text-gray-500 dark:hover:text-red-500"
+                >
                     <Heart size={16} />
                 </div>
 
                 {/* Quick Action Overlay on Hover */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/80 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                <div className="absolute bottom-6 left-1/2 z-20 flex w-full -translate-x-1/2 translate-y-4 justify-center gap-3 px-4 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-                    <button className="hover:bg-gold flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-white text-xs font-bold tracking-widest text-gray-900 uppercase shadow-lg transition-colors hover:text-white dark:bg-[#222] dark:text-white">
+                <div className="absolute bottom-6 left-1/2 z-30 flex w-full -translate-x-1/2 translate-y-4 justify-center gap-3 px-4 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                    <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log("Added to cart"); }}
+                        className="hover:bg-gold flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-white text-xs font-bold tracking-widest text-gray-900 uppercase shadow-lg transition-colors hover:text-white dark:bg-[#222] dark:text-white"
+                    >
                         <ShoppingCart size={14} /> Add to Cart
                     </button>
-                    <button className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-lg transition-colors hover:bg-gray-100 dark:bg-[#222] dark:text-white dark:hover:bg-gray-800">
+                    <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-lg transition-colors hover:bg-gray-100 dark:bg-[#222] dark:text-white dark:hover:bg-gray-800"
+                    >
                         <ShoppingBag size={14} />
                     </button>
                 </div>
