@@ -13,13 +13,15 @@ import {
     Image as ImageIcon,
     FileText,
     Loader2,
-    CheckCircle2
+    CheckCircle2,
+    RefreshCw
 } from "lucide-react";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useUploadKyc } from "@/hooks/useAuth";
 import { PageHero } from "@/app/_components/PageHero";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/api-client";
+import { BiometricCapture } from "./_components/BiometricCapture";
 
 // Steps: 0: Welcome/Prepare, 1: ID Upload, 2: Selfie, 3: Review/Submit
 const STEPS = ["Preparation", "ID Document", "Selfie Photo", "Verification"];
@@ -272,25 +274,43 @@ export default function KycPage() {
                                         <p className="mt-4 text-gray-500 dark:text-gray-400">Take a photo of your face to match with your ID card.</p>
                                     </div>
 
-                                    <div className="mx-auto max-w-sm">
-                                        <div className="relative group cursor-pointer overflow-hidden rounded-full border-4 border-dashed border-gray-100 bg-gray-50 transition-all hover:border-gold dark:border-white/10 dark:bg-white/2 aspect-square">
-                                            {selfiePreview ? (
-                                                <div className="h-full w-full">
-                                                    <img src={selfiePreview} alt="Selfie" className="h-full w-full object-cover" />
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                        <button onClick={() => setSelfiePreview(null)} className="rounded-full bg-white p-3 text-rose-500"><AlertCircle size={24} /></button>
+                                    <div className="mx-auto max-w-2xl">
+                                        {!selfie ? (
+                                            <BiometricCapture 
+                                                onCapture={(file) => {
+                                                    setSelfie(file);
+                                                    setSelfiePreview(URL.createObjectURL(file));
+                                                }} 
+                                            />
+                                        ) : (
+                                            <div className="relative group overflow-hidden rounded-3xl border-4 border-emerald-500/20 bg-gray-50 aspect-video">
+                                                <img src={selfiePreview!} alt="Selfie" className="h-full w-full object-cover" />
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <div className="mb-4 rounded-full bg-emerald-500 p-3 text-white">
+                                                        <Check size={32} />
                                                     </div>
+                                                    <p className="text-xs font-bold tracking-widest text-white uppercase">Biometric Captured</p>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelfie(null);
+                                                            setSelfiePreview(null);
+                                                        }} 
+                                                        className="mt-6 flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-[10px] font-bold tracking-widest text-rose-500 uppercase transition-all hover:bg-rose-50"
+                                                    >
+                                                        <RefreshCw size={14} /> Clear & Retake
+                                                    </button>
                                                 </div>
-                                            ) : (
-                                                <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center p-8 text-center">
-                                                    <div className="mb-6 h-32 w-32 rounded-full border border-gray-100 bg-white flex items-center justify-center dark:bg-[#111] dark:border-white/5 shadow-inner">
-                                                        <Camera className="text-gold" size={48} />
-                                                    </div>
-                                                    <span className="text-sm font-bold text-gray-900 dark:text-white">Take / Upload Selfie</span>
-                                                    <span className="mt-2 text-xs text-gray-400 leading-relaxed">Ensure your face is centered and fully visible within the circle.</span>
-                                                    <input type="file" className="hidden" accept="image/*" capture="user" onChange={(e) => handleFileChange(e, "selfie")} />
-                                                </label>
-                                            )}
+                                            </div>
+                                        )}
+                                        
+                                        <div className="mt-8 rounded-2xl bg-blue-50 p-5 border border-blue-100 dark:bg-blue-500/5 dark:border-blue-500/10">
+                                            <div className="flex gap-4">
+                                                <ShieldCheck className="shrink-0 text-blue-500" size={20} />
+                                                <p className="text-[10px] md:text-xs text-blue-800 dark:text-blue-400 leading-relaxed font-medium">
+                                                    Our 3D Liveness Detection ensures you are a real person. 
+                                                    Please follow the sequence: <b>Turn Left</b> → <b>Turn Right</b> → <b>Look Forward</b>.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
 

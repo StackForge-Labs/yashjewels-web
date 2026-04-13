@@ -88,13 +88,23 @@ const VerifyEmailPage = () => {
             e?.preventDefault();
             const code = otp.join("");
             if (code.length !== OTP_LENGTH || !email) return;
+
             verify.mutate(
                 { email, code },
                 {
                     onSuccess: (res) => {
                         if (res.success) {
                             sessionStorage.removeItem("verify_email");
+                            // Add a small delay for better UX and to allow Redux state to propagate
+                            setTimeout(() => {
+                                window.location.href = "/";
+                            }, 1500);
                         }
+                    },
+                    onError: () => {
+                        // Auto-clear OTP on error
+                        setOtp(Array(OTP_LENGTH).fill(""));
+                        inputRefs.current[0]?.focus();
                     },
                 },
             );

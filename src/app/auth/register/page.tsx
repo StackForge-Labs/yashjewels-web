@@ -29,6 +29,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const RegisterPage = () => {
     useRedirectIfAuthenticated();
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const registerMutation = useRegister();
 
     const {
@@ -191,7 +192,7 @@ const RegisterPage = () => {
                                     <div className="relative flex items-center">
                                         <Lock className="absolute left-4 text-gray-400" size={18} />
                                         <input
-                                            type={showPassword ? "text" : "password"}
+                                            type={showConfirmPassword ? "text" : "password"}
                                             {...register("confirmPassword")}
                                             placeholder="••••••••"
                                             className={`focus:border-gold w-full rounded-xl border bg-gray-50 py-3.5 pr-10 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
@@ -199,6 +200,13 @@ const RegisterPage = () => {
                                             }`}
                                             disabled={registerMutation.isPending}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
                                     </div>
                                     {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
                                 </div>
