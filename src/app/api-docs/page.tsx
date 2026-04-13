@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Shield, 
-  Database, 
-  Search, 
-  TrendingUp, 
-  User, 
-  ShieldCheck, 
+import {
+  Shield,
+  Database,
+  Search,
+  TrendingUp,
+  User,
+  ShieldCheck,
   Activity,
   ChevronDown,
   ChevronUp,
@@ -31,7 +31,7 @@ const apiModules = [
       { method: "POST", path: "/api/v1/auth/register", desc: "Đăng ký tài khoản người dùng mới (Role mặc định là Customer)." },
       { method: "POST", path: "/api/v1/auth/verify-email", desc: "Xác thực tài khoản qua mã OTP gửi về email." },
       { method: "POST", path: "/api/v1/auth/login", desc: "Đăng nhập hệ thống, cấp Access Token và Refresh Token." },
-      { method: "POST", path: "/api/v1/auth/refresh", desc: "Cấp mới Access Token (JWT) bằng Refresh Token." },
+      { method: "POST", path: "/api/v1/auth/refresh-token", desc: "Cấp mới Access Token (JWT) bằng Refresh Token." },
       { method: "POST", path: "/api/v1/auth/logout", desc: "Đăng xuất người dùng và thu hồi (revoke) các token hợp lệ." },
       { method: "POST", path: "/api/v1/auth/forgot-password", desc: "Yêu cầu lấy lại mật khẩu (gửi token đặt lại mật khẩu)." },
       { method: "POST", path: "/api/v1/auth/reset-password", desc: "Đặt lại mật khẩu mới bằng token đã được cấp." },
@@ -183,13 +183,13 @@ const getMethodColor = (method: string) => {
 };
 
 export default function ApiDocsPage() {
-  const [expandedModules, setExpandedModules] = useState<number[]>([0]); 
-  
+  const [expandedModules, setExpandedModules] = useState<number[]>([0]);
+
   const totalEndpoints = apiModules.reduce((acc, curr) => acc + curr.endpoints.length, 0);
 
   const toggleModule = (index: number) => {
-    setExpandedModules(prev => 
-      prev.includes(index) 
+    setExpandedModules(prev =>
+      prev.includes(index)
         ? prev.filter(i => i !== index)
         : [...prev, index]
     );
@@ -197,7 +197,7 @@ export default function ApiDocsPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-800 dark:bg-[#0A0A0A] dark:text-gray-200 transition-colors duration-500 font-sans selection:bg-amber-500/30">
-      
+
       {/* Header section */}
       <div className="relative overflow-hidden transition-colors duration-500 pb-10 border-b border-amber-200 bg-gradient-to-b from-amber-50 to-transparent dark:border-amber-500/10 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent">
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay"></div>
@@ -208,20 +208,20 @@ export default function ApiDocsPage() {
                 <Server className="w-4 h-4" />
                 <span>Developer Center</span>
               </div>
-              
+
               <h1 className="text-4xl md:text-5xl font-light mb-4 tracking-tight text-gray-900 dark:text-white">
                 API Documentation <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600 font-semibold">40% Milestone</span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
-                Hệ thống tài liệu tích hợp toàn bộ API endpoint của dự án Yash Gems & Jewelleries. 
+                Hệ thống tài liệu tích hợp toàn bộ API endpoint của dự án Yash Gems & Jewelleries.
                 Được xây dựng trên nền tảng .NET 8 với quy chuẩn kiến trúc hiện đại, đảm bảo tính ổn định và khả năng mở rộng cao.
               </p>
             </div>
-            
+
             <div className="flex gap-4">
-              <a 
-                href="http://localhost:5256/hangfire" 
-                target="_blank" 
+              <a
+                href="http://localhost:5256/hangfire"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="transition-all duration-300 rounded-xl px-4 py-3 flex items-center justify-center space-x-3 cursor-pointer group shadow-lg hover:-translate-y-1 border bg-white border-amber-200 hover:border-amber-400 shadow-amber-200/20 dark:bg-[#111] dark:border-amber-500/30 dark:hover:border-amber-500/50"
               >
@@ -249,7 +249,7 @@ export default function ApiDocsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-12">
-        
+
         {/* Core Infrastructure Features */}
         <div className="mb-16">
           <div className="flex items-center space-x-3 mb-8">
@@ -258,20 +258,20 @@ export default function ApiDocsPage() {
               Core <span className="font-semibold">Infrastructure</span>
             </h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {coreFeatures.map((feature, idx) => {
               const Icon = feature.icon;
               return (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  key={idx} 
+                  key={idx}
                   className="group relative overflow-hidden transition-all duration-300 rounded-2xl p-6 shadow-md hover:-translate-y-1 block border bg-white border-gray-100 hover:border-amber-200 hover:shadow-xl dark:bg-[#111] dark:border-gray-800 dark:hover:border-gray-700 dark:hover:shadow-2xl"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
-                  
+
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex justify-between items-start mb-5">
                       <div className={`p-3 rounded-xl border ${feature.iconColor}`}>
@@ -281,7 +281,7 @@ export default function ApiDocsPage() {
                         {feature.badge}
                       </span>
                     </div>
-                    
+
                     <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-100">{feature.title}</h3>
                     <p className="text-sm leading-relaxed transition-colors text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300">
                       {feature.description}
@@ -308,16 +308,16 @@ export default function ApiDocsPage() {
           {apiModules.map((module, mIndex) => {
             const Icon = module.icon;
             const isExpanded = expandedModules.includes(mIndex);
-            
+
             return (
-              <motion.div 
+              <motion.div
                 key={mIndex}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: mIndex * 0.1 }}
                 className="transition-all duration-300 rounded-2xl overflow-hidden border bg-white border-gray-200 hover:border-amber-200 shadow-sm dark:bg-[#111] dark:border-gray-800/80 dark:hover:border-gray-700/80 dark:shadow-inner"
               >
-                <div 
+                <div
                   className="flex items-center justify-between p-5 cursor-pointer select-none transition-colors bg-gradient-to-r from-gray-50 to-white hover:bg-gray-100 dark:from-[#141414] dark:to-[#111] dark:hover:from-[#181818]"
                   onClick={() => toggleModule(mIndex)}
                 >
@@ -334,9 +334,8 @@ export default function ApiDocsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className={`p-2 flex items-center justify-center transition-all duration-300 ${
-                    isExpanded ? 'rotate-180 text-amber-500' : 'text-gray-400'
-                  }`}>
+                  <div className={`p-2 flex items-center justify-center transition-all duration-300 ${isExpanded ? 'rotate-180 text-amber-500' : 'text-gray-400'
+                    }`}>
                     <ChevronDown className="w-5 h-5" />
                   </div>
                 </div>
@@ -351,7 +350,7 @@ export default function ApiDocsPage() {
                     >
                       <div className="border-t p-0 border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#0c0c0c]">
                         {module.endpoints.map((ep, eIndex) => (
-                          <div 
+                          <div
                             key={eIndex}
                             className="flex flex-col md:flex-row md:items-center px-6 py-4 border-b last:border-0 transition-colors group border-gray-100 hover:bg-white dark:border-gray-800/40 dark:hover:bg-[#131313]"
                           >
@@ -376,7 +375,7 @@ export default function ApiDocsPage() {
             );
           })}
         </div>
-        
+
         {/* Footer info */}
         <div className="mt-20 flex flex-col items-center justify-center text-sm pb-12 text-gray-400 dark:text-gray-600">
           <div className="w-12 h-1 bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mb-6"></div>
