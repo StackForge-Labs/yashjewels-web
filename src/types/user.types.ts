@@ -38,6 +38,11 @@ export interface ResetPasswordRequest {
     newPassword: string;
 }
 
+export interface VerifyResetOtpRequest {
+    email: string;
+    otp: string;
+}
+
 export interface VerifyEmailRequest {
     email: string;
     code: string;

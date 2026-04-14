@@ -12,6 +12,7 @@ import {
     resendOtpApi,
     forgotPasswordApi,
     resetPasswordApi,
+    verifyResetOtpApi,
     googleLoginApi,
     facebookLoginApi,
     logoutApi,
@@ -88,16 +89,13 @@ export function useResendOtp() {
     });
 }
 
-// ── Forgot Password ────────────────────────────────────────────
 export function useForgotPassword() {
-    const router = useRouter();
-
     return useMutation({
         mutationFn: forgotPasswordApi,
         onSuccess: (res, variables) => {
             if (res.success) {
+                // Optionally keep storing in session storage just in case, though the UI handles it
                 sessionStorage.setItem("reset_email", variables.email);
-                router.push("/auth/reset-password");
             }
         },
     });
@@ -105,15 +103,14 @@ export function useForgotPassword() {
 
 // ── Reset Password ─────────────────────────────────────────────
 export function useResetPassword() {
-    const router = useRouter();
-
     return useMutation({
         mutationFn: resetPasswordApi,
-        onSuccess: (res) => {
-            if (res.success) {
-                router.push("/auth/login");
-            }
-        },
+    });
+}
+
+export function useVerifyResetOtp() {
+    return useMutation({
+        mutationFn: verifyResetOtpApi,
     });
 }
 

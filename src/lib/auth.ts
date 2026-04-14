@@ -6,6 +6,7 @@ import type {
     RegisterRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
+    VerifyResetOtpRequest,
     VerifyEmailRequest,
     ResendOtpRequest,
     UserProfile,
@@ -37,6 +38,9 @@ export const forgotPasswordApi = (data: ForgotPasswordRequest) =>
 
 export const resetPasswordApi = (data: ResetPasswordRequest) =>
     apiClient.post<ApiResponse<string>>("/auth/reset-password", data).then((r) => r.data);
+
+export const verifyResetOtpApi = (data: VerifyResetOtpRequest) =>
+    apiClient.post<ApiResponse<string>>("/auth/verify-reset-otp", data).then((r) => r.data);
 
 // ── OAuth Social Login ─────────────────────────────────────────
 export const googleLoginApi = (idToken: string) =>
