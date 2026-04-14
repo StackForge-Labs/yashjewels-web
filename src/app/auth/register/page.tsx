@@ -11,13 +11,31 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { getErrorMessage } from "@/lib/api-client";
+import { CountryPhoneInput } from "../_components/CountryPhoneInput";
+import { Controller } from "react-hook-form";
+import { countries } from "@/data/countries";
 
 const registerSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
     email: z.string().min(1, "Email is required").email("Invalid email format"),
-    phone: z.string().min(1, "Phone number is required").regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone format"),
-    dateOfBirth: z.string().min(1, "Date of birth is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    countryCode: z.string().min(1, "Country code is required"),
+    phone: z.string().min(1, "Phone number is required").min(8, "Phone number is too short").max(15, "Phone number is too long"),
+    dateOfBirth: z.string().min(1, "Date of birth is required").refine((dob) => {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age >= 18;
+    }, "You must be at least 18 years old"),
+    password: z.string()
+        .min(8, "Password must be at least 8 characters")
+        .max(12, "Password must not exceed 12 characters")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -35,13 +53,29 @@ const RegisterPage = () => {
     const {
         register,
         handleSubmit,
+        control,
+        setValue,
+        watch,
         formState: { errors },
     } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
+        defaultValues: {
+            countryCode: "VN",
+            phone: "",
+        }
     });
 
-    const onSubmit = (data: RegisterFormValues) => {
-        registerMutation.mutate(data);
+    const onSubmit = (values: RegisterFormValues) => {
+        // Find dial_code from the selected ISO code
+        const selectedCountry = countries.find(c => c.code === values.countryCode);
+        const dialCode = selectedCountry?.dial_code || "+84";
+
+        // Correctly combine country code and phone for the API
+        const submitData = {
+            ...values,
+            phone: `${dialCode}${values.phone}`
+        };
+        registerMutation.mutate(submitData);
     };
 
     const errorMessage = getErrorMessage(registerMutation.error) || (registerMutation.data && !registerMutation.data.success ? registerMutation.data.errors?.[0] : null);
@@ -119,26 +153,28 @@ const RegisterPage = () => {
                                 {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                             </div>
 
-                            {/* Phone and DOB Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Phone and DOB (Sequential full-width rows) */}
+                            <div className="space-y-5">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
                                         Phone Number
                                     </label>
-                                    <div className="relative flex items-center">
-                                        <Phone className="absolute left-4 text-gray-400" size={18} />
-                                        <input
-                                            type="text"
-                                            {...register("phone")}
-                                            placeholder="+1234567890"
-                                            className={`focus:border-gold w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
-                                                errors.phone ? "border-red-500" : "border-gray-100 dark:border-white/5"
-                                            }`}
-                                            disabled={registerMutation.isPending}
-                                        />
-                                    </div>
-                                    {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
+                                    <Controller
+                                        name="phone"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <CountryPhoneInput
+                                                selectedCountryISO={watch("countryCode")}
+                                                phoneNumber={field.value}
+                                                onCountryChange={(iso) => setValue("countryCode", iso)}
+                                                onPhoneChange={field.onChange}
+                                                error={errors.phone?.message || errors.countryCode?.message}
+                                                disabled={registerMutation.isPending}
+                                            />
+                                        )}
+                                    />
                                 </div>
+
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold tracking-widest text-gray-400 uppercase">
                                         Date of Birth
@@ -148,6 +184,7 @@ const RegisterPage = () => {
                                         <input
                                             type="date"
                                             {...register("dateOfBirth")}
+                                            onClick={(e) => e.currentTarget.showPicker()}
                                             className={`focus:border-gold w-full rounded-xl border bg-gray-50 py-3.5 pr-4 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
                                                 errors.dateOfBirth ? "border-red-500" : "border-gray-100 dark:border-white/5"
                                             }`}
