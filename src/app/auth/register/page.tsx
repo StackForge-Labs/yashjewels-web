@@ -231,6 +231,7 @@ const RegisterPage = () => {
                                         <input
                                             type={showConfirmPassword ? "text" : "password"}
                                             {...register("confirmPassword")}
+                                            onPaste={(e) => e.preventDefault()}
                                             placeholder="••••••••"
                                             className={`focus:border-gold w-full rounded-xl border bg-gray-50 py-3.5 pr-10 pl-12 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
                                                 errors.confirmPassword ? "border-red-500" : "border-gray-100 dark:border-white/5"
