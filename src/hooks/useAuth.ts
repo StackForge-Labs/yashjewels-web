@@ -76,7 +76,6 @@ export function useVerifyEmail() {
         onSuccess: (res) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
-                router.push("/");
             }
         },
     });

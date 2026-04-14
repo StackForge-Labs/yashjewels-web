@@ -50,9 +50,8 @@ export const CountryPhoneInput = ({
                     <button
                         type="button"
                         onClick={() => !disabled && setIsOpen(!isOpen)}
-                        className={`flex h-[50px] w-full items-center justify-between rounded-xl border bg-gray-50 px-3 text-sm transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
-                            error ? "border-red-500" : "border-gray-100 dark:border-white/5"
-                        } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        className={`flex h-[50px] w-full items-center justify-between rounded-xl border bg-gray-50 px-3 text-sm transition-all focus:bg-white dark:bg-[#111] dark:text-white ${error ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                            } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                         disabled={disabled}
                     >
                         <div className="flex items-center gap-2 truncate pr-1">
@@ -121,10 +120,9 @@ export const CountryPhoneInput = ({
                             const val = e.target.value.replace(/\D/g, "");
                             onPhoneChange(val);
                         }}
-                        placeholder="0912 345 678"
-                        className={`h-[50px] w-full rounded-xl border bg-gray-50 px-4 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${
-                            error ? "border-red-500" : "border-gray-100 dark:border-white/5"
-                        } disabled:opacity-50`}
+                        placeholder="0912345678"
+                        className={`h-[50px] w-full rounded-xl border bg-gray-50 px-4 text-sm text-gray-900 outline-hidden transition-all focus:bg-white dark:bg-[#111] dark:text-white ${error ? "border-red-500" : "border-gray-100 dark:border-white/5"
+                            } disabled:opacity-50`}
                         disabled={disabled}
                     />
                 </div>

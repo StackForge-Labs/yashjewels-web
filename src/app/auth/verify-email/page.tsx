@@ -5,9 +5,10 @@ import { ArrowRight, Loader2, MailCheck, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useVerifyEmail, useResendOtp } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/lib/api-client";
 
 const OTP_LENGTH = 6;
-const RESEND_COOLDOWN = 60; // seconds
+const RESEND_COOLDOWN = 30; // seconds
 
 const maskEmail = (email: string) => {
     if (!email) return "";
@@ -22,6 +23,7 @@ const VerifyEmailPage = () => {
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
     const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
+    const [isRedirecting, setIsRedirecting] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     const verify = useVerifyEmail();
@@ -94,10 +96,11 @@ const VerifyEmailPage = () => {
                 {
                     onSuccess: (res) => {
                         if (res.success) {
+                            setIsRedirecting(true);
                             sessionStorage.removeItem("verify_email");
                             // Add a small delay for better UX and to allow Redux state to propagate
                             setTimeout(() => {
-                                window.location.href = "/";
+                                router.push("/");
                             }, 1500);
                         }
                     },
@@ -125,9 +128,7 @@ const VerifyEmailPage = () => {
         setCooldown(RESEND_COOLDOWN);
     };
 
-    const errorMessage =
-        verify.error?.message ||
-        (verify.data && !verify.data.success ? verify.data.errors?.[0] || verify.data.message : null);
+    const errorMessage = getErrorMessage(verify.error) || (verify.data && !verify.data.success ? verify.data.errors?.[0] : null);
 
     if (!email) return null;
 
@@ -202,10 +203,10 @@ const VerifyEmailPage = () => {
 
                             <button
                                 type="submit"
-                                disabled={verify.isPending || otp.join("").length !== OTP_LENGTH}
+                                disabled={verify.isPending || isRedirecting || otp.join("").length !== OTP_LENGTH}
                                 className="bg-gold flex w-full items-center justify-center rounded-xl py-4 text-sm font-bold tracking-widest text-white uppercase transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {verify.isPending ? (
+                                {verify.isPending || isRedirecting ? (
                                     <Loader2 size={18} className="animate-spin" />
                                 ) : (
                                     <>
