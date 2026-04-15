@@ -20,8 +20,12 @@ import {
     uploadKycApi,
     updateProfileApi,
     updateAvatarApi,
+    initKycSessionApi,
+    getKycSessionStatusApi,
+    submitMobileKycApi,
 } from "@/lib/auth";
 import type { AuthResponse } from "@/types/user.types";
+
 
 // ── Helper: save tokens + dispatch profile ─────────────────────
 function useAuthSuccess() {
@@ -231,5 +235,32 @@ export function useUpdateAvatar() {
                 queryClient.invalidateQueries({ queryKey: ["profile"] });
             }
         },
+    });
+}
+
+// ── KYC Session ──────────────────────────────────────────────
+export function useInitKycSession() {
+    return useMutation({
+        mutationFn: initKycSessionApi,
+    });
+}
+
+export function useKycSessionStatus(token: string, enabled = false) {
+    return useQuery({
+        queryKey: ["kyc-session", token],
+        queryFn: () => getKycSessionStatusApi(token),
+        enabled: enabled && !!token,
+        refetchInterval: (query) => {
+            if (query.state.data?.data === "Completed" || query.state.data?.data === "Failed") {
+                return false;
+            }
+            return 3000; // Poll every 3 seconds
+        },
+    });
+}
+
+export function useSubmitMobileKyc() {
+    return useMutation({
+        mutationFn: submitMobileKycApi,
     });
 }

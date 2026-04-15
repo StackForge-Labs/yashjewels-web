@@ -193,7 +193,7 @@ export default function ProfilePage() {
                                             </p>
                                         </div>
                                         {(profile.kycStatus?.toLowerCase() !== "verified" && profile.kycStatus?.toLowerCase() !== "approved") && profile.kycStatus?.toLowerCase() !== "pending" && (
-                                            <Link href="/auth/kyc" className="bg-gold group flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105 active:scale-95">
+                                            <Link href="/auth/kyc/handoff" className="bg-gold group flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105 active:scale-95">
                                                 Verify Identity <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                                             </Link>
                                         )}
