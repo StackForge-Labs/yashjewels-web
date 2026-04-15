@@ -15,6 +15,7 @@ import { getErrorMessage } from "@/lib/api-client";
 const loginSchema = z.object({
     email: z.string().min(1, "Email is required").email("Invalid email format"),
     password: z.string().min(1, "Password is required"),
+    rememberMe: z.boolean().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -27,12 +28,30 @@ const LoginPage = () => {
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
+        defaultValues: {
+            rememberMe: false,
+        },
     });
 
+    // Check for remembered email on mount
+    React.useEffect(() => {
+        const rememberedEmail = localStorage.getItem("remembered_email");
+        if (rememberedEmail) {
+            setValue("email", rememberedEmail);
+            setValue("rememberMe", true);
+        }
+    }, [setValue]);
+
     const onSubmit = (data: LoginFormValues) => {
+        if (data.rememberMe) {
+            localStorage.setItem("remembered_email", data.email);
+        } else {
+            localStorage.removeItem("remembered_email");
+        }
         login.mutate(data);
     };
 
@@ -139,7 +158,11 @@ const LoginPage = () => {
 
                             <div className="flex items-center justify-between text-sm">
                                 <label className="flex cursor-pointer items-center gap-2 text-gray-500 dark:text-gray-400">
-                                    <input type="checkbox" className="accent-gold h-4 w-4 rounded border-gray-200" />
+                                    <input 
+                                        type="checkbox" 
+                                        {...register("rememberMe")}
+                                        className="accent-gold h-4 w-4 rounded border-gray-200" 
+                                    />
                                     Remember me
                                 </label>
                                 <Link href="/auth/forgot-password" className="text-gold font-medium hover:underline">
