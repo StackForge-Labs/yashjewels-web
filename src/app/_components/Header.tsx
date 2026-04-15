@@ -159,8 +159,14 @@ export const Header = () => {
                                         }`}
                                 >
                                     <div className="mb-2 flex items-center gap-3 rounded-xl bg-gray-50 p-4 dark:bg-white/5">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-gold/30 bg-white font-serif text-lg font-bold text-gold dark:bg-[#111]">
-                                            {getInitials(user.fullName)}
+                                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-gold/30 bg-white dark:bg-[#111]">
+                                            {user.avatarUrl ? (
+                                                <img src={user.avatarUrl} alt={user.fullName} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <span className="font-serif text-lg font-bold text-gold">
+                                                    {getInitials(user.fullName)}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
                                             <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{user.fullName}</p>

@@ -83,8 +83,18 @@ export default function ProfilePage() {
                         <aside className="lg:col-span-4 translate-y-[-80px] md:translate-y-0">
                             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <div className="bg-gold/10 p-8 text-center dark:bg-white/5">
-                                    <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-gold bg-white font-serif text-3xl font-bold text-gold dark:bg-[#111]">
-                                        {profile.fullName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                                    <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full border-2 border-gold bg-white dark:bg-[#111]">
+                                        {profile.avatarUrl ? (
+                                            <img 
+                                                src={profile.avatarUrl} 
+                                                alt={profile.fullName} 
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center font-serif text-3xl font-bold text-gold uppercase">
+                                                {profile.fullName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                                            </div>
+                                        )}
                                     </div>
                                     <h2 className="font-serif text-2xl text-gray-900 dark:text-white">{profile.fullName}</h2>
                                     <p className="mt-1 text-xs font-bold tracking-widest text-gold uppercase">{profile.email}</p>

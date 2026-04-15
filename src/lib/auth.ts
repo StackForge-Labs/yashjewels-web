@@ -43,11 +43,11 @@ export const verifyResetOtpApi = (data: VerifyResetOtpRequest) =>
     apiClient.post<ApiResponse<string>>("/auth/verify-reset-otp", data).then((r) => r.data);
 
 // ── OAuth Social Login ─────────────────────────────────────────
-export const googleLoginApi = (idToken: string) =>
-    apiClient.post<ApiResponse<AuthResponse>>("/auth/google", { idToken }).then((r) => r.data);
+export const googleLoginApi = (token: string) =>
+    apiClient.post<ApiResponse<AuthResponse>>("/auth/google-login", { token }).then((r) => r.data);
 
 export const facebookLoginApi = (accessToken: string) =>
-    apiClient.post<ApiResponse<AuthResponse>>("/auth/facebook", { accessToken }).then((r) => r.data);
+    apiClient.post<ApiResponse<AuthResponse>>("/auth/facebook-login", { accessToken }).then((r) => r.data);
 
 // ── User Profile & KYC ──────────────────────────────────────────
 export const getProfileApi = () =>
