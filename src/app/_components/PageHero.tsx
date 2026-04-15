@@ -9,11 +9,11 @@ interface BreadcrumbItem {
 interface PageHeroProps {
     title: string;
     subtitle?: string;
-    breadcrumbs: BreadcrumbItem[];
+    breadcrumbs?: BreadcrumbItem[];
     backgroundImage?: string;
 }
 
-export const PageHero = ({ title, subtitle, breadcrumbs, backgroundImage }: PageHeroProps) => {
+export const PageHero = ({ title, subtitle, breadcrumbs = [], backgroundImage }: PageHeroProps) => {
     return (
         <section className="dark:bg-dark-bg relative overflow-hidden bg-gray-50 py-16 transition-colors md:py-24">
             {/* Background Pattern */}

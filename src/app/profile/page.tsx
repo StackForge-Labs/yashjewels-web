@@ -1,19 +1,40 @@
 "use client";
 
+import React from "react";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { PageHero } from "../_components/PageHero";
-import { User, Mail, Phone, Calendar, Shield, Clock, CheckCircle2, XCircle, ArrowRight, Settings, ShoppingBag, Heart, LogOut, Camera, Loader2 } from "lucide-react";
+import { User, Mail, Phone, Calendar, Shield, Clock, ArrowRight, Settings, ShoppingBag, Heart, LogOut, Camera, Loader2, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useLogout, useUpdateAvatar } from "@/hooks/useAuth";
 import { useRef } from "react";
-
-import { TwoFactorSection } from "@/components/profile/TwoFactorSection";
+import { TwoFactorSection } from "../../components/profile/TwoFactorSection";
+import { AddressSection } from "../../components/profile/AddressSection";
+import { useUpdateProfile } from "../../hooks/useUser";
 
 export default function ProfilePage() {
     const { profile, isLoading } = useAuthGuard();
     const logout = useLogout();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const updateAvatar = useUpdateAvatar();
+    const updateProfile = useUpdateProfile();
+
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [editData, setEditData] = React.useState({
+        fullName: "",
+        phone: "",
+        dateOfBirth: ""
+    });
+
+    // Update editData when profile changes
+    React.useEffect(() => {
+        if (profile) {
+            setEditData({
+                fullName: profile.fullName,
+                phone: profile.phone || "",
+                dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ""
+            });
+        }
+    }, [profile]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -24,140 +45,161 @@ export default function ProfilePage() {
 
     if (isLoading || !profile) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent"></div>
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50/30 dark:bg-[#050505]">
+                <Loader2 size={40} className="animate-spin text-gold" />
+                <p className="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase">Verifying Identity...</p>
             </div>
         );
     }
 
-    const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return "Not provided";
-        return new Date(dateStr).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
+    const formatDate = (date: string | null | undefined) => {
+        if (!date) return "Not provided";
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
     };
 
-    const getKycStatusConfig = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case "approved":
-            case "verified":
-                return {
-                    label: "Verified Premium Member",
-                    icon: CheckCircle2,
-                    color: "text-emerald-500",
-                    bgColor: "bg-emerald-500/10",
-                    description: "Your identity is verified. You now have full access to our private salon and high-value bespoke collections.",
-                };
-            case "pending":
-                return {
-                    label: "Verification Pending",
-                    icon: Clock,
-                    color: "text-amber-500",
-                    bgColor: "bg-amber-500/10",
-                    description: "Our experts are currently reviewing your documents. This usually takes 24-48 hours.",
-                };
-            case "rejected":
-                return {
-                    label: "Verification Rejected",
-                    icon: XCircle,
-                    color: "text-rose-500",
-                    bgColor: "bg-rose-500/10",
-                    description: "Your verification request was rejected. Please review our guide and try again.",
-                };
-            default:
-                return {
-                    label: "Unverified",
-                    icon: Shield,
-                    color: "text-gray-400",
-                    bgColor: "bg-gray-400/10",
-                    description: "Verify your identity to unlock high-value purchases and private salon access.",
-                };
+    const getKycConfig = (status: string | null | undefined) => {
+        const s = status?.toLowerCase();
+        if (s === "verified" || s === "approved") {
+            return {
+                label: "Verified Identity",
+                color: "text-emerald-500",
+                bgColor: "bg-emerald-500/10",
+                icon: Shield,
+                description: "Your account is fully verified. You have access to all premium features and high-value transactions."
+            };
+        }
+        if (s === "pending") {
+            return {
+                label: "Verification Pending",
+                color: "text-amber-500",
+                bgColor: "bg-amber-500/10",
+                icon: Clock,
+                description: "We are currently reviewing your documents. This process usually takes 24-48 hours."
+            };
+        }
+        return {
+            label: "Unverified Account",
+            color: "text-rose-500",
+            bgColor: "bg-rose-500/10",
+            icon: Shield,
+            description: "Please complete your identity verification to enable all features and secure your account."
+        };
+    };
+
+    const kycConfig = getKycConfig(profile.kycStatus);
+    const StatusIcon = kycConfig.icon;
+
+    const handleSave = async () => {
+        try {
+            await updateProfile.mutateAsync({
+                fullName: editData.fullName,
+                phone: editData.phone,
+                dateOfBirth: editData.dateOfBirth || undefined
+            });
+            setIsEditing(false);
+        } catch (err) {
+            console.error(err);
         }
     };
 
-    const kycConfig = getKycStatusConfig(profile.kycStatus);
-    const StatusIcon = kycConfig.icon;
+    const handleCancel = () => {
+        setEditData({
+            fullName: profile.fullName,
+            phone: profile.phone || "",
+            dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ""
+        });
+        setIsEditing(false);
+    };
 
     return (
         <>
-            <PageHero
-                title="Private Salon"
-                subtitle="Manage your account, preferences, and luxury collection access."
-                breadcrumbs={[{ label: "My Account" }]}
+            <PageHero 
+                title="Your Profile" 
+                subtitle="Manage your account preferences and security" 
+                breadcrumbs={[{ label: "Profile" }]}
             />
-
-            <section className="bg-white py-12 md:py-24 transition-colors dark:bg-[#030303]">
-                <div className="container mx-auto px-4 lg:px-12">
+            
+            <section className="relative bg-gray-50/30 py-20 transition-colors dark:bg-[#050505]">
+                <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
                         {/* Sidebar */}
-                        <aside className="lg:col-span-4 translate-y-[-80px] md:translate-y-0">
-                            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl dark:border-white/5 dark:bg-[#0a0a0a]">
-                                <div className="bg-gold/10 p-8 text-center dark:bg-white/5">
-                                    <div 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="group relative mx-auto mb-4 h-24 w-24 cursor-pointer overflow-hidden rounded-full border-2 border-gold bg-white transition-all hover:border-gold/50 dark:bg-[#111]"
-                                    >
-                                        {updateAvatar.isPending ? (
-                                            <div className="flex h-full w-full items-center justify-center bg-black/10">
-                                                <Loader2 size={24} className="animate-spin text-gold" />
-                                            </div>
-                                        ) : profile.avatarUrl ? (
-                                            <img 
-                                                src={profile.avatarUrl} 
-                                                alt={profile.fullName} 
-                                                className="h-full w-full object-cover transition-transform group-hover:scale-110"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center font-serif text-3xl font-bold text-gold uppercase">
-                                                {profile.fullName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                                            </div>
-                                        )}
-                                        
-                                        {!updateAvatar.isPending && (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                <Camera size={20} className="text-white" />
-                                                <span className="mt-1 text-[8px] font-bold text-white uppercase tracking-widest">Update</span>
-                                            </div>
-                                        )}
-
+                        <aside className="lg:col-span-4">
+                            <div className="sticky top-28 space-y-8">
+                                <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center dark:border-white/5 dark:bg-[#0a0a0a]">
+                                    <div className="relative group mx-auto mb-6 h-32 w-32 md:h-40 md:w-40">
+                                        <div className="h-full w-full overflow-hidden rounded-full border-4 border-gray-50 bg-gray-100 shadow-xl dark:border-white/5 dark:bg-white/5">
+                                            {profile.avatarUrl ? (
+                                                <img src={profile.avatarUrl} alt={profile.fullName} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center bg-gold/10 text-gold">
+                                                    <User size={64} />
+                                                </div>
+                                            )}
+                                            
+                                            {updateAvatar.isPending && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                    <Loader2 className="animate-spin text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-gold text-white shadow-lg transition-all hover:scale-110 active:scale-95"
+                                        >
+                                            <Camera size={18} />
+                                        </button>
                                         <input 
-                                            ref={fileInputRef}
-                                            type="file"
-                                            className="hidden"
-                                            accept="image/*"
-                                            onChange={handleFileChange}
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileChange} 
+                                            accept="image/*" 
+                                            className="hidden" 
                                         />
                                     </div>
+                                    
                                     <h2 className="font-serif text-2xl text-gray-900 dark:text-white">{profile.fullName}</h2>
                                     <p className="mt-1 text-xs font-bold tracking-widest text-gold uppercase">{profile.email}</p>
+                                    
+                                    <div className="mt-8 flex items-center justify-center gap-6 border-t border-gray-50 pt-8 dark:border-white/5">
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Level</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">Gold Tier</p>
+                                        </div>
+                                        <div className="h-8 w-px bg-gray-100 dark:bg-white/5"></div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Points</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">1,250</p>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <nav className="p-4">
-                                    <ul className="space-y-1">
+                                <nav className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-white/5 dark:bg-[#0a0a0a]">
+                                    <ul className="space-y-2">
                                         <li>
-                                            <button className="flex w-full items-center gap-4 rounded-xl bg-gold/5 px-6 py-4 text-xs font-bold tracking-widest text-gold uppercase transition-all">
-                                                <User size={18} /> My Profile
+                                            <button className="flex w-full items-center gap-4 rounded-xl bg-gray-50 px-6 py-4 text-xs font-bold tracking-widest text-gold uppercase transition-all dark:bg-white/5">
+                                                <User size={18} /> Account Overview
                                             </button>
                                         </li>
                                         <li>
-                                            <Link href="/wishlist" className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5">
-                                                <Heart size={18} /> Wishlist
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link href="/orders" className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5">
+                                            <button className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
                                                 <ShoppingBag size={18} /> Order History
-                                            </Link>
+                                            </button>
                                         </li>
                                         <li>
-                                            <Link href="/settings" className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5">
-                                                <Settings size={18} /> Security
-                                            </Link>
+                                            <button className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                                                <Heart size={18} /> My Wishlist
+                                            </button>
                                         </li>
-                                        <div className="my-4 border-t border-gray-100 dark:border-white/5"></div>
                                         <li>
+                                            <button className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                                                <Settings size={18} /> Preferences
+                                            </button>
+                                        </li>
+                                        <li className="pt-2">
                                             <button 
                                                 onClick={() => logout.mutate()}
                                                 className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-rose-500 uppercase transition-all hover:bg-rose-50 dark:hover:bg-rose-500/10"
@@ -210,37 +252,88 @@ export default function ProfilePage() {
                                 <div className="rounded-2xl border border-gray-100 bg-white p-8 md:p-10 dark:border-white/5 dark:bg-[#0a0a0a]">
                                     <div className="mb-10 flex items-center justify-between">
                                         <h3 className="font-serif text-2xl text-gray-900 dark:text-white">Account Information</h3>
-                                        <button className="text-gold text-xs font-bold tracking-widest uppercase hover:underline">Edit Details</button>
+                                        {!isEditing ? (
+                                            <button 
+                                                onClick={() => setIsEditing(true)}
+                                                className="text-gold text-xs font-bold tracking-widest uppercase hover:underline"
+                                            >
+                                                Edit Details
+                                            </button>
+                                        ) : (
+                                            <div className="flex items-center gap-4">
+                                                <button 
+                                                    onClick={handleCancel}
+                                                    className="text-gray-400 text-[10px] font-bold tracking-widest uppercase hover:text-gray-600 transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button 
+                                                    onClick={handleSave}
+                                                    disabled={updateProfile.isPending}
+                                                    className="bg-gold text-white px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase hover:brightness-105 transition-all disabled:opacity-50"
+                                                >
+                                                    {updateProfile.isPending ? "Saving..." : "Save Changes"}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Full Name</p>
-                                            <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                <User size={16} className="text-gold" />
-                                                <span className="text-sm font-medium">{profile.fullName}</span>
-                                            </div>
+                                            {isEditing ? (
+                                                <input 
+                                                    type="text"
+                                                    value={editData.fullName}
+                                                    onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                                                    <User size={16} className="text-gold" />
+                                                    <span className="text-sm font-medium">{profile.fullName}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Email Address</p>
-                                            <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                <Mail size={16} className="text-gold" />
+                                            <div className="flex items-center gap-3 text-gray-400 dark:text-gray-500">
+                                                <Mail size={16} className="" />
                                                 <span className="text-sm font-medium">{profile.email}</span>
+                                                <span className="text-[9px] border border-gray-200 dark:border-white/10 px-1.5 py-0.5 rounded uppercase">ReadOnly</span>
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Phone Number</p>
-                                            <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                <Phone size={16} className="text-gold" />
-                                                <span className="text-sm font-medium">{profile.phone || "Not provided"}</span>
-                                            </div>
+                                            {isEditing ? (
+                                                <input 
+                                                    type="tel"
+                                                    value={editData.phone}
+                                                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                                                    <Phone size={16} className="text-gold" />
+                                                    <span className="text-sm font-medium">{profile.phone || "Not provided"}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Date of Birth</p>
-                                            <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                <Calendar size={16} className="text-gold" />
-                                                <span className="text-sm font-medium">{formatDate(profile.dateOfBirth)}</span>
-                                            </div>
+                                            {isEditing ? (
+                                                <input 
+                                                    type="date"
+                                                    value={editData.dateOfBirth}
+                                                    onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
+                                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                                                    <Calendar size={16} className="text-gold" />
+                                                    <span className="text-sm font-medium">{formatDate(profile.dateOfBirth)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="space-y-2 md:col-span-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Member Since</p>
@@ -250,7 +343,11 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Address Section */}
+                                <AddressSection />
                                 
+                                {/* 2FA Section */}
                                 <TwoFactorSection isEnabled={profile.twoFaEnabled} />
                             </div>
                         </div>

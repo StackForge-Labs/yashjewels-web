@@ -68,6 +68,30 @@ export interface UserProfile {
     twoFaEnabled: boolean;
 }
 
+export interface UserAddressDto {
+    id: string;
+    label?: string;
+    recipientName: string;
+    recipientPhone: string;
+    addressLine1: string;
+    ward: string;
+    district: string;
+    province: string;
+    isDefault: boolean;
+    createdAt: string;
+}
+
+export interface CreateAddressRequest {
+    label?: string;
+    recipientName: string;
+    recipientPhone: string;
+    addressLine1: string;
+    ward: string;
+    district: string;
+    province: string;
+    isDefault: boolean;
+}
+
 // ── Admin KYC ───────────────────────────────────────────────────
 export interface PendingKycDto {
     userId: string;
