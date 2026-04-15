@@ -19,6 +19,11 @@ export const userSlice = createSlice({
             state.user = action.payload;
             state.isAuthenticated = true;
         },
+        updateAvatar(state, action: PayloadAction<string>) {
+            if (state.user) {
+                state.user.avatarUrl = action.payload;
+            }
+        },
         clearUser(state) {
             state.user = null;
             state.isAuthenticated = false;
@@ -26,5 +31,5 @@ export const userSlice = createSlice({
     },
 });
 
-export const { setUser, clearUser } = userSlice.actions;
+export const { setUser, clearUser, updateAvatar } = userSlice.actions;
 export default userSlice.reducer;

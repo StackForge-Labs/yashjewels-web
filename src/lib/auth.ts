@@ -60,3 +60,10 @@ export const uploadKycApi = (formData: FormData) =>
     apiClient.post<ApiResponse<string>>("/user/kyc", formData, {
         headers: { "Content-Type": "multipart/form-data" }
     }).then((r) => r.data);
+export const updateAvatarApi = (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post<ApiResponse<string>>("/user/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+    }).then((r) => r.data);
+};
