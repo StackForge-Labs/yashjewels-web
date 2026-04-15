@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, ShieldCheck, Loader2, Copy, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -12,19 +12,23 @@ interface TwoFactorSectionProps {
     isEnabled: boolean;
 }
 
-type ToastType = { message: string; type: "success" | "error" } | null;
+export function InlineToast({ message, type, onBlur }: { message: string, type: "success" | "error", onBlur?: () => void }) {
+    useEffect(() => {
+        if (onBlur) {
+            const timer = setTimeout(onBlur, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [onBlur]);
 
-function InlineToast({ toast }: { toast: ToastType }) {
-    if (!toast) return null;
     return (
-        <div className={`mt-4 flex items-center gap-3 rounded-xl p-4 text-sm font-medium ${toast.type === "success"
+        <div className={`mt-4 flex items-center gap-3 rounded-xl p-4 text-sm font-medium animate-in fade-in slide-in-from-top-1 duration-300 ${type === "success"
                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                 : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
             }`}>
-            {toast.type === "success"
+            {type === "success"
                 ? <CheckCircle2 size={16} className="shrink-0" />
                 : <AlertCircle size={16} className="shrink-0" />}
-            {toast.message}
+            {message}
         </div>
     );
 }
@@ -134,7 +138,7 @@ export function TwoFactorSection({ isEnabled }: TwoFactorSectionProps) {
                 )}
             </div>
 
-            <InlineToast toast={toast} />
+            {toast && <InlineToast message={toast.message} type={toast.type} onBlur={() => setToast(null)} />}
 
             {/* QR Setup Panel */}
             {isSettingUp && qrData && (
