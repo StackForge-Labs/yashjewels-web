@@ -23,6 +23,10 @@ import {
     initKycSessionApi,
     getKycSessionStatusApi,
     submitMobileKycApi,
+    setup2FaApi,
+    enable2FaApi,
+    disable2FaApi,
+    loginVerify2FaApi,
 } from "@/lib/auth";
 import type { AuthResponse } from "@/types/user.types";
 
@@ -126,12 +130,26 @@ export function useGoogleLogin() {
 
     return useMutation({
         mutationFn: googleLoginApi,
-        onSuccess: (res) => {
+        onSuccess: (res, variables) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
                 router.push("/");
+            } else if (res.requiresTwoFactor) {
+                // Since googleLoginApi might not return email easily from result, we assume we might need to look inside potential decoded token or just rely on backend's response message if it contains email. 
+                // However, the best way is for the backend to include email in the 2FA error response or for the hook to know it.
+                // For now, redirect to verify-2fa. We'll ensure backend provides email.
+                router.push(`/auth/verify-2fa?email=${encodeURIComponent(res.message || "")}`);
             }
         },
+        onError: (err: any) => {
+            const res = err?.response?.data;
+            if (res?.requiresTwoFactor) {
+                // Backend should ideally return the email in the message or a dedicated field
+                // For social login, let's assume the message contains the email or we extract it.
+                // I'll update social login handlers to include email in message for easy extraction.
+                router.push(`/auth/verify-2fa?email=${encodeURIComponent(res.message || "")}`);
+            }
+        }
     });
 }
 
@@ -146,8 +164,16 @@ export function useFacebookLogin() {
             if (res.success && res.data) {
                 onSuccess(res.data);
                 router.push("/");
+            } else if (res.requiresTwoFactor) {
+                router.push(`/auth/verify-2fa?email=${encodeURIComponent(res.message || "")}`);
             }
         },
+        onError: (err: any) => {
+            const res = err?.response?.data;
+            if (res?.requiresTwoFactor) {
+                router.push(`/auth/verify-2fa?email=${encodeURIComponent(res.message || "")}`);
+            }
+        }
     });
 }
 
@@ -262,5 +288,51 @@ export function useKycSessionStatus(token: string, enabled = false) {
 export function useSubmitMobileKyc() {
     return useMutation({
         mutationFn: submitMobileKycApi,
+    });
+}
+
+// ── 2FA ────────────────────────────────────────────────────────
+export function useSetup2Fa() {
+    return useMutation({
+        mutationFn: setup2FaApi,
+    });
+}
+
+export function useEnable2Fa() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: enable2FaApi,
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }
+        },
+    });
+}
+
+export function useDisable2Fa() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: disable2FaApi,
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }
+        },
+    });
+}
+
+export function useLoginVerify2Fa() {
+    const onSuccess = useAuthSuccess();
+    const router = useRouter();
+
+    return useMutation({
+        mutationFn: loginVerify2FaApi,
+        onSuccess: (res) => {
+            if (res.success && res.data) {
+                onSuccess(res.data);
+                router.push("/");
+            }
+        },
     });
 }
