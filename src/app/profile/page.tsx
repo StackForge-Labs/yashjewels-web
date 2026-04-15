@@ -2,13 +2,23 @@
 
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { PageHero } from "../_components/PageHero";
-import { User, Mail, Phone, Calendar, Shield, Clock, CheckCircle2, XCircle, ArrowRight, Settings, ShoppingBag, Heart, LogOut } from "lucide-react";
+import { User, Mail, Phone, Calendar, Shield, Clock, CheckCircle2, XCircle, ArrowRight, Settings, ShoppingBag, Heart, LogOut, Camera, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useLogout } from "@/hooks/useAuth";
+import { useLogout, useUpdateAvatar } from "@/hooks/useAuth";
+import { useRef } from "react";
 
 export default function ProfilePage() {
     const { profile, isLoading } = useAuthGuard();
     const logout = useLogout();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const updateAvatar = useUpdateAvatar();
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            updateAvatar.mutate(file);
+        }
+    };
 
     if (isLoading || !profile) {
         return (
@@ -83,18 +93,40 @@ export default function ProfilePage() {
                         <aside className="lg:col-span-4 translate-y-[-80px] md:translate-y-0">
                             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl dark:border-white/5 dark:bg-[#0a0a0a]">
                                 <div className="bg-gold/10 p-8 text-center dark:bg-white/5">
-                                    <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full border-2 border-gold bg-white dark:bg-[#111]">
-                                        {profile.avatarUrl ? (
+                                    <div 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="group relative mx-auto mb-4 h-24 w-24 cursor-pointer overflow-hidden rounded-full border-2 border-gold bg-white transition-all hover:border-gold/50 dark:bg-[#111]"
+                                    >
+                                        {updateAvatar.isPending ? (
+                                            <div className="flex h-full w-full items-center justify-center bg-black/10">
+                                                <Loader2 size={24} className="animate-spin text-gold" />
+                                            </div>
+                                        ) : profile.avatarUrl ? (
                                             <img 
                                                 src={profile.avatarUrl} 
                                                 alt={profile.fullName} 
-                                                className="h-full w-full object-cover"
+                                                className="h-full w-full object-cover transition-transform group-hover:scale-110"
                                             />
                                         ) : (
                                             <div className="flex h-full w-full items-center justify-center font-serif text-3xl font-bold text-gold uppercase">
                                                 {profile.fullName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                                             </div>
                                         )}
+                                        
+                                        {!updateAvatar.isPending && (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                <Camera size={20} className="text-white" />
+                                                <span className="mt-1 text-[8px] font-bold text-white uppercase tracking-widest">Update</span>
+                                            </div>
+                                        )}
+
+                                        <input 
+                                            ref={fileInputRef}
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                        />
                                     </div>
                                     <h2 className="font-serif text-2xl text-gray-900 dark:text-white">{profile.fullName}</h2>
                                     <p className="mt-1 text-xs font-bold tracking-widest text-gold uppercase">{profile.email}</p>

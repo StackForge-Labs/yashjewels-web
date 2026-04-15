@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { setUser, clearUser } from "@/store/userSlice";
+import { setUser, clearUser, updateAvatar } from "@/store/userSlice";
 import { setTokens, clearTokens, getRefreshToken, getAccessToken } from "@/lib/api-client";
 import {
     loginApi,
@@ -19,6 +19,7 @@ import {
     getProfileApi,
     uploadKycApi,
     updateProfileApi,
+    updateAvatarApi,
 } from "@/lib/auth";
 import type { AuthResponse } from "@/types/user.types";
 
@@ -208,6 +209,25 @@ export function useUploadKyc() {
         mutationFn: (formData: FormData) => uploadKycApi(formData),
         onSuccess: (res) => {
             if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ["profile"] });
+            }
+        },
+    });
+}
+
+// ── Update Avatar ──────────────────────────────────────────────
+export function useUpdateAvatar() {
+    const queryClient = useQueryClient();
+    const dispatch = useDispatch();
+
+    return useMutation({
+        mutationFn: updateAvatarApi,
+        onSuccess: (res) => {
+            if (res.success && res.data) {
+                // Update Redux state immediately with the new URL
+                dispatch(updateAvatar(res.data));
+                
+                // Also invalidate query to keep everything in sync
                 queryClient.invalidateQueries({ queryKey: ["profile"] });
             }
         },
