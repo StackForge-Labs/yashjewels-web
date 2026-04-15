@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, ShieldCheck, Loader2, Copy, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Shield, ShieldCheck, Loader2, Copy, AlertCircle, CheckCircle2, MapPin } from "lucide-react";
+import Link from "next/link";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +23,8 @@ export function InlineToast({ message, type, onBlur }: { message: string, type: 
 
     return (
         <div className={`mt-4 flex items-center gap-3 rounded-xl p-4 text-sm font-medium animate-in fade-in slide-in-from-top-1 duration-300 ${type === "success"
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
+            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+            : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
             }`}>
             {type === "success"
                 ? <CheckCircle2 size={16} className="shrink-0" />
@@ -34,180 +35,121 @@ export function InlineToast({ message, type, onBlur }: { message: string, type: 
 }
 
 export function TwoFactorSection({ isEnabled }: TwoFactorSectionProps) {
-    const [isSettingUp, setIsSettingUp] = useState(false);
-    const [otpCode, setOtpCode] = useState("");
-    const [qrData, setQrData] = useState<{ sharedKey: string; authenticatorUri: string } | null>(null);
-    const [toast, setToast] = useState<ToastType>(null);
-
-    const setup2Fa = useSetup2Fa();
-    const enable2Fa = useEnable2Fa();
     const disable2Fa = useDisable2Fa();
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [isConfirmingDisable, setIsConfirmingDisable] = useState(false);
+    const [disableCode, setDisableCode] = useState("");
 
-    const showToast = (message: string, type: "success" | "error") => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 4000);
-    };
-
-    const handleToggle = async (checked: boolean) => {
-        if (checked) {
-            try {
-                const res = await setup2Fa.mutateAsync();
-                if (res.success && res.data) {
-                    setQrData(res.data);
-                    setIsSettingUp(true);
-                    setToast(null);
-                } else {
-                    showToast(res.message || "Không thể khởi tạo 2FA", "error");
-                }
-            } catch {
-                showToast("Lỗi kết nối server. Vui lòng thử lại.", "error");
-            }
-        } else {
-            const code = prompt("Nhập mã OTP 6 số để tắt 2FA:");
-            if (code) {
-                try {
-                    const res = await disable2Fa.mutateAsync(code);
-                    if (res.success) {
-                        showToast("Đã tắt xác thực 2 lớp thành công.", "success");
-                    } else {
-                        showToast(res.message || "Mã không đúng.", "error");
-                    }
-                } catch {
-                    showToast("Lỗi hệ thống khi tắt 2FA.", "error");
-                }
-            }
-        }
-    };
-
-    const handleVerifyAndEnable = async () => {
-        if (otpCode.length !== 6) {
-            showToast("Vui lòng nhập đủ 6 chữ số.", "error");
-            return;
-        }
+    const handleDisable = async () => {
+        if (disableCode.length !== 6) return;
 
         try {
-            const res = await enable2Fa.mutateAsync(otpCode);
+            const res = await disable2Fa.mutateAsync(disableCode);
             if (res.success) {
-                showToast("Xác thực 2 lớp đã được bật thành công!", "success");
-                setIsSettingUp(false);
-                setQrData(null);
-                setOtpCode("");
+                setToast({ message: "Two-factor authentication disabled successfully.", type: "success" });
+                setIsConfirmingDisable(false);
+                setDisableCode("");
             } else {
-                showToast(res.message || "Mã không chính xác.", "error");
+                setToast({ message: res.message || "Invalid or incorrect code.", type: "error" });
             }
         } catch {
-            showToast("Xác thực thất bại. Vui lòng thử lại.", "error");
+            setToast({ message: "System error while disabling 2FA.", type: "error" });
         }
-    };
-
-    const handleCancelSetup = () => {
-        setIsSettingUp(false);
-        setQrData(null);
-        setOtpCode("");
-    };
-
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        showToast("Đã sao chép mã bí mật!", "success");
     };
 
     return (
         <div className="rounded-2xl border border-gray-100 bg-white p-6 md:p-8 dark:border-white/5 dark:bg-[#0a0a0a]">
-            {/* Header Row */}
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isEnabled ? "bg-emerald-500/10 text-emerald-500" : "bg-gold/10 text-gold"
-                        }`}>
-                        {isEnabled ? <ShieldCheck size={24} /> : <Shield size={24} />}
-                    </div>
-                    <div>
-                        <h3 className="font-serif text-lg md:text-xl text-gray-900 dark:text-white uppercase tracking-wider">Two-Factor Authentication</h3>
-                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                            {isEnabled
-                                ? "Tài khoản của bạn đang được bảo vệ bởi lớp xác thực thứ hai."
-                                : "Thêm lớp bảo mật bằng mã OTP khi đăng nhập."}
-                        </p>
-                    </div>
-                </div>
-                {!isSettingUp && (
-                    <Switch
-                        checked={isEnabled}
-                        onCheckedChange={handleToggle}
-                        disabled={setup2Fa.isPending || enable2Fa.isPending || disable2Fa.isPending}
-                    />
-                )}
-            </div>
+            {/* Full-screen Modal Overlay for Disable Confirmation */}
+            {isConfirmingDisable && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-500"
+                        onClick={() => setIsConfirmingDisable(false)}
+                    ></div>
 
-            {toast && <InlineToast message={toast.message} type={toast.type} onBlur={() => setToast(null)} />}
-
-            {/* QR Setup Panel */}
-            {isSettingUp && qrData && (
-                <div className="mt-8 rounded-2xl bg-slate-50 p-6 md:p-8 dark:bg-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        {/* QR Code */}
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                            <div className="p-4 bg-white rounded-2xl shadow-xl dark:bg-white inline-block">
-                                <QRCodeSVG value={qrData.authenticatorUri} size={180} />
+                    {/* Modal Content */}
+                    <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white p-8 dark:bg-[#0f0f0f] border border-white/5 shadow-2xl animate-in zoom-in-95 fade-in duration-300">
+                        <div className="text-center space-y-6">
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+                                <Shield size={32} />
                             </div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                                Quét bằng Google Authenticator hoặc Authy
-                            </p>
-                        </div>
 
-                        {/* Instructions */}
-                        <div className="space-y-6">
-                            <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white mb-2">Bước 1: Đăng ký ứng dụng</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                                    Mở ứng dụng xác thực trên điện thoại và quét mã QR. Nếu không quét được, nhập mã bí mật này theo cách thủ công:
+                            <div className="space-y-2">
+                                <h4 className="font-serif text-2xl text-gray-900 dark:text-white uppercase tracking-wider">Disable 2FA</h4>
+                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed px-4">
+                                    For security reasons, please enter your verification code to continue.
                                 </p>
-                                <div className="flex items-center gap-2 rounded-xl bg-white p-3 border border-gray-100 dark:bg-black dark:border-white/10 shadow-sm">
-                                    <code className="flex-1 font-mono text-xs tracking-widest text-gold break-all uppercase font-bold">
-                                        {qrData.sharedKey}
-                                    </code>
-                                    <button
-                                        type="button"
-                                        onClick={() => copyToClipboard(qrData.sharedKey)}
-                                        className="ml-2 shrink-0 text-gray-400 hover:text-gold transition-all active:scale-95"
-                                    >
-                                        <Copy size={16} />
-                                    </button>
-                                </div>
                             </div>
 
-                            <div className="space-y-3">
-                                <h4 className="font-bold text-gray-900 dark:text-white font-serif">Bước 2: Xác nhận kích hoạt</h4>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <Input
-                                        placeholder="000000"
-                                        value={otpCode}
-                                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                                        className="text-center font-serif text-3xl tracking-[0.4em] h-14 bg-white dark:bg-black"
-                                        maxLength={6}
-                                        inputMode="numeric"
-                                    />
-                                    <Button
-                                        onClick={handleVerifyAndEnable}
-                                        disabled={enable2Fa.isPending || otpCode.length !== 6}
-                                        className="h-14 bg-gold hover:bg-gold/90 text-white font-bold tracking-widest uppercase px-8 shadow-lg shadow-gold/20"
-                                    >
-                                        {enable2Fa.isPending ? <Loader2 size={18} className="animate-spin" /> : "Kích hoạt"}
-                                    </Button>
-                                </div>
+                            <div className="relative">
+                                <Input
+                                    placeholder="0 0 0 0 0 0"
+                                    value={disableCode}
+                                    onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                    className="text-center font-serif text-4xl! tracking-[0.4em] h-20 bg-gray-50 dark:bg-black border-gray-100 dark:border-white/10 rounded-2xl focus:border-gold/50 font-bold placeholder:text-gray-200 dark:placeholder:text-gray-800"
+                                    maxLength={6}
+                                    autoFocus
+                                />
                             </div>
 
-                            <div className="pt-2 border-t border-gray-100 dark:border-white/5">
-                                <button
-                                    onClick={handleCancelSetup}
-                                    className="text-xs font-bold text-gray-400 hover:text-red-500 tracking-widest uppercase transition-colors"
+                            <div className="flex flex-col gap-3">
+                                <Button 
+                                    onClick={handleDisable}
+                                    disabled={disable2Fa.isPending || disableCode.length !== 6}
+                                    className="w-full bg-[#991b1b] hover:bg-[#7f1d1d] text-white font-bold tracking-widest uppercase h-14 rounded-2xl shadow-xl shadow-red-900/20 transition-all active:scale-95"
                                 >
-                                    Hủy thiết lập
+                                    {disable2Fa.isPending ? <Loader2 size={18} className="animate-spin" /> : "Deactivate Now"}
+                                </Button>
+                                <button 
+                                    onClick={() => {
+                                        setIsConfirmingDisable(false);
+                                        setDisableCode("");
+                                    }}
+                                    className="pt-2 text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 uppercase tracking-[0.2em] transition-colors"
+                                >
+                                    Cancel & Stay Protected
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isEnabled ? "bg-emerald-500/10 text-emerald-500" : "bg-gold/10 text-gold"}`}>
+                        {isEnabled ? <ShieldCheck size={24} /> : <Shield size={24} />}
+                    </div>
+                    <div>
+                        <h3 className="font-serif text-lg md:text-xl text-gray-900 dark:text-white uppercase tracking-wider">Two-Factor Authentication</h3>
+                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                            {isEnabled
+                                ? "Your account is currently protected by an extra layer of security."
+                                : "Add an additional layer of security with OTP verification."}
+                        </p>
+                    </div>
+                </div>
+
+                {isEnabled ? (
+                    <Button 
+                        onClick={() => setIsConfirmingDisable(true)}
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-700 bg-red-50/50 dark:bg-red-500/10 text-[10px] font-bold tracking-[0.2em] uppercase transition-all px-6 border border-red-100/50 dark:border-red-500/20 hover:border-red-500 dark:hover:border-red-500/40 rounded-xl"
+                        disabled={disable2Fa.isPending}
+                    >
+                        Disable
+                    </Button>
+                ) : (
+                    <Link href="/profile/2fa/setup">
+                        <Button className="bg-gold hover:bg-gold/90 text-white font-bold tracking-[0.2em] uppercase px-8 shadow-lg shadow-gold/20 rounded-xl transition-all active:scale-95">
+                            Enable
+                        </Button>
+                    </Link>
+                )}
+            </div>
+
+            {toast && <InlineToast message={toast.message} type={toast.type} onBlur={() => setToast(null)} />}
         </div>
     );
 }
