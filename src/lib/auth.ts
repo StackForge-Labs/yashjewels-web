@@ -75,5 +75,22 @@ export const initKycSessionApi = () =>
 export const getKycSessionStatusApi = (token: string) =>
     apiClient.get<ApiResponse<string>>(`/user/kyc/session-status/${token}`).then(r => r.data);
 
-export const submitMobileKycApi = (data: { sessionToken: string, request: any }) =>
-    apiClient.post<ApiResponse<boolean>>("/user/kyc/submit-mobile", data).then(r => r.data);
+export const submitMobileKycApi = (request: { sessionToken: string; request: any }) => 
+    apiClient.post<string>("/user/kyc/submit-mobile", request);
+
+// ── 2FA ────────────────────────────────────────────────────────
+export const setup2FaApi = () => 
+    apiClient.get<ApiResponse<{ sharedKey: string; authenticatorUri: string }>>("/user/2fa/setup").then(r => r.data);
+
+export const enable2FaApi = (code: string) => 
+    apiClient.post<ApiResponse<string>>("/user/2fa/enable", JSON.stringify(code), { 
+        headers: { "Content-Type": "application/json" } 
+    }).then(r => r.data);
+
+export const disable2FaApi = (code: string) => 
+    apiClient.post<ApiResponse<string>>("/user/2fa/disable", JSON.stringify(code), { 
+        headers: { "Content-Type": "application/json" } 
+    }).then(r => r.data);
+
+export const loginVerify2FaApi = (data: { email: string; otp: string }) => 
+    apiClient.post<ApiResponse<AuthResponse>>("/user/2fa/login-verify", data).then(r => r.data);

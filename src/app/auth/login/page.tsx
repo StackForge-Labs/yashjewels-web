@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SocialLogin } from "../_components/SocialLogin";
 import { AuthAlert } from "../_components/AuthAlert";
 import { useLogin } from "@/hooks/useAuth";
@@ -22,7 +23,9 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
     useRedirectIfAuthenticated();
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
+    
     const login = useLogin();
 
     const {
@@ -46,16 +49,32 @@ const LoginPage = () => {
         }
     }, [setValue]);
 
-    const onSubmit = (data: LoginFormValues) => {
+    const onSubmit = async (data: LoginFormValues) => {
         if (data.rememberMe) {
             localStorage.setItem("remembered_email", data.email);
         } else {
             localStorage.removeItem("remembered_email");
         }
-        login.mutate(data);
+        
+        try {
+            const res = await login.mutateAsync(data);
+            
+            // Check if 2FA is required (Even if Success is false)
+            if (res.requiresTwoFactor) {
+                router.push(`/auth/verify-2fa?email=${encodeURIComponent(data.email)}`);
+                return;
+            }
+        } catch (err: any) {
+            // Check nested response data in case axios threw because Success = false
+            const res = err?.response?.data;
+            if (res?.requiresTwoFactor) {
+                router.push(`/auth/verify-2fa?email=${encodeURIComponent(data.email)}`);
+            }
+        }
     };
 
-    const errorMessage = getErrorMessage(login.error) || (login.data && !login.data.success ? login.data.errors?.[0] : null);
+    const errorMessage = getErrorMessage(login.error) || 
+                         (login.data && !login.data.success && !login.data.requiresTwoFactor ? login.data.errors?.[0] : null);
 
     return (
         <section className="min-h-screen bg-white py-20 transition-colors dark:bg-[#050505]">
@@ -103,7 +122,9 @@ const LoginPage = () => {
 
                     {/* Login Card */}
                     <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm dark:border-white/5 dark:bg-[#0a0a0a]">
-                        <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
+                        <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+                            Welcome back
+                        </h2>
                         <p className="mb-8 text-sm text-gray-500 dark:text-gray-400">
                             Please enter your details to sign in
                         </p>

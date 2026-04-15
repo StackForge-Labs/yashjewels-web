@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useLogout, useUpdateAvatar } from "@/hooks/useAuth";
 import { useRef } from "react";
 
+import { TwoFactorSection } from "@/components/profile/TwoFactorSection";
+
 export default function ProfilePage() {
     const { profile, isLoading } = useAuthGuard();
     const logout = useLogout();
@@ -249,21 +251,7 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                                 
-                                <div className="rounded-2xl border border-gray-100 bg-white p-8 dark:border-white/5 dark:bg-[#0a0a0a]">
-                                    <h3 className="mb-6 font-serif text-xl text-gray-900 dark:text-white">Account Security</h3>
-                                    <div className="flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 p-6 dark:border-white/5 dark:bg-white/2">
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
-                                                <Shield size={20} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">Two-Factor Authentication</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Add an extra layer of security to your account.</p>
-                                            </div>
-                                        </div>
-                                        <button className="rounded-lg bg-gray-900 px-4 py-2 text-[10px] font-bold tracking-widest text-white uppercase transition-all hover:bg-black dark:bg-white dark:text-black">Enable</button>
-                                    </div>
-                                </div>
+                                <TwoFactorSection isEnabled={profile.twoFaEnabled} />
                             </div>
                         </div>
                     </div>

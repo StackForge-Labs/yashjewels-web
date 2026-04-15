@@ -1,6 +1,7 @@
 // ── API Generic Response ───────────────────────────────────────
 export interface ApiResponse<T> {
     success: boolean;
+    requiresTwoFactor?: boolean;
     message: string;
     data: T | null;
     errors: string[];
@@ -64,6 +65,7 @@ export interface UserProfile {
     avatarUrl: string | null;
     dateOfBirth: string | null;
     createdAt: string;
+    twoFaEnabled: boolean;
 }
 
 // ── Admin KYC ───────────────────────────────────────────────────
