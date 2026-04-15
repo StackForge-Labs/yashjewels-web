@@ -117,13 +117,13 @@ export default function ProfilePage() {
 
     return (
         <>
-            <PageHero 
-                title="Your Profile" 
-                subtitle="Manage your account preferences and security" 
+            <PageHero
+                title="Your Profile"
+                subtitle="Manage your account preferences and security"
                 breadcrumbs={[{ label: "Profile" }]}
             />
-            
-            <section className="relative bg-gray-50/30 py-20 transition-colors dark:bg-[#050505]">
+
+            <section className="relative bg-gray-50/30 py-5 transition-colors dark:bg-[#050505]">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
                         {/* Sidebar */}
@@ -139,31 +139,31 @@ export default function ProfilePage() {
                                                     <User size={64} />
                                                 </div>
                                             )}
-                                            
+
                                             {updateAvatar.isPending && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                     <Loader2 className="animate-spin text-white" />
                                                 </div>
                                             )}
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => fileInputRef.current?.click()}
                                             className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-gold text-white shadow-lg transition-all hover:scale-110 active:scale-95"
                                         >
                                             <Camera size={18} />
                                         </button>
-                                        <input 
-                                            type="file" 
-                                            ref={fileInputRef} 
-                                            onChange={handleFileChange} 
-                                            accept="image/*" 
-                                            className="hidden" 
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            onChange={handleFileChange}
+                                            accept="image/*"
+                                            className="hidden"
                                         />
                                     </div>
-                                    
+
                                     <h2 className="font-serif text-2xl text-gray-900 dark:text-white">{profile.fullName}</h2>
                                     <p className="mt-1 text-xs font-bold tracking-widest text-gold uppercase">{profile.email}</p>
-                                    
+
                                     <div className="mt-8 flex items-center justify-center gap-6 border-t border-gray-50 pt-8 dark:border-white/5">
                                         <div className="text-center">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Level</p>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                                             </button>
                                         </li>
                                         <li className="pt-2">
-                                            <button 
+                                            <button
                                                 onClick={() => logout.mutate()}
                                                 className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-rose-500 uppercase transition-all hover:bg-rose-50 dark:hover:bg-rose-500/10"
                                             >
@@ -253,7 +253,7 @@ export default function ProfilePage() {
                                     <div className="mb-10 flex items-center justify-between">
                                         <h3 className="font-serif text-2xl text-gray-900 dark:text-white">Account Information</h3>
                                         {!isEditing ? (
-                                            <button 
+                                            <button
                                                 onClick={() => setIsEditing(true)}
                                                 className="text-gold text-xs font-bold tracking-widest uppercase hover:underline"
                                             >
@@ -261,13 +261,13 @@ export default function ProfilePage() {
                                             </button>
                                         ) : (
                                             <div className="flex items-center gap-4">
-                                                <button 
+                                                <button
                                                     onClick={handleCancel}
                                                     className="text-gray-400 text-[10px] font-bold tracking-widest uppercase hover:text-gray-600 transition-colors"
                                                 >
                                                     Cancel
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={handleSave}
                                                     disabled={updateProfile.isPending}
                                                     className="bg-gold text-white px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase hover:brightness-105 transition-all disabled:opacity-50"
@@ -282,7 +282,7 @@ export default function ProfilePage() {
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Full Name</p>
                                             {isEditing ? (
-                                                <input 
+                                                <input
                                                     type="text"
                                                     value={editData.fullName}
                                                     onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Phone Number</p>
                                             {isEditing ? (
-                                                <input 
+                                                <input
                                                     type="tel"
                                                     value={editData.phone}
                                                     onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
@@ -322,7 +322,7 @@ export default function ProfilePage() {
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Date of Birth</p>
                                             {isEditing ? (
-                                                <input 
+                                                <input
                                                     type="date"
                                                     value={editData.dateOfBirth}
                                                     onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
@@ -346,7 +346,7 @@ export default function ProfilePage() {
 
                                 {/* Address Section */}
                                 <AddressSection />
-                                
+
                                 {/* 2FA Section */}
                                 <TwoFactorSection isEnabled={profile.twoFaEnabled} />
                             </div>
