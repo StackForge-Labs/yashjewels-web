@@ -4,7 +4,7 @@ import { Instagram } from "../icon/Instagram";
 import { Youtube } from "../icon/Youtube";
 import { ScrollToTop } from "./ScrollToTop";
 import { FomoNotification } from "./FomoNotification";
-import { PromoBar } from "./PromoBar";
+// import { PromoBar } from "./PromoBar";
 import Link from "next/link";
 
 export const Footer = () => {
@@ -36,10 +36,10 @@ export const Footer = () => {
                             </h2>
                         </div>
                         <p className="mb-8 text-[13px] md:text-sm leading-relaxed text-gray-500 dark:text-gray-400 text-center lg:text-left">
-                            Natural diamonds, high jewelry, and custom engagement rings. 
+                            Natural diamonds, high jewelry, and custom engagement rings.
                             Handcrafted, elegant, and made to last.
                         </p>
-                        
+
                         <div className="space-y-4 mb-8">
                             <div className="flex items-center justify-center lg:justify-start gap-4 text-xs md:text-sm font-medium text-gray-600 dark:text-gray-300">
                                 <MapPin size={16} className="text-gold shrink-0" />
@@ -173,8 +173,8 @@ export const Footer = () => {
                             GIA Certified
                         </span>
                         <div className="flex items-center gap-3 text-gray-300 dark:text-gray-600">
-                             <div className="h-4 w-8 rounded bg-gray-100 dark:bg-white/5 border border-transparent"></div>
-                             <div className="h-4 w-8 rounded bg-gray-100 dark:bg-white/5 border border-transparent"></div>
+                            <div className="h-4 w-8 rounded bg-gray-100 dark:bg-white/5 border border-transparent"></div>
+                            <div className="h-4 w-8 rounded bg-gray-100 dark:bg-white/5 border border-transparent"></div>
                         </div>
                     </div>
 
@@ -187,7 +187,7 @@ export const Footer = () => {
             </div>
             <ScrollToTop />
             <FomoNotification />
-            <PromoBar />
+            {/* <PromoBar /> */}
         </footer>
     );
 };

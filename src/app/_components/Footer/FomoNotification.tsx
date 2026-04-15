@@ -61,9 +61,8 @@ export const FomoNotification = () => {
 
     return (
         <div
-            className={`fixed bottom-8 left-8 z-100 hidden max-w-[360px] overflow-hidden rounded-2xl border border-gray-100 bg-white/95 p-0 shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all duration-700 select-none lg:flex dark:border-white/10 dark:bg-zinc-900/95 ${
-                isVisible ? "translate-x-0 opacity-100" : "-translate-x-10 opacity-0"
-            }`}
+            className={`fixed bottom-8 right-8 z-100 hidden max-w-[360px] overflow-hidden rounded-2xl border border-gray-100 bg-white/95 p-0 shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all duration-700 select-none lg:flex dark:border-white/10 dark:bg-zinc-900/95 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-10 opacity-0"
+                }`}
         >
             <div className="flex w-full items-center p-3">
                 {/* Product Image */}
@@ -104,9 +103,8 @@ export const FomoNotification = () => {
             {/* Progress bar for timer */}
             <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gray-50 dark:bg-black/20">
                 <div
-                    className={`bg-gold h-full transition-all duration-15000 linear ${
-                        isVisible ? "w-full" : "w-0"
-                    }`}
+                    className={`bg-gold h-full transition-all duration-15000 linear ${isVisible ? "w-full" : "w-0"
+                        }`}
                 ></div>
             </div>
         </div>
