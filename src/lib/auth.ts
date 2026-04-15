@@ -67,3 +67,13 @@ export const updateAvatarApi = (file: File) => {
         headers: { "Content-Type": "multipart/form-data" }
     }).then((r) => r.data);
 };
+
+// ── KYC Session ──────────────────────────────────────────────
+export const initKycSessionApi = () => 
+    apiClient.post<ApiResponse<{ sessionToken: string, qrUrl: string }>>("/user/kyc/init-session").then(r => r.data);
+
+export const getKycSessionStatusApi = (token: string) =>
+    apiClient.get<ApiResponse<string>>(`/user/kyc/session-status/${token}`).then(r => r.data);
+
+export const submitMobileKycApi = (data: { sessionToken: string, request: any }) =>
+    apiClient.post<ApiResponse<boolean>>("/user/kyc/submit-mobile", data).then(r => r.data);
