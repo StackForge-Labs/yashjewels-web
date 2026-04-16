@@ -29,6 +29,7 @@ import { useState, useRef, useEffect } from "react";
 
 export const Header = () => {
     const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
+    const cart = useSelector((state: RootState) => state.cart);
     const logout = useLogout();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -175,7 +176,11 @@ export const Header = () => {
 
                         <Link href="/cart" className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5">
                             <ShoppingCart size={22} strokeWidth={1.5} />
-                            <span className="bg-gold absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white dark:border-[#050505] dark:text-black">3</span>
+                            {cart?.items?.length > 0 && (
+                                <span className="bg-gold absolute -top-0 -right-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white px-1 text-[9px] font-bold text-white dark:border-[#050505] dark:text-black">
+                                    {cart.items.length}
+                                </span>
+                            )}
                         </Link>
                     </div>
                 </div>

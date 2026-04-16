@@ -14,6 +14,8 @@ import { useCart } from "@/hooks/useCart";
 import axiosInstance from "@/lib/api-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import AddressSection from "./_components/AddressSection";
+import { UserAddressDto } from "@/types/user.types";
 
 const STEPS = ["Address", "Insurance", "Payment", "Review"];
 
@@ -25,12 +27,12 @@ export default function CheckoutPage() {
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
     const [payment, setPayment] = useState("card");
+    const [pay100Percent, setPay100Percent] = useState(false);
     const [isGift, setIsGift] = useState(false);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
     // Form states
-    const [shippingName, setShippingName] = useState("");
-    const [shippingPhone, setShippingPhone] = useState("");
+    const [selectedAddress, setSelectedAddress] = useState<UserAddressDto | null>(null);
     const [idempotencyKey] = useState(() => crypto.randomUUID());
 
     useEffect(() => {
@@ -40,6 +42,35 @@ export default function CheckoutPage() {
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     };
+
+    // Calculate dynamic insurance fees based on cart total
+    const getInsuranceFee = (type: string) => {
+        const total = cart.totalLiveMrp;
+        if (type === "shipping") return Math.round(total * 0.005); // 0.5%
+        if (type === "full") return Math.round(total * 0.015);    // 1.5%
+        return 0;
+    };
+
+    const insuranceFee = getInsuranceFee(insurance);
+    // backend handles VAT inside MRP, so we mock 0 extra here to fix GAP-12 double-VAT issue
+    const vatAmount = 0; 
+    const grandTotal = cart.totalLiveMrp + insuranceFee + vatAmount;
+
+    // Calculate dynamic deposit based on exact backend logic
+    const getDepositRequired = () => {
+        if (pay100Percent || grandTotal >= 50000000) return grandTotal; // 100%
+        if (grandTotal >= 10000000) return grandTotal * 0.5; // 50%
+        return grandTotal * 0.3; // 30%
+    };
+    const depositAmount = getDepositRequired();
+    const depositPct = depositAmount === grandTotal ? "100%" : depositAmount === grandTotal * 0.5 ? "50%" : "30%";
+
+    // Handle COD constraints
+    useEffect(() => {
+        if (grandTotal > 20000000 && payment === "cod") {
+            setPayment("card");
+        }
+    }, [grandTotal, payment]);
 
     // KYC Check Enforcement
     const kycStatus = user?.kycStatus?.toLowerCase();
@@ -54,7 +85,6 @@ export default function CheckoutPage() {
                     breadcrumbs={[{ label: "Cart", href: "/cart" }, { label: "Verification Required" }]}
                 />
                 <section className="bg-white py-24 transition-colors dark:bg-[#050505]">
-                    {/* KYC UI is identical to previous version */}
                     <div className="container mx-auto px-4 text-center">
                         <div className="mx-auto max-w-lg rounded-3xl border border-gold/20 bg-gold/5 p-12 shadow-2xl backdrop-blur-sm">
                             <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl dark:bg-[#111]">
@@ -94,37 +124,47 @@ export default function CheckoutPage() {
     }
 
     const handlePlaceOrder = async () => {
-        if (!shippingName || !shippingPhone) {
-            toast.error("Please enter shipping name and phone.");
+        if (step !== 3) {
+            setStep(3);
+            return;
+        }
+
+        if (!selectedAddress) {
+            toast.error("Please select a shipping address.");
             setStep(0);
             return;
         }
 
         setIsPlacingOrder(true);
         try {
-            const { data } = await axiosInstance.post("/v1/orders", {
-                shippingName,
-                shippingPhone,
+            const { data } = await axiosInstance.post("/orders", {
+                shippingName: selectedAddress.recipientName,
+                shippingPhone: selectedAddress.recipientPhone,
+                shippingAddressId: selectedAddress.id,
                 idempotencyKey
             });
 
             if (data.success) {
                 toast.success("Order Created Successfully!");
-                // Clear cart state (backend already cleared it, we just refresh local state)
                 await fetchCart();
-                // Redirect forward to orders page (or payment portal if stripe was ready)
-                router.push(`/profile`);
+                router.push(`/orders/${data.data.orderId}/payment`);
             } else {
                 toast.error(data.message || "Failed to create order.");
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Checkout Blocked (Market Fluctuation).");
-            if (error.response?.data?.message?.includes('fluctuation')) {
-                router.push("/cart"); // send them back to cart to review prices
-            }
+            toast.error(error.response?.data?.message || "Checkout Blocked.");
         } finally {
             setIsPlacingOrder(false);
         }
+    };
+
+    const handleNextStep = () => {
+        // Validation Guards
+        if (step === 0 && !selectedAddress) {
+            toast.error("Please select a shipping address to continue.");
+            return;
+        }
+        setStep(step + 1);
     };
 
     return (
@@ -144,8 +184,8 @@ export default function CheckoutPage() {
                                 <button
                                     onClick={() => setStep(i)}
                                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${i <= step
-                                            ? "bg-gold text-white shadow-lg shadow-gold/20"
-                                            : "border border-gray-200 text-gray-400 dark:border-white/10"
+                                        ? "bg-gold text-white shadow-lg shadow-gold/20"
+                                        : "border border-gray-200 text-gray-400 dark:border-white/10"
                                         }`}
                                 >
                                     {i < step ? <Check size={14} /> : i + 1}
@@ -165,29 +205,10 @@ export default function CheckoutPage() {
                         <div className="lg:col-span-7">
                             {/* Step 1: Address */}
                             {step === 0 && (
-                                <div className="space-y-6 rounded-2xl border border-gray-100 p-6 md:p-8 dark:border-white/5">
-                                    <div className="flex items-center gap-3">
-                                        <MapPin size={20} className="text-gold" />
-                                        <h2 className="font-serif text-xl text-gray-900 dark:text-white">Delivery Address</h2>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <input
-                                            placeholder="Full Name *"
-                                            value={shippingName}
-                                            onChange={e => setShippingName(e.target.value)}
-                                            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2"
-                                        />
-                                        <input
-                                            placeholder="Phone Number *"
-                                            value={shippingPhone}
-                                            onChange={e => setShippingPhone(e.target.value)}
-                                            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2"
-                                        />
-                                        <input placeholder="Street Address *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2" />
-                                        <input placeholder="City *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                        <input placeholder="State / Province *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                    </div>
-                                </div>
+                                <AddressSection
+                                    selectedId={selectedAddress?.id}
+                                    onSelect={(addr) => setSelectedAddress(addr)}
+                                />
                             )}
 
                             {/* Step 2: Insurance */}
@@ -201,15 +222,15 @@ export default function CheckoutPage() {
 
                                     {[
                                         { id: "none", title: "No Insurance", desc: "Standard delivery without additional coverage", price: "Free", icon: Package },
-                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit", price: "+449,318 VND", icon: Truck },
-                                        { id: "full", title: "Full Coverage", desc: "Shipping + 30-day product protection after delivery", price: "+1,347,955 VND", icon: ShieldCheck },
+                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit (0.5%)", price: `+${formatCurrency(getInsuranceFee("shipping"))}`, icon: Truck },
+                                        { id: "full", title: "Full Coverage", desc: "Shipping + 30-day product protection (1.5%)", price: `+${formatCurrency(getInsuranceFee("full"))}`, icon: ShieldCheck },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
                                             onClick={() => setInsurance(opt.id)}
                                             className={`flex w-full items-start gap-4 rounded-xl border-2 p-5 text-left transition-all ${insurance === opt.id
-                                                    ? "border-gold bg-gold/5 shadow-lg shadow-gold/10"
-                                                    : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
+                                                ? "border-gold bg-gold/5 shadow-lg shadow-gold/10"
+                                                : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
                                                 }`}
                                         >
                                             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${insurance === opt.id ? "bg-gold text-white" : "bg-gray-100 text-gray-400 dark:bg-white/5"}`}>
@@ -234,23 +255,29 @@ export default function CheckoutPage() {
                                     </div>
 
                                     {[
-                                        { id: "card", title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX" },
-                                        { id: "bank", title: "Bank Transfer", desc: "Direct bank transfer with auto-verification" },
-                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 VND" },
+                                        { id: "card", title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX", disabled: false },
+                                        { id: "bank", title: "Bank Transfer", desc: "Direct bank transfer with auto-verification", disabled: false },
+                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 20,000,000 VND", disabled: grandTotal > 20000000 },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => setPayment(opt.id)}
+                                            onClick={() => !opt.disabled && setPayment(opt.id)}
+                                            disabled={opt.disabled}
                                             className={`flex w-full items-center gap-4 rounded-xl border-2 p-5 text-left transition-all ${payment === opt.id
                                                     ? "border-gold bg-gold/5"
-                                                    : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
+                                                    : opt.disabled 
+                                                        ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed dark:border-white/5 dark:bg-white/5" 
+                                                        : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
                                                 }`}
                                         >
                                             <div className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${payment === opt.id ? "border-gold" : "border-gray-300 dark:border-white/20"}`}>
                                                 {payment === opt.id && <div className="h-2.5 w-2.5 rounded-full bg-gold" />}
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{opt.title}</p>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{opt.title}</p>
+                                                    {opt.disabled && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter line-through">Disabled</span>}
+                                                </div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">{opt.desc}</p>
                                             </div>
                                         </button>
@@ -258,10 +285,30 @@ export default function CheckoutPage() {
 
                                     {/* Deposit Info */}
                                     <div className="mt-4 rounded-xl bg-gold/5 border border-gold/10 p-5">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Deposit Options</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                            For orders above 10,000,000 VND, you may choose to pay a deposit (30%-50%) and complete the remaining payment after vendor confirms your order.
+                                        <div className="flex items-center justify-between mb-4 border-b border-gold/10 pb-4">
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">Settlement Preference</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select how you would like to settle your balance.</p>
+                                            </div>
+                                            <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="accent-gold h-4 w-4"
+                                                    checked={pay100Percent}
+                                                    onChange={(e) => setPay100Percent(e.target.checked)}
+                                                />
+                                                Full Settlement
+                                            </label>
+                                        </div>
+
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Required Deposit: {depositPct}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                                            For orders above 10,000,000 VND, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order.
                                         </p>
+                                        <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
+                                            <span>To Pay Now:</span>
+                                            <span>{formatCurrency(depositAmount)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -288,8 +335,13 @@ export default function CheckoutPage() {
                                         <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
                                             <p className="mb-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Delivery Address</p>
                                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                                                {shippingName || "Not provided"}<br />
-                                                {shippingPhone || "Not provided"}
+                                                {selectedAddress ? (
+                                                    <>
+                                                        <span className="font-bold">{selectedAddress.recipientName}</span><br />
+                                                        {selectedAddress.recipientPhone}<br />
+                                                        {selectedAddress.addressLine1}, {selectedAddress.ward}, {selectedAddress.district}, {selectedAddress.province}
+                                                    </>
+                                                ) : "Not selected"}
                                             </p>
                                         </div>
                                         <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
@@ -310,7 +362,7 @@ export default function CheckoutPage() {
                                 </button>
                                 {step < STEPS.length - 1 ? (
                                     <button
-                                        onClick={() => setStep(step + 1)}
+                                        onClick={handleNextStep}
                                         className="bg-gold group flex items-center gap-2 rounded-xl px-8 py-3 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105"
                                     >
                                         Continue <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
@@ -348,13 +400,13 @@ export default function CheckoutPage() {
                                 <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
                                     <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : insurance === "shipping" ? "+449k" : "+1.3M"}</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp * 0.1)}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">{formatCurrency(vatAmount)}</span></div>
                                 </div>
 
                                 <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
                                     <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
-                                    <span className="text-gold text-xl font-bold">{formatCurrency(cart.totalLiveMrp * 1.1)}</span>
+                                    <span className="text-gold text-xl font-bold">{formatCurrency(grandTotal)}</span>
                                 </div>
 
                                 {cart.checkoutBlocked && (
