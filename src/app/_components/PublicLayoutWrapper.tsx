@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { ReactNode } from "react";
+import { SignalRWatcher } from "./SignalRWatcher";
 
 export const PublicLayoutWrapper = ({ children }: { children: ReactNode }) => {
     const pathname = usePathname() || "";
@@ -16,6 +17,7 @@ export const PublicLayoutWrapper = ({ children }: { children: ReactNode }) => {
 
     return (
         <>
+            <SignalRWatcher />
             <Header />
             <main className="grow pb-0">{children}</main>
             <Footer />

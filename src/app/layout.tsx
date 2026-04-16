@@ -7,6 +7,7 @@ import { ReduxProvider } from "@/wrapper/ReduxProvider";
 import QueryProvider from "@/wrapper/QueryProvider";
 import { ProfileWatcher } from "./_components/ProfileWatcher";
 import { CookieConsent } from "./_components/CookieConsent";
+import { Toaster } from "sonner";
 
 const cormorant = Cormorant_Garamond({
     variable: "--font-cormorant",
@@ -50,6 +51,7 @@ export default function RootLayout({
                         <ProfileWatcher />
                         <PublicLayoutWrapper>{children}</PublicLayoutWrapper>
                         <CookieConsent />
+                        <Toaster position="top-right" richColors closeButton />
                     </QueryProvider>
                 </ReduxProvider>
             </body>
