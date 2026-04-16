@@ -6,6 +6,7 @@ import { PublicLayoutWrapper } from "./_components/PublicLayoutWrapper";
 import { ReduxProvider } from "@/wrapper/ReduxProvider";
 import QueryProvider from "@/wrapper/QueryProvider";
 import { ProfileWatcher } from "./_components/ProfileWatcher";
+import { InventoryWatcher } from "./_components/InventoryWatcher";
 import { CookieConsent } from "./_components/CookieConsent";
 import { Toaster } from "sonner";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
                 <ReduxProvider>
                     <QueryProvider>
                         <ProfileWatcher />
+                        <InventoryWatcher />
                         <PublicLayoutWrapper>{children}</PublicLayoutWrapper>
                         <CookieConsent />
                         <Toaster position="top-right" richColors closeButton />
