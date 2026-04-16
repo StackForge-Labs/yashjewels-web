@@ -28,9 +28,18 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
         turnedRight: false,
         isCenter: false,
     });
-    
+
     const [photo, setPhoto] = useState<string | null>(null);
     const [centerDuration, setCenterDuration] = useState(0);
+
+    // EAR Calculation for Blink Detection
+    const calculateEAR = (eye: any[]) => {
+        const dist = (p1: any, p2: any) => Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        const v1 = dist(eye[1], eye[5]);
+        const v2 = dist(eye[2], eye[4]);
+        const h = dist(eye[0], eye[3]);
+        return (v1 + v2) / (2.0 * h);
+    };
 
     // Initial Model Loading
     useEffect(() => {
@@ -55,8 +64,8 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
 
     const startVideo = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
             });
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
@@ -67,7 +76,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
         }
     };
 
-    // Detection Interval (User's Logic)
+    // Detection Interval
     useEffect(() => {
         let interval: any;
         if (isDetecting && isModelsLoaded && !photo && faceApi) {
@@ -75,7 +84,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                 if (videoRef.current && videoRef.current.readyState === 4) {
                     const video = videoRef.current;
                     const displaySize = { width: video.videoWidth, height: video.videoHeight };
-                    
+
                     if (canvasRef.current && canvasRef.current.width !== displaySize.width) {
                         faceApi.matchDimensions(canvasRef.current, displaySize);
                     }
@@ -85,49 +94,52 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                     if (detections) {
                         const landmarks = detections.landmarks;
                         const nose = landmarks.getNose()[0];
-                        const leftEye = landmarks.getLeftEye()[0];
-                        const rightEye = landmarks.getRightEye()[3]; // Outer edge
+                        const leftEye = landmarks.getLeftEye();
+                        const rightEye = landmarks.getRightEye();
 
-                        const distLeft = nose.x - leftEye.x;
-                        const distRight = rightEye.x - nose.x;
+                        // Head orientation
+                        const distLeft = nose.x - leftEye[0].x;
+                        const distRight = rightEye[3].x - nose.x;
                         const ratio = distLeft / (distRight || 1);
+
+                        // Eye EAR for blink
+                        const earL = calculateEAR(leftEye);
+                        const earR = calculateEAR(rightEye);
+                        const avgEAR = (earL + earR) / 2;
 
                         setLivenessStatus(prev => {
                             const nextStatus = { ...prev };
-                            
-                            // Step 1: Must turn left first
+
+                            // Step 1: Turn Left
                             if (!prev.turnedLeft && ratio > 1.8) {
                                 nextStatus.turnedLeft = true;
                             }
-                            // Step 2: Only after left is done, turn right
+                            // Step 2: Turn Right
                             else if (prev.turnedLeft && !prev.turnedRight && ratio < 0.55) {
                                 nextStatus.turnedRight = true;
                             }
-                            
-                            // isCenter should always reflect the *current* state
-                            nextStatus.isCenter = (ratio >= 0.8 && ratio <= 1.2); 
+
+                            nextStatus.isCenter = (ratio >= 0.8 && ratio <= 1.25);
                             return nextStatus;
                         });
                     } else {
-                        // Reset center if no face is detected
                         setLivenessStatus(prev => ({ ...prev, isCenter: false }));
                     }
                 }
-            }, 300);
+            }, 100); // 10fps for better blink detection speed
         }
         return () => clearInterval(interval);
     }, [isDetecting, isModelsLoaded, photo, faceApi]);
 
-    // 2-Second Center Counter Logic
+    // Final Stage Counter Logic (Hold Center for 2.5s)
     useEffect(() => {
         let timer: any;
         if (livenessStatus.turnedLeft && livenessStatus.turnedRight && !photo) {
             if (livenessStatus.isCenter) {
-                // If it's center, increase progress every 100ms
                 timer = setInterval(() => {
                     setCenterDuration(prev => {
                         const next = prev + 100;
-                        if (next >= 2000) {
+                        if (next >= 2500) {
                             clearInterval(timer);
                             capturePhoto();
                         }
@@ -135,7 +147,6 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                     });
                 }, 100);
             } else {
-                // If not center, reset the progress
                 setCenterDuration(0);
             }
         }
@@ -144,13 +155,12 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
 
     const capturePhoto = useCallback(() => {
         if (!videoRef.current) return;
-        
+
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
         const ctx = canvas.getContext("2d");
         if (ctx) {
-            // Apply scaleX(-1) transformation to mirror the UI display
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
             ctx.drawImage(videoRef.current, 0, 0);
@@ -162,7 +172,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                 onCapture(file);
             });
         }
-        
+
         const stream = videoRef.current.srcObject as MediaStream;
         stream?.getTracks().forEach(track => track.stop());
     }, [onCapture]);
@@ -176,28 +186,26 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
         startVideo();
     };
 
-    // Derived State for UX
+    // Derived Logic for Instructions
     const currentStep = !livenessStatus.turnedLeft ? 1 : (!livenessStatus.turnedRight ? 2 : 3);
-    const centerProgressPercentage = Math.min(100, (centerDuration / 2000) * 100);
+    const centerProgressPercentage = Math.min(100, (centerDuration / 2500) * 100);
 
     return (
         <div className="relative overflow-hidden rounded-3xl bg-gray-50 dark:bg-black/20 border-2 border-gray-100 dark:border-white/5">
             <div className="relative aspect-square md:aspect-video w-full overflow-hidden bg-black">
-                <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    muted 
-                    playsInline 
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
                     className={`h-full w-full object-cover transition-opacity duration-500 -scale-x-100 ${photo ? "opacity-50" : "opacity-100"}`}
                 />
                 <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
-                
+
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    {/* Face Guide Frame */}
-                    <div className={`h-64 w-64 md:h-80 md:w-80 rounded-full border-4 border-dashed transition-all duration-500 scale-110 ${
-                        photo ? "border-emerald-500 bg-emerald-500/10" : 
+                    <div className={`h-64 w-64 md:h-80 md:w-80 rounded-full border-4 border-dashed transition-all duration-500 scale-110 ${photo ? "border-emerald-500 bg-emerald-500/10" :
                         currentStep === 3 && livenessStatus.isCenter ? "border-gold animate-pulse" : "border-white/30"
-                    }`}>
+                        }`}>
                         {(photo) && (
                             <div className="flex h-full w-full items-center justify-center">
                                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="rounded-full bg-emerald-500 p-6 text-white shadow-xl">
@@ -207,9 +215,8 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                         )}
                     </div>
 
-                    {/* Instructions Overlay */}
                     <div className="absolute bottom-10 left-0 right-0 p-6 flex justify-center">
-                        <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl px-8 py-5 text-center shadow-2xl min-w-[300px]">
+                        <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl px-8 py-5 text-center shadow-2xl min-w-[320px]">
                             {!isModelsLoaded ? (
                                 <div className="flex flex-col items-center gap-3 text-white">
                                     <Loader2 className="animate-spin text-gold" size={24} />
@@ -219,8 +226,8 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                                 <div className="flex flex-col items-center gap-3 text-rose-400">
                                     <AlertCircle size={28} />
                                     <p className="text-xs font-medium leading-relaxed">{error}</p>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); reset(); }} 
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); reset(); }}
                                         className="mt-2 bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-widest transition-all pointer-events-auto"
                                     >
                                         Retry Session
@@ -229,28 +236,28 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                             ) : photo ? (
                                 <div className="flex items-center justify-center gap-3 text-emerald-400">
                                     <CheckCircle2 size={20} />
-                                    <span className="text-sm font-bold tracking-[0.2em] uppercase">Identity Captured</span>
+                                    <span className="text-sm font-bold tracking-[0.2em] uppercase">Capture Finalized</span>
                                 </div>
                             ) : (
                                 <>
                                     {currentStep === 1 && (
                                         <div className="space-y-1">
-                                            <p className="text-base font-serif text-white italic">Step 1</p>
-                                            <p className="text-xs font-bold tracking-[0.2em] text-gold uppercase animate-pulse">← Turn face to the LEFT</p>
+                                            <p className="text-[10px] font-bold tracking-[0.2em] text-white/50 uppercase">Step 1 / 3</p>
+                                            <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase animate-pulse">← Turn face to the LEFT</p>
                                         </div>
                                     )}
                                     {currentStep === 2 && (
                                         <div className="space-y-1">
-                                            <p className="text-base font-serif text-white italic">Step 2</p>
-                                            <p className="text-xs font-bold tracking-[0.2em] text-gold uppercase animate-pulse">Now Turn to the RIGHT →</p>
+                                            <p className="text-[10px] font-bold tracking-[0.2em] text-white/50 uppercase">Step 2 / 3</p>
+                                            <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase animate-pulse">Now Turn to the RIGHT →</p>
                                         </div>
                                     )}
                                     {currentStep === 3 && (
                                         <div className="space-y-3">
-                                            <p className="text-base font-serif text-white italic">Final Step</p>
-                                            <p className="text-xs font-bold tracking-[0.2em] text-white uppercase">Look straight and hold still</p>
+                                            <p className="text-[10px] font-bold tracking-[0.2em] text-white/50 uppercase">Final Phase</p>
+                                            <p className="text-sm font-bold tracking-[0.2em] text-white uppercase">Hold center and stay still</p>
                                             <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden flex items-end">
-                                               <div className="h-full bg-gold transition-all duration-100 shadow-[0_0_10px_#D4AF37]" style={{ width: `${centerProgressPercentage}%` }}></div>
+                                                <div className="h-full bg-gold transition-all duration-100 shadow-[0_0_10px_#D4AF37]" style={{ width: `${centerProgressPercentage}%` }}></div>
                                             </div>
                                         </div>
                                     )}
@@ -261,14 +268,13 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                 </div>
             </div>
 
-            {/* Bottom Actions if Captured */}
             {photo && (
                 <div className="p-4 flex justify-center bg-white dark:bg-[#0a0a0a]">
-                    <button 
+                    <button
                         onClick={reset}
                         className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-gray-400 hover:text-gold uppercase transition-all"
                     >
-                        <RefreshCw size={14} /> Retake Biometric Scan
+                        <RefreshCw size={14} /> Retake Session
                     </button>
                 </div>
             )}

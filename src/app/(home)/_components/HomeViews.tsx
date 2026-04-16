@@ -13,6 +13,8 @@ interface DiamondData {
     original: string;
     sale: string;
     discount: string;
+    quantity?: number;
+    status?: string;
 }
 
 export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
@@ -181,7 +183,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                             <div data-aos="fade-up" data-aos-delay={i * 100} key={d.sku}>
                                 <ProductCard
                                     sku={d.sku}
-                                    productId={i < 2 ? "MOCK-LIVE-P1" : undefined} // Force top 2 to be dynamic
+                                    productId={d.sku} // Enable live features for all
                                     name={d.name}
                                     category="New Collection"
                                     original={d.original}
@@ -194,6 +196,8 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                         "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg"
                                     }
                                     badge="NEW"
+                                    quantity={d.quantity}
+                                    status={d.status}
                                 />
                             </div>
                         ))}
@@ -215,6 +219,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                             <div data-aos="fade-up" data-aos-delay={i * 100} key={d.sku}>
                                 <ProductCard
                                     sku={d.sku}
+                                    productId={d.sku}
                                     name={d.name.replace("Diamond", "Pendant")}
                                     category="Signature"
                                     original={d.original}
@@ -227,6 +232,8 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                         "https://tamluxury.vn/wp-content/uploads/2026/03/Mat-day-chuyen-kim-cuong-thien-nhien-Milkway-Ma-MD773-1-scaled.jpg"
                                     }
                                     badge="HOT"
+                                    quantity={d.quantity}
+                                    status={d.status}
                                 />
                             </div>
                         ))}
@@ -272,6 +279,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                 <ProductCard
                                     key={d.sku}
                                     sku={d.sku}
+                                    productId={d.sku}
                                     name={"Premium Women's Ring " + d.sku}
                                     category="Women's Line"
                                     original={d.original}
@@ -292,6 +300,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                 <ProductCard
                                     key={d.sku}
                                     sku={d.sku}
+                                    productId={d.sku}
                                     name={"Majestic Men's Ring " + d.sku}
                                     category="Men's Line"
                                     original={d.original}

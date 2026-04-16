@@ -153,7 +153,7 @@ export const Header = () => {
                                             <div className="flex items-center gap-3"><UserCircle size={16} strokeWidth={1.5} /> My Account</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
-                                        <Link href="/orders" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
+                                        <Link href="/profile?view=orders" className="group/item flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400">
                                             <div className="flex items-center gap-3"><ShoppingBag size={16} strokeWidth={1.5} /> My Orders</div>
                                             <ChevronRight size={14} className="opacity-0 -translate-x-2 transition-all group-hover/item:opacity-100 group-hover/item:translate-x-0" />
                                         </Link>
