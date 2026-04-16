@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHero } from "../_components/PageHero";
 import {
     MapPin, CreditCard, Shield, ChevronRight, Check,
@@ -10,20 +10,36 @@ import {
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { useCart } from "@/hooks/useCart";
+import axiosInstance from "@/lib/api-client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const STEPS = ["Address", "Insurance", "Payment", "Review"];
 
-const MOCK_ITEMS = [
-    { name: "Mia Diamond Heart Earrings", sku: "ERFNJ2504921", price: "13,990,200 VND", qty: 1, image: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=200" },
-    { name: "Classic Tennis Bracelet", sku: "BRJ2504800", price: "75,650,000 VND", qty: 1, image: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=200" },
-];
-
 export default function CheckoutPage() {
+    const router = useRouter();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
+    const { cart, fetchCart } = useCart();
+
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
     const [payment, setPayment] = useState("card");
     const [isGift, setIsGift] = useState(false);
+    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+    // Form states
+    const [shippingName, setShippingName] = useState("");
+    const [shippingPhone, setShippingPhone] = useState("");
+    const [idempotencyKey] = useState(() => crypto.randomUUID());
+
+    useEffect(() => {
+        fetchCart();
+    }, [fetchCart]);
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    };
 
     // KYC Check Enforcement
     const kycStatus = user?.kycStatus?.toLowerCase();
@@ -38,6 +54,7 @@ export default function CheckoutPage() {
                     breadcrumbs={[{ label: "Cart", href: "/cart" }, { label: "Verification Required" }]}
                 />
                 <section className="bg-white py-24 transition-colors dark:bg-[#050505]">
+                    {/* KYC UI is identical to previous version */}
                     <div className="container mx-auto px-4 text-center">
                         <div className="mx-auto max-w-lg rounded-3xl border border-gold/20 bg-gold/5 p-12 shadow-2xl backdrop-blur-sm">
                             <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl dark:bg-[#111]">
@@ -47,7 +64,7 @@ export default function CheckoutPage() {
                             <p className="mt-4 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
                                 To protect our clients and maintain the integrity of our Maison, we require identity verification for all jewelry purchases over <span className="font-bold text-gray-900 dark:text-white">5,000,000 VND</span>.
                             </p>
-                            
+
                             <div className="mt-10 flex flex-col gap-4">
                                 <Link href="/auth/kyc" className="bg-gold rounded-xl py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 shadow-lg shadow-gold/20">
                                     Verify My Identity Now
@@ -67,6 +84,49 @@ export default function CheckoutPage() {
         );
     }
 
+    if (cart.items.length === 0) {
+        return (
+            <section className="py-24 text-center">
+                <h2 className="text-2xl mb-4 font-serif">Your Cart is Empty</h2>
+                <Link href="/collections" className="text-gold">Return to Shop</Link>
+            </section>
+        );
+    }
+
+    const handlePlaceOrder = async () => {
+        if (!shippingName || !shippingPhone) {
+            toast.error("Please enter shipping name and phone.");
+            setStep(0);
+            return;
+        }
+
+        setIsPlacingOrder(true);
+        try {
+            const { data } = await axiosInstance.post("/v1/orders", {
+                shippingName,
+                shippingPhone,
+                idempotencyKey
+            });
+
+            if (data.success) {
+                toast.success("Order Created Successfully!");
+                // Clear cart state (backend already cleared it, we just refresh local state)
+                await fetchCart();
+                // Redirect forward to orders page (or payment portal if stripe was ready)
+                router.push(`/profile`);
+            } else {
+                toast.error(data.message || "Failed to create order.");
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Checkout Blocked (Market Fluctuation).");
+            if (error.response?.data?.message?.includes('fluctuation')) {
+                router.push("/cart"); // send them back to cart to review prices
+            }
+        } finally {
+            setIsPlacingOrder(false);
+        }
+    };
+
     return (
         <>
             <PageHero
@@ -83,11 +143,10 @@ export default function CheckoutPage() {
                             <div key={s} className="flex items-center gap-2">
                                 <button
                                     onClick={() => setStep(i)}
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                                        i <= step
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${i <= step
                                             ? "bg-gold text-white shadow-lg shadow-gold/20"
                                             : "border border-gray-200 text-gray-400 dark:border-white/10"
-                                    }`}
+                                        }`}
                                 >
                                     {i < step ? <Check size={14} /> : i + 1}
                                 </button>
@@ -112,27 +171,21 @@ export default function CheckoutPage() {
                                         <h2 className="font-serif text-xl text-gray-900 dark:text-white">Delivery Address</h2>
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <input placeholder="First Name *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                        <input placeholder="Last Name *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                        <input placeholder="Email Address *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2" />
-                                        <input placeholder="Phone Number *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2" />
+                                        <input
+                                            placeholder="Full Name *"
+                                            value={shippingName}
+                                            onChange={e => setShippingName(e.target.value)}
+                                            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2"
+                                        />
+                                        <input
+                                            placeholder="Phone Number *"
+                                            value={shippingPhone}
+                                            onChange={e => setShippingPhone(e.target.value)}
+                                            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2"
+                                        />
                                         <input placeholder="Street Address *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white md:col-span-2" />
                                         <input placeholder="City *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
                                         <input placeholder="State / Province *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                        <input placeholder="ZIP / Postal Code *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                        <input placeholder="Country *" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                    </div>
-
-                                    {/* Gift Option */}
-                                    <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                                        <label className="flex cursor-pointer items-center gap-3">
-                                            <input type="checkbox" checked={isGift} onChange={() => setIsGift(!isGift)} className="accent-gold h-4 w-4" />
-                                            <Gift size={16} className="text-gold" />
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">This is a gift</span>
-                                        </label>
-                                        {isGift && (
-                                            <textarea placeholder="Write a gift message (optional)" className="mt-3 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" rows={3} />
-                                        )}
                                     </div>
                                 </div>
                             )}
@@ -148,17 +201,16 @@ export default function CheckoutPage() {
 
                                     {[
                                         { id: "none", title: "No Insurance", desc: "Standard delivery without additional coverage", price: "Free", icon: Package },
-                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit (48h claim window)", price: "+449,318 VND", icon: Truck },
+                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit", price: "+449,318 VND", icon: Truck },
                                         { id: "full", title: "Full Coverage", desc: "Shipping + 30-day product protection after delivery", price: "+1,347,955 VND", icon: ShieldCheck },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
                                             onClick={() => setInsurance(opt.id)}
-                                            className={`flex w-full items-start gap-4 rounded-xl border-2 p-5 text-left transition-all ${
-                                                insurance === opt.id
+                                            className={`flex w-full items-start gap-4 rounded-xl border-2 p-5 text-left transition-all ${insurance === opt.id
                                                     ? "border-gold bg-gold/5 shadow-lg shadow-gold/10"
                                                     : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
-                                            }`}
+                                                }`}
                                         >
                                             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${insurance === opt.id ? "bg-gold text-white" : "bg-gray-100 text-gray-400 dark:bg-white/5"}`}>
                                                 <opt.icon size={18} />
@@ -189,11 +241,10 @@ export default function CheckoutPage() {
                                         <button
                                             key={opt.id}
                                             onClick={() => setPayment(opt.id)}
-                                            className={`flex w-full items-center gap-4 rounded-xl border-2 p-5 text-left transition-all ${
-                                                payment === opt.id
+                                            className={`flex w-full items-center gap-4 rounded-xl border-2 p-5 text-left transition-all ${payment === opt.id
                                                     ? "border-gold bg-gold/5"
                                                     : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
-                                            }`}
+                                                }`}
                                         >
                                             <div className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${payment === opt.id ? "border-gold" : "border-gray-300 dark:border-white/20"}`}>
                                                 {payment === opt.id && <div className="h-2.5 w-2.5 rounded-full bg-gold" />}
@@ -204,17 +255,6 @@ export default function CheckoutPage() {
                                             </div>
                                         </button>
                                     ))}
-
-                                    {payment === "card" && (
-                                        <div className="mt-4 space-y-4 rounded-xl border border-gray-100 p-5 dark:border-white/5">
-                                            <input placeholder="Card Number" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <input placeholder="MM / YY" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                                <input placeholder="CVC" className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                            </div>
-                                            <input placeholder="Cardholder Name" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white" />
-                                        </div>
-                                    )}
 
                                     {/* Deposit Info */}
                                     <div className="mt-4 rounded-xl bg-gold/5 border border-gold/10 p-5">
@@ -232,14 +272,14 @@ export default function CheckoutPage() {
                                     <h2 className="font-serif text-xl text-gray-900 dark:text-white">Review Your Order</h2>
 
                                     <div className="space-y-4">
-                                        {MOCK_ITEMS.map((item) => (
-                                            <div key={item.sku} className="flex items-center gap-4 rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                                                <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
+                                        {cart.items.map((item) => (
+                                            <div key={item.cartItemId} className="flex items-center gap-4 rounded-xl border border-gray-100 p-4 dark:border-white/5">
+                                                <img src={item.primaryImageUrl || "/images/placeholder-jewelry.png"} alt={item.productName} className="h-16 w-16 rounded-lg object-cover" />
                                                 <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">REF: {item.sku} • QTY: {item.qty}</p>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.productName}</p>
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">REF: {item.styleCode} • QTY: {item.quantity}</p>
                                                 </div>
-                                                <p className="text-gold text-sm font-bold">{item.price}</p>
+                                                <p className="text-gold text-sm font-bold">{formatCurrency(item.currentLiveMrp)}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -247,11 +287,14 @@ export default function CheckoutPage() {
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
                                             <p className="mb-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Delivery Address</p>
-                                            <p className="text-sm text-gray-700 dark:text-gray-300">John Doe<br />123 Diamond Ave, Suite 100<br />New York, NY 10036</p>
+                                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                                                {shippingName || "Not provided"}<br />
+                                                {shippingPhone || "Not provided"}
+                                            </p>
                                         </div>
                                         <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
                                             <p className="mb-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Payment Method</p>
-                                            <p className="text-sm text-gray-700 dark:text-gray-300">Credit Card<br />•••• •••• •••• 4242<br />Exp: 12/28</p>
+                                            <p className="text-sm text-gray-700 dark:text-gray-300 capitalize">{payment.replace("-", " ")}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -273,8 +316,12 @@ export default function CheckoutPage() {
                                         Continue <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                                     </button>
                                 ) : (
-                                    <button className="bg-gold group flex items-center gap-2 rounded-xl px-8 py-3 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105">
-                                        Place Order <Check size={14} />
+                                    <button
+                                        onClick={handlePlaceOrder}
+                                        disabled={isPlacingOrder || cart.checkoutBlocked}
+                                        className="bg-gold disabled:opacity-50 disabled:cursor-not-allowed group flex items-center gap-2 rounded-xl px-8 py-3 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105"
+                                    >
+                                        {isPlacingOrder ? "Placing..." : "Place Order"} <Check size={14} />
                                     </button>
                                 )}
                             </div>
@@ -286,29 +333,36 @@ export default function CheckoutPage() {
                                 <h3 className="mb-6 font-serif text-lg text-gray-900 dark:text-white">Order Summary</h3>
 
                                 <div className="mb-6 space-y-3">
-                                    {MOCK_ITEMS.map((item) => (
-                                        <div key={item.sku} className="flex items-center gap-3">
-                                            <img src={item.image} alt={item.name} className="h-12 w-12 rounded-lg object-cover" />
+                                    {cart.items.map((item) => (
+                                        <div key={item.cartItemId} className="flex items-center gap-3">
+                                            <img src={item.primaryImageUrl || "/images/placeholder-jewelry.png"} alt={item.productName} className="h-12 w-12 rounded-lg object-cover" />
                                             <div className="flex-1 text-sm">
-                                                <p className="line-clamp-1 font-medium text-gray-900 dark:text-white">{item.name}</p>
-                                                <p className="text-xs text-gray-400">Qty: {item.qty}</p>
+                                                <p className="line-clamp-1 font-medium text-gray-900 dark:text-white">{item.productName}</p>
+                                                <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{item.price}</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.currentLiveMrp)}</p>
                                         </div>
                                     ))}
                                 </div>
 
                                 <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">89,640,200 VND</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : insurance === "shipping" ? "449,318 VND" : "1,347,955 VND"}</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">8,964,020 VND</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : insurance === "shipping" ? "+449k" : "+1.3M"}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp * 0.1)}</span></div>
                                 </div>
 
                                 <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
                                     <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
-                                    <span className="text-gold text-xl font-bold">98,604,220 VND</span>
+                                    <span className="text-gold text-xl font-bold">{formatCurrency(cart.totalLiveMrp * 1.1)}</span>
                                 </div>
+
+                                {cart.checkoutBlocked && (
+                                    <div className="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100">
+                                        <AlertTriangle size={14} className="inline mr-1 mb-0.5" />
+                                        Your cart contains items that have fluctuated heavily {`(>10%)`} in price. Please return to the Cart to review them.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
