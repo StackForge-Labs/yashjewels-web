@@ -2,20 +2,22 @@ import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { setCartStart, setCartSuccess, setCartFailure, clearCartLocal } from "@/store/cartSlice";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/api-client";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const useCart = () => {
     const dispatch = useDispatch<AppDispatch>();
     const cart = useSelector((state: RootState) => state.cart);
     const { isAuthenticated } = useSelector((state: RootState) => state.user);
+    const router = useRouter();
 
     const fetchCart = useCallback(async () => {
         if (!isAuthenticated) return;
-        
+
         try {
             dispatch(setCartStart());
-            const { data } = await axiosInstance.get("/v1/cart");
+            const { data } = await axiosInstance.get("/cart");
             if (data.success) {
                 dispatch(setCartSuccess(data.data));
             } else {
@@ -28,49 +30,53 @@ export const useCart = () => {
 
     const addToCart = async (productId: string, quantity: number = 1, isGift: boolean = false, giftMessage?: string) => {
         if (!isAuthenticated) {
-            toast.error("Please login to add items to your cart.");
+            toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
+            sessionStorage.setItem("redirect_after_login", window.location.pathname + window.location.search);
+            router.push("/auth/login");
             return false;
         }
 
         try {
-            const { data } = await axiosInstance.post("/v1/cart/items", {
+            const { data } = await axiosInstance.post("/cart/items", {
                 productId,
                 quantity,
                 isGift,
                 giftMessage
             });
-            
+
             if (data.success) {
-                toast.success("Added to cart successfully.");
-                await fetchCart(); // Re-sync entire cart to get accurate drift pct and totals
+                toast.success("Thêm vào giỏ hàng thành công");
+                await fetchCart();
                 return true;
+            } else {
+                toast.error(data.message || "Could not add item to cart.");
+                return false;
             }
-            toast.error(data.message || "Failed to add to cart.");
-            return false;
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Error adding item.");
+            const msg = error.response?.data?.message || "An error occurred while adding to cart.";
+            toast.error(msg);
             return false;
         }
     };
 
     const updateQuantity = async (cartItemId: string, quantity: number) => {
         if (quantity < 1) return;
-        
+
         try {
-            const { data } = await axiosInstance.patch(`/v1/cart/items/${cartItemId}`, { quantity });
+            const { data } = await axiosInstance.patch(`/cart/items/${cartItemId}`, { quantity });
             if (data.success) {
                 await fetchCart();
             } else {
                 toast.error(data.message || "Failed to update quantity.");
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Error updating item.");
+            toast.error("Error updating cart.");
         }
     };
 
     const removeItem = async (cartItemId: string) => {
         try {
-            const { data } = await axiosInstance.delete(`/v1/cart/items/${cartItemId}`);
+            const { data } = await axiosInstance.delete(`/cart/items/${cartItemId}`);
             if (data.success) {
                 toast.success("Item removed.");
                 await fetchCart();
@@ -84,7 +90,7 @@ export const useCart = () => {
 
     const clearCart = async () => {
         try {
-            const { data } = await axiosInstance.delete("/v1/cart");
+            const { data } = await axiosInstance.delete("/cart");
             if (data.success) {
                 dispatch(clearCartLocal());
             }

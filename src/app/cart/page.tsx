@@ -112,6 +112,7 @@ export default function CartPage() {
                                         price={formatCurrency(item.currentLiveMrp)}
                                         originalPrice={item.priceDriftPct > 0 ? formatCurrency(item.mrpAtAdd) : ""}
                                         quantity={item.quantity}
+                                        maxQuantity={item.maxStockQuantity}
                                         priceChanged={Math.abs(item.priceDriftPct) > 3}
                                         onRemove={removeItem}
                                         onQuantityChange={updateQuantity}

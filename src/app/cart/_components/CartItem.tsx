@@ -3,6 +3,7 @@
 import { Minus, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/app/admin/_components/ui/ConfirmDialog";
 
 interface CartItemProps {
     id: string;
@@ -14,6 +15,7 @@ interface CartItemProps {
     price: string;
     originalPrice: string;
     quantity: number;
+    maxQuantity: number; // GAP-03 FIX
     priceChanged?: boolean;
     onRemove?: (id: string) => void;
     onQuantityChange?: (id: string, qty: number) => void;
@@ -29,14 +31,20 @@ export const CartItem = ({
     price,
     originalPrice,
     quantity: initialQty,
+    maxQuantity,
     priceChanged,
     onRemove,
     onQuantityChange,
 }: CartItemProps) => {
     const [qty, setQty] = useState(initialQty);
+    const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
 
     const handleQtyChange = (newQty: number) => {
-        if (newQty < 1) return;
+        if (newQty < 1) {
+            setIsRemoveConfirmOpen(true);
+            return;
+        }
+        if (newQty > maxQuantity) return;
         setQty(newQty);
         onQuantityChange?.(id, newQty);
     };
@@ -95,7 +103,9 @@ export const CartItem = ({
                         <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white">{qty}</span>
                         <button
                             onClick={() => handleQtyChange(qty + 1)}
-                            className="hover:text-gold px-3 py-2 text-gray-400 transition-colors"
+                            disabled={qty >= maxQuantity}
+                            className="hover:text-gold px-3 py-2 text-gray-400 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
+                            title={qty >= maxQuantity ? "Max stock reached" : ""}
                         >
                             <Plus size={14} />
                         </button>
@@ -108,7 +118,7 @@ export const CartItem = ({
                             <p className="text-[11px] text-gray-400 line-through">{originalPrice}</p>
                         </div>
                         <button
-                            onClick={() => onRemove?.(id)}
+                            onClick={() => setIsRemoveConfirmOpen(true)}
                             className="rounded-full p-2 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                         >
                             <Trash2 size={16} />
@@ -116,6 +126,19 @@ export const CartItem = ({
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog 
+                isOpen={isRemoveConfirmOpen} 
+                onClose={() => setIsRemoveConfirmOpen(false)} 
+                onConfirm={() => {
+                    setIsRemoveConfirmOpen(false);
+                    onRemove?.(id);
+                }} 
+                title="Xác nhận bỏ sản phẩm"
+                description={`Bạn có chắc chắn muốn bỏ "${name}" khỏi giỏ hàng không?`}
+                confirmLabel="Bỏ sản phẩm"
+                isDestructive={true}
+            />
         </div>
     );
 };

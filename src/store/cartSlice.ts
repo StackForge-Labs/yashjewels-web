@@ -15,6 +15,7 @@ export interface CartItemType {
     isGift: boolean;
     giftMessage: string | null;
     addedAt: string;
+    maxStockQuantity: number;
 }
 
 export interface CartState {

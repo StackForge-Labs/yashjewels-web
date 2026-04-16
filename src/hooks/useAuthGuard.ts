@@ -38,7 +38,13 @@ export function useRedirectIfAuthenticated() {
     useEffect(() => {
         const token = getAccessToken();
         if (token) {
-            router.replace("/");
+            const redirectUrl = sessionStorage.getItem("redirect_after_login");
+            if (redirectUrl) {
+                sessionStorage.removeItem("redirect_after_login");
+                router.replace(redirectUrl);
+            } else {
+                router.replace("/");
+            }
         }
     }, [router]);
 }

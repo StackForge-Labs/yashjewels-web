@@ -13,6 +13,8 @@ import { productService } from "@/services/product.service";
 import { Product } from "@/types/product.types";
 import { catalogService, RefItem } from "@/services/catalog.service";
 import { categoryService } from "@/services/category.service";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 
 const ProductDetailPage = () => {
     const { slug } = useParams();
@@ -27,6 +29,8 @@ const ProductDetailPage = () => {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState("specifications");
     const [openFaq, setOpenFaq] = useState<number | null>(0);
+    const { addToCart } = useCart();
+    const [isAdding, setIsAdding] = useState(false);
 
     // Mock images because backend image handling isn't fully integrated into `Product` yet
     const fallbackImages = [
@@ -196,9 +200,25 @@ const ProductDetailPage = () => {
                                             <Plus size={16} />
                                         </button>
                                     </div>
-                                    <button disabled={product.quantity === 0} className="bg-gold group flex h-14 grow items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {product.quantity > 0 ? "Add to Treasure Bag" : "Out of Stock"}
-                                        <ArrowRight size={16} />
+                                    <button 
+                                        disabled={product.quantity === 0 || isAdding} 
+                                        onClick={async () => {
+                                            const productId = (product as any).id || (product as any).Id;
+                                            if (!productId) {
+                                                toast.error("Invalid product ID. Please reload the page.");
+                                                return;
+                                            }
+                                            setIsAdding(true);
+                                            try {
+                                                await addToCart(productId, quantity);
+                                            } finally {
+                                                setIsAdding(false);
+                                            }
+                                        }}
+                                        className="bg-gold group flex h-14 grow items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isAdding ? "Adding to Bag..." : product.quantity > 0 ? "Add to Treasure Bag" : "Out of Stock"}
+                                        <ArrowRight size={16} className={isAdding ? "animate-pulse" : ""} />
                                     </button>
                                 </div>
                             </div>
