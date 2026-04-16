@@ -10,6 +10,8 @@ import type {
     VerifyEmailRequest,
     ResendOtpRequest,
     UserProfile,
+    UserAddressDto,
+    CreateAddressRequest,
 } from "@/types/user.types";
 
 // ── Registration & Verification ────────────────────────────────
@@ -76,7 +78,7 @@ export const getKycSessionStatusApi = (token: string) =>
     apiClient.get<ApiResponse<string>>(`/user/kyc/session-status/${token}`).then(r => r.data);
 
 export const submitMobileKycApi = (request: { sessionToken: string; request: any }) => 
-    apiClient.post<string>("/user/kyc/submit-mobile", request);
+    apiClient.post<ApiResponse<string>>("/user/kyc/submit-mobile", request).then((r) => r.data);
 
 // ── 2FA ────────────────────────────────────────────────────────
 export const setup2FaApi = () => 
@@ -94,3 +96,19 @@ export const disable2FaApi = (code: string) =>
 
 export const loginVerify2FaApi = (data: { email: string; otp: string }) => 
     apiClient.post<ApiResponse<AuthResponse>>("/user/2fa/login-verify", data).then(r => r.data);
+
+// ── Addresses ─────────────────────────────────────────────
+export const getAddressesApi = () =>
+    apiClient.get<ApiResponse<UserAddressDto[]>>("/user/addresses").then(r => r.data);
+
+export const createAddressApi = (data: CreateAddressRequest) =>
+    apiClient.post<ApiResponse<UserAddressDto>>("/user/addresses", data).then(r => r.data);
+
+export const updateAddressApi = (params: { id: string, data: CreateAddressRequest }) =>
+    apiClient.put<ApiResponse<UserAddressDto>>(`/user/addresses/${params.id}`, params.data).then(r => r.data);
+
+export const deleteAddressApi = (id: string) =>
+    apiClient.delete<ApiResponse<boolean>>(`/user/addresses/${id}`).then(r => r.data);
+
+export const setDefaultAddressApi = (id: string) =>
+    apiClient.patch<ApiResponse<boolean>>(`/user/addresses/${id}/set-default`).then(r => r.data);
