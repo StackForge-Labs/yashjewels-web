@@ -9,6 +9,7 @@ import { useState } from "react";
 const MOCK_WISHLIST = [
     {
         sku: "NNU1544",
+        productId: "NNU1544",
         name: "Mia Natural Diamond Ring in 14K White Gold",
         category: "Rings",
         original: "25,500,000 VND",
@@ -20,6 +21,7 @@ const MOCK_WISHLIST = [
     },
     {
         sku: "NNU1545",
+        productId: "NNU1545",
         name: "Artisan Solitaire Diamond Necklace",
         category: "Necklaces",
         original: "45,000,000 VND",
@@ -30,6 +32,7 @@ const MOCK_WISHLIST = [
     },
     {
         sku: "NNU1546",
+        productId: "NNU1546",
         name: "Classic Tennis Bracelet with Natural Diamonds",
         category: "Bracelets",
         original: "89,000,000 VND",
@@ -41,6 +44,7 @@ const MOCK_WISHLIST = [
     },
     {
         sku: "NNU1547",
+        productId: "NNU1547",
         name: "Floral Halo Diamond Earrings",
         category: "Earrings",
         original: "18,000,000 VND",

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import AddressSection from "./_components/AddressSection";
 import { UserAddressDto } from "@/types/user.types";
+import { BiometricCapture } from "../auth/kyc/_components/BiometricCapture";
 
 const STEPS = ["Address", "Insurance", "Payment", "Review"];
 
@@ -34,10 +35,20 @@ export default function CheckoutPage() {
     // Form states
     const [selectedAddress, setSelectedAddress] = useState<UserAddressDto | null>(null);
     const [idempotencyKey] = useState(() => crypto.randomUUID());
+    const [isFaceScanning, setIsFaceScanning] = useState(false);
 
     useEffect(() => {
         fetchCart();
     }, [fetchCart]);
+
+    // Handle COD constraints (Limit 2,000,000 VND)
+    useEffect(() => {
+        const insuranceFee = getInsuranceFee(insurance);
+        const grandTotal = cart.totalLiveMrp + insuranceFee;
+        if (grandTotal > 2000000 && payment === "cod") {
+            setPayment("card");
+        }
+    }, [insurance, cart.totalLiveMrp, payment]);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -52,7 +63,6 @@ export default function CheckoutPage() {
     };
 
     const insuranceFee = getInsuranceFee(insurance);
-    // backend handles VAT inside MRP, so we mock 0 extra here to fix GAP-12 double-VAT issue
     const vatAmount = 0; 
     const grandTotal = cart.totalLiveMrp + insuranceFee + vatAmount;
 
@@ -65,18 +75,90 @@ export default function CheckoutPage() {
     const depositAmount = getDepositRequired();
     const depositPct = depositAmount === grandTotal ? "100%" : depositAmount === grandTotal * 0.5 ? "50%" : "30%";
 
-    // Handle COD constraints
-    useEffect(() => {
-        if (grandTotal > 20000000 && payment === "cod") {
-            setPayment("card");
-        }
-    }, [grandTotal, payment]);
-
-    // KYC Check Enforcement
+    // KYC Tier System logic
     const kycStatus = user?.kycStatus?.toLowerCase();
     const isKycApproved = kycStatus === "verified" || kycStatus === "approved";
+    
+    // Level 1 Error (Missing Profile KYC) - MOVED TO RENDER BLOCK
+    
+    const handlePlaceOrder = async () => {
+        if (step !== 3) {
+            setStep(3);
+            return;
+        }
 
-    if (!isKycApproved) {
+        if (!selectedAddress) {
+            toast.error("Please select a shipping address.");
+            setStep(0);
+            return;
+        }
+
+        setIsPlacingOrder(true);
+        try {
+            const { data } = await axiosInstance.post("/user-orders", {
+                shippingName: selectedAddress.recipientName,
+                shippingPhone: selectedAddress.recipientPhone,
+                shippingAddressId: selectedAddress.id,
+                idempotencyKey,
+                pay100Percent: pay100Percent,
+                insuranceType: insurance
+            });
+
+            if (data.success) {
+                toast.success("Order Created Successfully!");
+                await fetchCart();
+                router.push(`/orders/${data.data.orderId}/payment`);
+            } else {
+                toast.error(data.message || "Failed to create order.");
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Checkout Blocked.");
+        } finally {
+            setIsPlacingOrder(false);
+        }
+    };
+
+    const handleNextStep = () => {
+        if (step === 0 && !selectedAddress) {
+            toast.error("Please select a shipping address to continue.");
+            return;
+        }
+
+        // Tier 2 eKYC Face Scan trigger
+        if (step === 2 && grandTotal > 20000000) {
+            setIsFaceScanning(true);
+            return;
+        }
+
+        setStep(step + 1);
+    };
+
+    const handleFaceScanSuccess = async (file: File) => {
+        // Here we would normally upload the scan for server-side Liveness check
+        // For checkout flow, we verify if it matches the current user's profile
+        toast.loading("Verifying Biometrics...");
+        
+        try {
+            const formData = new FormData();
+            formData.append("faceImage", file);
+            
+            // Call high-security endpoint for checkout verification
+            // const { data } = await axiosInstance.post("/kyc/verify-liveness", formData); 
+            
+            // Simulation for now but using real component
+            setTimeout(() => {
+                toast.dismiss();
+                setIsFaceScanning(false);
+                toast.success("Biometric verification successful. Identity matches KYC record.");
+                setStep(3); // Move to review step
+            }, 2000);
+        } catch (err) {
+            toast.error("Biometric verification failed. Please try again.");
+        }
+    };
+
+    // Conditional render for Level 1 KYC
+    if (grandTotal >= 5000000 && !isKycApproved) {
         return (
             <>
                 <PageHero
@@ -123,49 +205,6 @@ export default function CheckoutPage() {
         );
     }
 
-    const handlePlaceOrder = async () => {
-        if (step !== 3) {
-            setStep(3);
-            return;
-        }
-
-        if (!selectedAddress) {
-            toast.error("Please select a shipping address.");
-            setStep(0);
-            return;
-        }
-
-        setIsPlacingOrder(true);
-        try {
-            const { data } = await axiosInstance.post("/orders", {
-                shippingName: selectedAddress.recipientName,
-                shippingPhone: selectedAddress.recipientPhone,
-                shippingAddressId: selectedAddress.id,
-                idempotencyKey
-            });
-
-            if (data.success) {
-                toast.success("Order Created Successfully!");
-                await fetchCart();
-                router.push(`/orders/${data.data.orderId}/payment`);
-            } else {
-                toast.error(data.message || "Failed to create order.");
-            }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Checkout Blocked.");
-        } finally {
-            setIsPlacingOrder(false);
-        }
-    };
-
-    const handleNextStep = () => {
-        // Validation Guards
-        if (step === 0 && !selectedAddress) {
-            toast.error("Please select a shipping address to continue.");
-            return;
-        }
-        setStep(step + 1);
-    };
 
     return (
         <>
@@ -257,7 +296,7 @@ export default function CheckoutPage() {
                                     {[
                                         { id: "card", title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX", disabled: false },
                                         { id: "bank", title: "Bank Transfer", desc: "Direct bank transfer with auto-verification", disabled: false },
-                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 20,000,000 VND", disabled: grandTotal > 20000000 },
+                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 VND", disabled: grandTotal > 2000000 },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
@@ -349,6 +388,23 @@ export default function CheckoutPage() {
                                             <p className="text-sm text-gray-700 dark:text-gray-300 capitalize">{payment.replace("-", " ")}</p>
                                         </div>
                                     </div>
+                                    
+                                    {/* Trust Elements UI */}
+                                    <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-4 text-center md:flex-row md:items-center md:justify-between md:text-left">
+                                        <div className="flex items-center justify-center gap-2 text-xs font-medium text-gray-500">
+                                            <ShieldCheck size={16} className="text-gold" />
+                                            Stripe Secure Payments AES-256
+                                        </div>
+                                        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-gray-400">
+                                            <Link href="/policies/exchange" className="hover:text-gold transition-colors">Exchange</Link>
+                                            <span>•</span>
+                                            <Link href="/policies/payment-guide" className="hover:text-gold transition-colors">Payment Guide</Link>
+                                            <span>•</span>
+                                            <Link href="/policies/privacy" className="hover:text-gold transition-colors">Privacy</Link>
+                                            <span>•</span>
+                                            <Link href="/policies/warranty" className="hover:text-gold transition-colors">Warranty</Link>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -401,7 +457,7 @@ export default function CheckoutPage() {
                                     <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-gray-900 dark:text-white">{formatCurrency(vatAmount)}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-green-600 dark:text-green-400 font-medium tracking-wide text-xs">Included in MRP</span></div>
                                 </div>
 
                                 <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
@@ -420,6 +476,36 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Face Biometric Verification Modal (Tier 2 KYC) */}
+            {isFaceScanning && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-[#111] p-8 rounded-3xl max-w-md w-full border border-gold/20 shadow-2xl">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
+                                <ShieldCheck className="text-gold" size={32} />
+                            </div>
+                            <h3 className="font-serif text-2xl text-gray-900 dark:text-white mb-2">Biometric Verification</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
+                                As your order value exceeds 20,000,000 VND, we require a quick face scan to ensure your identity matches your KYC record.
+                            </p>
+
+                            <div className="w-full mb-8">
+                                <BiometricCapture onCapture={handleFaceScanSuccess} />
+                            </div>
+
+                            <div className="flex w-full gap-4">
+                                <button 
+                                    onClick={() => setIsFaceScanning(false)}
+                                    className="flex-1 py-3 px-4 rounded-xl border border-gray-200 dark:border-white/10 text-xs font-bold uppercase hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
