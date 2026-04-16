@@ -7,9 +7,10 @@ interface CartSummaryProps {
     tax: string;
     total: string;
     itemCount: number;
+    checkoutBlocked?: boolean;
 }
 
-export const CartSummary = ({ subtotal, shipping, tax, total, itemCount }: CartSummaryProps) => {
+export const CartSummary = ({ subtotal, shipping, tax, total, itemCount, checkoutBlocked }: CartSummaryProps) => {
     return (
         <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-6 md:p-8 dark:border-white/5 dark:bg-white/2">
             <h3 className="mb-6 font-serif text-lg text-gray-900 dark:text-white">Order Summary</h3>
@@ -52,13 +53,22 @@ export const CartSummary = ({ subtotal, shipping, tax, total, itemCount }: CartS
             </div>
 
             {/* CTA */}
-            <Link
-                href="/checkout"
-                className="bg-gold group mt-6 flex h-14 w-full items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98]"
-            >
-                Proceed to Checkout
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-            </Link>
+            {checkoutBlocked ? (
+                <button
+                    disabled
+                    className="bg-gray-400 mt-6 flex h-14 w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase"
+                >
+                    Checkout Disabled
+                </button>
+            ) : (
+                <Link
+                    href="/checkout"
+                    className="bg-gold group mt-6 flex h-14 w-full items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98]"
+                >
+                    Proceed to Checkout
+                    <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                </Link>
+            )}
 
             {/* Trust Badges */}
             <div className="mt-6 grid grid-cols-2 gap-3">

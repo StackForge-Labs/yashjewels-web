@@ -3,57 +3,36 @@
 import { CartItem } from "./_components/CartItem";
 import { CartSummary } from "./_components/CartSummary";
 import { PageHero } from "../_components/PageHero";
-import { ShoppingBag, ArrowRight } from "lucide-react";
+import { ShoppingBag, ArrowRight, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-
-const MOCK_CART = [
-    {
-        id: "1",
-        name: "Mia Natural Diamond Heart Earrings in 14K White Gold",
-        sku: "ERFNJ2504921",
-        image: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-        metal: "14K White Gold",
-        stone: "Natural Diamond",
-        price: "13,990,200 VND",
-        originalPrice: "16,655,000 VND",
-        quantity: 1,
-        priceChanged: true,
-    },
-    {
-        id: "2",
-        name: "Classic Tennis Bracelet with Natural Diamonds",
-        sku: "BRJ2504800",
-        image: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=600",
-        metal: "18K Yellow Gold",
-        stone: "VVS Diamond",
-        price: "75,650,000 VND",
-        originalPrice: "89,000,000 VND",
-        quantity: 1,
-        priceChanged: false,
-    },
-    {
-        id: "3",
-        name: "Artisan Solitaire Diamond Necklace",
-        sku: "NKJ2504555",
-        image: "https://images.pexels.com/photos/1733604/pexels-photo-1733604.jpeg?auto=compress&cs=tinysrgb&w=600",
-        metal: "Platinum 950",
-        stone: "GIA Diamond",
-        price: "38,250,000 VND",
-        originalPrice: "45,000,000 VND",
-        quantity: 1,
-        priceChanged: false,
-    },
-];
+import { useEffect } from "react";
+import { useCart } from "@/hooks/useCart";
 
 export default function CartPage() {
-    const [items, setItems] = useState(MOCK_CART);
+    const { cart, fetchCart, updateQuantity, removeItem } = useCart();
 
-    const handleRemove = (id: string) => {
-        setItems(items.filter((item) => item.id !== id));
+    useEffect(() => {
+        fetchCart();
+    }, [fetchCart]);
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     };
 
-    if (items.length === 0) {
+    if (cart.isLoading && cart.items.length === 0) {
+        return (
+            <>
+                <PageHero title="Shopping Cart" breadcrumbs={[{ label: "Cart" }]} />
+                <section className="bg-white py-24 transition-colors dark:bg-dark-bg">
+                    <div className="container mx-auto flex items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gold mx-auto"></div>
+                    </div>
+                </section>
+            </>
+        );
+    }
+
+    if (cart.items.length === 0) {
         return (
             <>
                 <PageHero title="Shopping Cart" breadcrumbs={[{ label: "Cart" }]} />
@@ -83,12 +62,31 @@ export default function CartPage() {
         <>
             <PageHero
                 title="Shopping Cart"
-                subtitle={`${items.length} item${items.length > 1 ? "s" : ""} in your treasure bag`}
+                subtitle={`${cart.itemCount} item${cart.itemCount > 1 ? "s" : ""} in your treasure bag`}
                 breadcrumbs={[{ label: "Cart" }]}
             />
 
             <section className="bg-white py-12 md:py-24 transition-colors dark:bg-dark-bg">
                 <div className="container mx-auto px-4 lg:px-12">
+                    {/* Global Price Warning Banner if any item drifted > 3% */}
+                    {cart.hasPriceWarning && (
+                        <div className="mb-8 flex items-start gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+                            <AlertTriangle className="shrink-0 text-amber-500 mt-1" size={24} />
+                            <div>
+                                <h4 className="font-bold">Gold Price Fluctuation Alert</h4>
+                                <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                                    The global gold rate has changed since you added items to your cart.
+                                    Prices have been automatically updated based on the real-time market value.
+                                    {cart.checkoutBlocked && (
+                                        <span className="block mt-2 font-bold text-red-600 dark:text-red-400">
+                                            Some items have drifted by more than 10%. Please review the new prices before checkout.
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
                         {/* Items List */}
                         <div className="lg:col-span-8">
@@ -102,8 +100,22 @@ export default function CartPage() {
                             </div>
 
                             <div>
-                                {items.map((item) => (
-                                    <CartItem key={item.id} {...item} onRemove={handleRemove} />
+                                {cart.items.map((item) => (
+                                    <CartItem
+                                        key={item.cartItemId}
+                                        id={item.cartItemId}
+                                        name={item.productName}
+                                        sku={item.styleCode}
+                                        image={item.primaryImageUrl || "/images/placeholder-jewelry.png"}
+                                        metal="Custom"
+                                        stone="Diamond"
+                                        price={formatCurrency(item.currentLiveMrp)}
+                                        originalPrice={item.priceDriftPct > 0 ? formatCurrency(item.mrpAtAdd) : ""}
+                                        quantity={item.quantity}
+                                        priceChanged={Math.abs(item.priceDriftPct) > 3}
+                                        onRemove={removeItem}
+                                        onQuantityChange={updateQuantity}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -112,12 +124,18 @@ export default function CartPage() {
                         <div className="lg:col-span-4">
                             <div className="sticky top-32">
                                 <CartSummary
-                                    subtotal="127,890,200 VND"
+                                    subtotal={formatCurrency(cart.totalLiveMrp)}
                                     shipping="Free"
-                                    tax="12,789,020 VND"
-                                    total="140,679,220 VND"
-                                    itemCount={items.length}
+                                    tax={formatCurrency(cart.totalLiveMrp * 0.1)} // 10% VAT display mock (backend will calc actual)
+                                    total={formatCurrency(cart.totalLiveMrp * 1.1)}
+                                    itemCount={cart.itemCount}
+                                    checkoutBlocked={cart.checkoutBlocked}
                                 />
+                                {cart.checkoutBlocked && (
+                                    <p className="mt-4 text-center text-xs text-red-500 font-bold">
+                                        Checkout is temporarily disabled due to extreme market fluctuation ({'>'}10%).
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
