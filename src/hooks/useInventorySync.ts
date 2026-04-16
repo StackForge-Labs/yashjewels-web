@@ -6,6 +6,7 @@ import * as signalR from "@microsoft/signalr";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store";
+import { updateProductStatus } from "@/store/productRealtimeSlice";
 
 export const useInventorySync = () => {
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
@@ -31,12 +32,13 @@ export const useInventorySync = () => {
 
                     // Listeners
                     connection.on("ItemLocked", (productId: string) => {
-                        // Optional: Disallow adding to cart if it's the last item and locked
+                        dispatch(updateProductStatus({ productId, quantity: 1 }));
+                        toast.info("Một món đồ vừa được giữ chỗ!");
                     });
 
                     connection.on("InventoryDepleted", (productId: string) => {
-                        toast.error("Một sản phẩm trong giỏ hàng của bạn vừa hết hàng!");
-                        // Ideally, we would refresh cart here
+                        dispatch(updateProductStatus({ productId, quantity: 0, status: "SOLD_OUT" }));
+                        toast.error("Một món đồ vừa hết hàng!");
                     });
                 })
                 .catch(e => console.error("Connection failed: ", e));
