@@ -76,5 +76,16 @@ export const productService = {
     } catch (error) {
       return { success: false, message: getErrorMessage(error) ?? "An error occurred" };
     }
-  }
+  },
+
+  /** Get dynamic MRP for a product based on current gold rate (via PricingService) */
+  getPrice: async (id: string, insuranceRatePct?: number): Promise<{ success: boolean; data?: unknown; message: string }> => {
+    try {
+      const params = insuranceRatePct ? { insuranceRatePct } : {};
+      const { data } = await apiClient.get(`/products/${id}/price`, { params });
+      return { success: data.success, data: data.data, message: data.message || "OK" };
+    } catch (error) {
+      return { success: false, message: getErrorMessage(error) ?? "An error occurred" };
+    }
+  },
 };

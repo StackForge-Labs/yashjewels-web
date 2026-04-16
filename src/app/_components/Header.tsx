@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import ThemeToggle from "../(home)/_components/ThemeToggle";
 import SearchModal from "../(home)/_components/SearchModal";
+import { GoldTicker } from "@/components/ui/GoldTicker";
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -59,35 +60,8 @@ export const Header = () => {
 
     return (
         <>
-            {/* Top Notification Bar */}
-            <div className="border-b border-gray-200 bg-white py-2 text-[10px] text-gray-500 transition-colors md:text-[11px] dark:border-white/5 dark:bg-[#080808] dark:text-gray-400">
-                <div className="container mx-auto flex items-center justify-between px-4">
-                    <div className="flex shrink-0 items-center gap-4">
-                        <span className="flex items-center gap-1 font-bold tracking-[0.1em] text-gray-900 uppercase dark:text-gray-200">
-                            <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse"></span>
-                            Free Global Delivery
-                        </span>
-                        <span className="hidden h-3 w-px bg-gray-200 lg:block dark:bg-white/10"></span>
-                        <span className="hidden tracking-[0.05em] xl:inline">
-                            Complementary Maison Packaging on all orders
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-5">
-                        <a
-                            href="tel:+18001234567"
-                            className="hover:text-gold flex items-center gap-2 transition-colors font-medium"
-                        >
-                            <Phone size={12} className="text-gold" />
-                            <span>Client Service</span>
-                        </a>
-                        <div className="flex items-center gap-2 border-l border-gray-200 pl-5 dark:border-white/10 uppercase tracking-widest font-bold">
-                            <span className="text-gray-900 dark:text-white">EN</span>
-                            <span className="text-gray-300">/</span>
-                            <span className="hover:text-gold cursor-pointer transition-colors">USD</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Live Gold Market Ticker */}
+            <GoldTicker />
 
             {/* Main Navigation Header */}
             <header className="sticky top-0 z-[100] border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md transition-all dark:border-white/5 dark:bg-[#050505]/95">

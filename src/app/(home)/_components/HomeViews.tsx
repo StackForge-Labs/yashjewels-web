@@ -181,6 +181,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                             <div data-aos="fade-up" data-aos-delay={i * 100} key={d.sku}>
                                 <ProductCard
                                     sku={d.sku}
+                                    productId={i < 2 ? "MOCK-LIVE-P1" : undefined} // Force top 2 to be dynamic
                                     name={d.name}
                                     category="New Collection"
                                     original={d.original}
