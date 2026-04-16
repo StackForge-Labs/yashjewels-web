@@ -40,16 +40,17 @@ export const goldRateService = {
   getSnapshot: async (): Promise<GoldRateSnapshot | null> => {
     try {
       const [rateRes, usdRes] = await Promise.all([
-        apiClient.get<number>("/gold-rates/current"),
-        apiClient.get<number>("/gold-rates/usd-rate"),
+        apiClient.get<any>("/gold-rates/current-gold-rate"),
+        apiClient.get<any>("/gold-rates/current-usd-rate"),
       ]);
 
-      const rate24k = rateRes.data;
+      const rate24k = rateRes.data.currentGoldRateVnd;
+      const usdRate = usdRes.data.currentUsdToVndRate;
       return {
         rate24kPerGram: rate24k,
         rate18kPerGram:  Math.round(rate24k * KARAT_18K_RATIO),
         rate24kPerChi: Math.round(rate24k * CHI_MULTIPLIER),
-        usdToVnd: usdRes.data,
+        usdToVnd: usdRate,
         updatedAt: new Date().toISOString(),
       };
     } catch {
