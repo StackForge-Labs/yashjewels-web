@@ -10,8 +10,12 @@ import { useRef } from "react";
 import { TwoFactorSection } from "../../components/profile/TwoFactorSection";
 import { AddressSection } from "../../components/profile/AddressSection";
 import { useUpdateProfile } from "../../hooks/useUser";
+import { useSearchParams } from "next/navigation";
+import { OrdersView } from "../../components/profile/OrdersView";
 
 export default function ProfilePage() {
+    const searchParams = useSearchParams();
+    const queryView = searchParams.get("view");
     const { profile, isLoading } = useAuthGuard();
     const logout = useLogout();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,6 +23,7 @@ export default function ProfilePage() {
     const updateProfile = useUpdateProfile();
 
     const [isEditing, setIsEditing] = React.useState(false);
+    const [view, setView] = React.useState<"overview" | "orders">("overview");
     const [editData, setEditData] = React.useState({
         fullName: "",
         phone: "",
@@ -35,6 +40,12 @@ export default function ProfilePage() {
             });
         }
     }, [profile]);
+
+    React.useEffect(() => {
+        if (queryView === "orders") {
+            setView("orders");
+        }
+    }, [queryView]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -180,12 +191,16 @@ export default function ProfilePage() {
                                 <nav className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-white/5 dark:bg-[#0a0a0a]">
                                     <ul className="space-y-2">
                                         <li>
-                                            <button className="flex w-full items-center gap-4 rounded-xl bg-gray-50 px-6 py-4 text-xs font-bold tracking-widest text-gold uppercase transition-all dark:bg-white/5">
+                                            <button 
+                                                onClick={() => setView("overview")}
+                                                className={`flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest uppercase transition-all ${view === "overview" ? "bg-gray-50 text-gold dark:bg-white/5" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5"}`}>
                                                 <User size={18} /> Account Overview
                                             </button>
                                         </li>
                                         <li>
-                                            <button className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                                            <button 
+                                                onClick={() => setView("orders")}
+                                                className={`flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest uppercase transition-all ${view === "orders" ? "bg-gray-50 text-gold dark:bg-white/5" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5"}`}>
                                                 <ShoppingBag size={18} /> Order History
                                             </button>
                                         </li>
@@ -248,107 +263,113 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
 
-                                {/* Personal Data */}
-                                <div className="rounded-2xl border border-gray-100 bg-white p-8 md:p-10 dark:border-white/5 dark:bg-[#0a0a0a]">
-                                    <div className="mb-10 flex items-center justify-between">
-                                        <h3 className="font-serif text-2xl text-gray-900 dark:text-white">Account Information</h3>
-                                        {!isEditing ? (
-                                            <button
-                                                onClick={() => setIsEditing(true)}
-                                                className="text-gold text-xs font-bold tracking-widest uppercase hover:underline"
-                                            >
-                                                Edit Details
-                                            </button>
-                                        ) : (
-                                            <div className="flex items-center gap-4">
-                                                <button
-                                                    onClick={handleCancel}
-                                                    className="text-gray-400 text-[10px] font-bold tracking-widest uppercase hover:text-gray-600 transition-colors"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    onClick={handleSave}
-                                                    disabled={updateProfile.isPending}
-                                                    className="bg-gold text-white px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase hover:brightness-105 transition-all disabled:opacity-50"
-                                                >
-                                                    {updateProfile.isPending ? "Saving..." : "Save Changes"}
-                                                </button>
+                                {view === "overview" ? (
+                                    <>
+                                        {/* Personal Data */}
+                                        <div className="rounded-2xl border border-gray-100 bg-white p-8 md:p-10 dark:border-white/5 dark:bg-[#0a0a0a]">
+                                            <div className="mb-10 flex items-center justify-between">
+                                                <h3 className="font-serif text-2xl text-gray-900 dark:text-white">Account Information</h3>
+                                                {!isEditing ? (
+                                                    <button
+                                                        onClick={() => setIsEditing(true)}
+                                                        className="text-gold text-xs font-bold tracking-widest uppercase hover:underline"
+                                                    >
+                                                        Edit Details
+                                                    </button>
+                                                ) : (
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            onClick={handleCancel}
+                                                            className="text-gray-400 text-[10px] font-bold tracking-widest uppercase hover:text-gray-600 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={handleSave}
+                                                            disabled={updateProfile.isPending}
+                                                            className="bg-gold text-white px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase hover:brightness-105 transition-all disabled:opacity-50"
+                                                        >
+                                                            {updateProfile.isPending ? "Saving..." : "Save Changes"}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Full Name</p>
-                                            {isEditing ? (
-                                                <input
-                                                    type="text"
-                                                    value={editData.fullName}
-                                                    onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
-                                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                    <User size={16} className="text-gold" />
-                                                    <span className="text-sm font-medium">{profile.fullName}</span>
+                                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Full Name</p>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editData.fullName}
+                                                            onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                                                            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                                                            <User size={16} className="text-gold" />
+                                                            <span className="text-sm font-medium">{profile.fullName}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Email Address</p>
-                                            <div className="flex items-center gap-3 text-gray-400 dark:text-gray-500">
-                                                <Mail size={16} className="" />
-                                                <span className="text-sm font-medium">{profile.email}</span>
-                                                <span className="text-[9px] border border-gray-200 dark:border-white/10 px-1.5 py-0.5 rounded uppercase">ReadOnly</span>
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Email Address</p>
+                                                    <div className="flex items-center gap-3 text-gray-400 dark:text-gray-500">
+                                                        <Mail size={16} className="" />
+                                                        <span className="text-sm font-medium">{profile.email}</span>
+                                                        <span className="text-[9px] border border-gray-200 dark:border-white/10 px-1.5 py-0.5 rounded uppercase">ReadOnly</span>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Phone Number</p>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="tel"
+                                                            value={editData.phone}
+                                                            onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                                                            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                                                            <Phone size={16} className="text-gold" />
+                                                            <span className="text-sm font-medium">{profile.phone || "Not provided"}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Date of Birth</p>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="date"
+                                                            value={editData.dateOfBirth}
+                                                            onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
+                                                            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                                                            <Calendar size={16} className="text-gold" />
+                                                            <span className="text-sm font-medium">{formatDate(profile.dateOfBirth)}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Member Since</p>
+                                                    <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
+                                                        <span className="text-xs font-medium italic">{new Date(profile.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Phone Number</p>
-                                            {isEditing ? (
-                                                <input
-                                                    type="tel"
-                                                    value={editData.phone}
-                                                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                    <Phone size={16} className="text-gold" />
-                                                    <span className="text-sm font-medium">{profile.phone || "Not provided"}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Date of Birth</p>
-                                            {isEditing ? (
-                                                <input
-                                                    type="date"
-                                                    value={editData.dateOfBirth}
-                                                    onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
-                                                    className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold transition-colors"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
-                                                    <Calendar size={16} className="text-gold" />
-                                                    <span className="text-sm font-medium">{formatDate(profile.dateOfBirth)}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2 md:col-span-2">
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">Member Since</p>
-                                            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                                                <span className="text-xs font-medium italic">{new Date(profile.createdAt).toLocaleDateString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {/* Address Section */}
-                                <AddressSection />
+                                        {/* Address Section */}
+                                        <AddressSection />
 
-                                {/* 2FA Section */}
-                                <TwoFactorSection isEnabled={profile.twoFaEnabled} />
+                                        {/* 2FA Section */}
+                                        <TwoFactorSection isEnabled={profile.twoFaEnabled} />
+                                    </>
+                                ) : (
+                                    <OrdersView />
+                                )}
                             </div>
                         </div>
                     </div>
