@@ -5,7 +5,7 @@ import { PageHero } from "../_components/PageHero";
 import {
     MapPin, CreditCard, Shield, ChevronRight, Check,
     Truck, ShieldCheck, ArrowRight, Package, Gift,
-    AlertTriangle, Lock
+    AlertTriangle, Lock, X
 } from "lucide-react";
 import Link from "next/link";
 import { useSelector } from "react-redux";
@@ -31,6 +31,12 @@ export default function CheckoutPage() {
     const [pay100Percent, setPay100Percent] = useState(false);
     const [isGift, setIsGift] = useState(false);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+    // Coupon states
+    const [couponCode, setCouponCode] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+    const [couponError, setCouponError] = useState("");
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     // Form states
     const [selectedAddress, setSelectedAddress] = useState<UserAddressDto | null>(null);
@@ -64,7 +70,23 @@ export default function CheckoutPage() {
 
     const insuranceFee = getInsuranceFee(insurance);
     const vatAmount = 0; 
-    const grandTotal = cart.totalLiveMrp + insuranceFee + vatAmount;
+
+    // Apply Coupon Discount
+    let discountAmount = 0;
+    if (appliedCoupon && cart.totalLiveMrp > 0) {
+        if (appliedCoupon.minOrderAmount && cart.totalLiveMrp < appliedCoupon.minOrderAmount) {
+             // Does not meet minimum order required. Silently fail discount here but we shouldn't apply it anyway
+        } else {
+            if (appliedCoupon.discountType === 0) { // percentage
+                discountAmount = (cart.totalLiveMrp * appliedCoupon.discountValue) / 100;
+            } else if (appliedCoupon.discountType === 1) { // fixed
+                discountAmount = appliedCoupon.discountValue;
+            }
+            if (discountAmount > cart.totalLiveMrp) discountAmount = cart.totalLiveMrp;
+        }
+    }
+
+    const grandTotal = cart.totalLiveMrp + insuranceFee + vatAmount - discountAmount;
 
     // Calculate dynamic deposit based on exact backend logic
     const getDepositRequired = () => {
@@ -101,7 +123,8 @@ export default function CheckoutPage() {
                 shippingAddressId: selectedAddress.id,
                 idempotencyKey,
                 pay100Percent: pay100Percent,
-                insuranceType: insurance
+                insuranceType: insurance,
+                couponCode: appliedCoupon ? couponCode : undefined
             });
 
             if (data.success) {
@@ -115,6 +138,30 @@ export default function CheckoutPage() {
             toast.error(error.response?.data?.message || "Checkout Blocked.");
         } finally {
             setIsPlacingOrder(false);
+        }
+    };
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode) return;
+        setIsApplyingCoupon(true);
+        setCouponError("");
+        try {
+            const { data } = await axiosInstance.post("/coupons/validate", {
+                code: couponCode,
+                orderTotal: cart.totalLiveMrp
+            });
+            if (data.success && data.data?.isValid) {
+                setAppliedCoupon(data.data.coupon);
+                toast.success("Coupon applied successfully");
+            } else {
+                setCouponError(data.data?.message || "Invalid coupon");
+                setAppliedCoupon(null);
+            }
+        } catch (err: any) {
+            setCouponError(err.response?.data?.message || "Invalid coupon");
+            setAppliedCoupon(null);
+        } finally {
+            setIsApplyingCoupon(false);
         }
     };
 
@@ -143,17 +190,22 @@ export default function CheckoutPage() {
             formData.append("faceImage", file);
             
             // Call high-security endpoint for checkout verification
-            // const { data } = await axiosInstance.post("/kyc/verify-liveness", formData); 
+            const { data } = await axiosInstance.post("/auth/kyc/verify-liveness", formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
             
-            // Simulation for now but using real component
-            setTimeout(() => {
-                toast.dismiss();
-                setIsFaceScanning(false);
+            toast.dismiss();
+            setIsFaceScanning(false);
+            
+            if (data?.success || data?.isMatch) {
                 toast.success("Biometric verification successful. Identity matches KYC record.");
                 setStep(3); // Move to review step
-            }, 2000);
-        } catch (err) {
-            toast.error("Biometric verification failed. Please try again.");
+            } else {
+                toast.error("Biometric verification failed: Identity mismatch. Please try again.");
+            }
+        } catch (err: any) {
+            toast.dismiss();
+            toast.error(err.response?.data?.message || "Biometric verification failed. Please check your connection and try again.");
         }
     };
 
@@ -458,6 +510,44 @@ export default function CheckoutPage() {
                                     <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
                                     <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-green-600 dark:text-green-400 font-medium tracking-wide text-xs">Included in MRP</span></div>
+                                    {appliedCoupon && (
+                                        <div className="flex justify-between text-sm text-green-600 font-bold">
+                                            <span>Discount ({appliedCoupon.code})</span>
+                                            <span>-{formatCurrency(discountAmount)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Coupon Input */}
+                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Voucher / Coupon</p>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Enter code..." 
+                                                value={couponCode}
+                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                disabled={appliedCoupon !== null}
+                                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-all focus:border-gold disabled:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:focus:border-gold"
+                                            />
+                                            {appliedCoupon && (
+                                                <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
+                                                    <X size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {appliedCoupon == null && (
+                                            <button 
+                                                onClick={handleApplyCoupon}
+                                                disabled={!couponCode || isApplyingCoupon}
+                                                className="rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-gold disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gold dark:hover:text-white"
+                                            >
+                                                {isApplyingCoupon ? "..." : "APPLY"}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
                                 </div>
 
                                 <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
