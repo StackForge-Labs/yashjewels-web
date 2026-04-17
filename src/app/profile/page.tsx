@@ -13,7 +13,7 @@ import { useUpdateProfile } from "../../hooks/useUser";
 import { useSearchParams } from "next/navigation";
 import { OrdersView } from "../../components/profile/OrdersView";
 
-export default function ProfilePage() {
+function ProfileContent() {
     const searchParams = useSearchParams();
     const queryView = searchParams.get("view");
     const { profile, isLoading } = useAuthGuard();
@@ -376,5 +376,18 @@ export default function ProfilePage() {
                 </div>
             </section>
         </>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <React.Suspense fallback={
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50/30 dark:bg-[#050505]">
+                <Loader2 size={40} className="animate-spin text-gold" />
+                <p className="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase">Initialising Profile...</p>
+            </div>
+        }>
+            <ProfileContent />
+        </React.Suspense>
     );
 }
