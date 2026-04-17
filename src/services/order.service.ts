@@ -18,6 +18,7 @@ export interface OrderDetailDto {
     shippingName: string;
     shippingPhone: string;
     shippingAddress: string;
+    returnRequestId?: string;
     timeline: OrderTimelineDto[];
     items: any[];
 }
