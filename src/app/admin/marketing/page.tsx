@@ -392,7 +392,7 @@ export default function MarketingPage() {
                 title="Delete Coupon" 
                 description={`Are you sure you want to permanently delete coupon "${selected?.code}"? This action cannot be undone and may affect order history reporting.`} 
                 confirmLabel="Delete Coupon"
-                variant="danger"
+                isDestructive
             />
         </div>
     );

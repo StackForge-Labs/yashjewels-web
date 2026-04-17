@@ -5,10 +5,11 @@ import { Eye, ChevronDown, CheckCircle2, XCircle, PhoneCall, RefreshCw, AlertTri
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
+import { Modal } from "../_components/ui/Modal";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
-import axiosInstance from "@/lib/api-client";
-import { toast } from "sonner";
+import { adminService } from "@/services/admin.service";
+import toast from "react-hot-toast";
 
 type OrderItem = {
     productId: string;
@@ -34,21 +35,22 @@ type Order = {
 };
 
 export default function OrdersPage() {
-    const { token } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [contactNote, setContactNote] = useState("");
+    const [isSuccess, setIsSuccess] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
     const fetchOrders = async () => {
-        if (!token) return;
         setLoading(true);
         try {
-            const { data } = await axiosInstance.get("/admin/orders/all");
-            if (data.success) {
-                setOrders(data.data);
+            const res = await adminService.getOrdersApi();
+            if (res.success) {
+                setOrders(res.data);
             }
         } catch (error) {
             console.error("Failed to fetch orders:", error);
@@ -60,50 +62,46 @@ export default function OrdersPage() {
 
     useEffect(() => {
         fetchOrders();
-    }, [token]);
+    }, []);
 
     const handleDecision = async (orderId: string, approve: boolean) => {
         if (!confirm(`Are you sure you want to ${approve ? 'APPROVE' : 'REJECT'} this order?`)) return;
 
         setActionLoading(true);
         try {
-            const { data } = await axiosInstance.put(`/vendor/orders/${orderId}/decision`, {
-                isApproved: approve,
-                reason: approve ? "Approved by Admin" : "Inventory unavailable / Policy rejection"
-            });
+            const res = await adminService.confirmOrderApi(orderId, approve, approve ? "Approved by Admin" : "Inventory unavailable / Policy rejection");
             
-            if (data.success) {
+            if (res.success) {
                 toast.success(approve ? "Order approved successfully!" : "Order rejected and refund initiated.");
                 fetchOrders();
                 setIsDetailOpen(false);
-            } else {
-                toast.error(data.message);
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Action failed.");
+            toast.error("Action failed.");
         } finally {
             setActionLoading(false);
         }
     };
 
-    const handleContact = async (orderId: string) => {
-        const note = prompt("Enter contact attempt note:");
-        if (note === null) return;
-
+    const handleLogContact = async () => {
+        if (!selectedOrder) return;
         setActionLoading(true);
         try {
-            const { data } = await axiosInstance.post(`/vendor/orders/${orderId}/contact`, {
-                attemptNumber: 1,
-                isSuccess: false,
-                note
+            const res = await adminService.recordOrderContactApi({
+                orderId: selectedOrder.orderId,
+                method: 0, // PHONE
+                result: isSuccess ? 0 : 2, // CONFIRMED or REJECTED
+                notes: contactNote
             });
             
-            if (data.success) {
+            if (res.success) {
                 toast.success("Contact attempt logged.");
+                setIsContactModalOpen(false);
+                setContactNote("");
                 fetchOrders();
             }
         } catch(error: any) {
-            toast.error(error.response?.data?.message || "Failed to log contact.");
+            toast.error("Failed to log contact.");
         } finally {
             setActionLoading(false);
         }
@@ -201,7 +199,7 @@ export default function OrdersPage() {
                     <div className="flex flex-col gap-6">
                         <div className="flex items-center justify-between gap-3">
                             <StatusBadge status={selectedOrder.status.toLowerCase()} />
-                            <button onClick={() => handleContact(selectedOrder.orderId)} className="inline-flex items-center gap-2 text-blue-600 font-bold text-xs hover:underline">
+                            <button onClick={() => setIsContactModalOpen(true)} className="inline-flex items-center gap-2 text-blue-600 font-bold text-xs hover:underline">
                                 <PhoneCall className="h-3.5 w-3.5" /> Log Contact
                             </button>
                         </div>
@@ -221,16 +219,16 @@ export default function OrdersPage() {
                             <div className="flex flex-col gap-2">
                                 <div className="flex justify-between">
                                     <span className="font-plus-jakarta text-sm font-semibold text-gray-500">Total MRP</span>
-                                    <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selectedOrder.totalAmount.toLocaleString()} VND</span>
+                                    <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selectedOrder.totalAmount?.toLocaleString()} VND</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="font-plus-jakarta text-sm font-semibold text-gray-500">Deposit Paid</span>
-                                    <span className="font-plus-jakarta text-sm font-bold text-blue-600">{selectedOrder.depositAmount.toLocaleString()} VND ({selectedOrder.depositPct}%)</span>
+                                    <span className="font-plus-jakarta text-sm font-bold text-blue-600">{selectedOrder.depositAmount?.toLocaleString()} VND ({selectedOrder.depositPct}%)</span>
                                 </div>
                                 {selectedOrder.remainingAmount > 0 && (
                                     <div className="flex justify-between border-t border-gray-50 pt-2 mt-1 dark:border-gray-800">
                                         <span className="font-plus-jakarta text-sm font-semibold text-gray-500">Remaining Bal.</span>
-                                        <span className="font-plus-jakarta text-sm font-bold text-amber-600">{selectedOrder.remainingAmount.toLocaleString()} VND</span>
+                                        <span className="font-plus-jakarta text-sm font-bold text-amber-600">{selectedOrder.remainingAmount?.toLocaleString()} VND</span>
                                     </div>
                                 )}
                             </div>
@@ -239,13 +237,13 @@ export default function OrdersPage() {
                         <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
                             <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Order Items</p>
                             <div className="flex flex-col gap-3">
-                                {selectedOrder.items.map((item, i) => (
+                                {selectedOrder.items?.map((item, i) => (
                                     <div key={i} className="flex items-center justify-between gap-4">
                                         <div>
                                             <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.productName}</p>
                                             <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">{item.styleCode} × {item.quantity}</p>
                                         </div>
-                                        <span className="shrink-0 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.unitPrice.toLocaleString()}</span>
+                                        <span className="shrink-0 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.unitPrice?.toLocaleString()} VND</span>
                                     </div>
                                 ))}
                             </div>
@@ -253,6 +251,47 @@ export default function OrdersPage() {
                     </div>
                 )}
             </Drawer>
+
+            {/* Contact Attempt Modal */}
+            <Modal
+                isOpen={isContactModalOpen}
+                onClose={() => setIsContactModalOpen(false)}
+                title="Log Contact Attempt"
+                subtitle="Document communication efforts with the customer"
+                size="md"
+                footer={<>
+                    <button onClick={() => setIsContactModalOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
+                    <button disabled={actionLoading || !contactNote.trim()} onClick={handleLogContact} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">Document Attempt</button>
+                </>}
+            >
+                <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                        <label className="font-plus-jakarta text-xs font-bold uppercase tracking-widest text-gray-400">Success Status</label>
+                        <div className="flex gap-2">
+                            <button onClick={() => setIsSuccess(true)} className={`flex-1 rounded-xl border p-3 flex flex-col items-center gap-1 transition-all ${isSuccess ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700' : 'border-gray-100 hover:bg-gray-50 text-gray-500'}`}>
+                                <CheckCircle2 className={`h-5 w-5 ${isSuccess ? 'text-emerald-500' : 'text-gray-300'}`} />
+                                <span className="text-xs font-bold">Contact Made</span>
+                            </button>
+                            <button onClick={() => setIsSuccess(false)} className={`flex-1 rounded-xl border p-3 flex flex-col items-center gap-1 transition-all ${!isSuccess ? 'border-rose-500 bg-rose-50/50 text-rose-700' : 'border-gray-100 hover:bg-gray-50 text-gray-500'}`}>
+                                <XCircle className={`h-5 w-5 ${!isSuccess ? 'text-rose-500' : 'text-gray-300'}`} />
+                                <span className="text-xs font-bold">Failed / No Answer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="font-plus-jakarta text-xs font-bold uppercase tracking-widest text-gray-400">Communication Notes</label>
+                        <textarea
+                            rows={4}
+                            value={contactNote}
+                            onChange={(e) => setContactNote(e.target.value)}
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 p-4 font-plus-jakarta text-sm font-medium placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:text-gray-100"
+                            placeholder="Detail the conversation or reason for failure..."
+                        />
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
+
