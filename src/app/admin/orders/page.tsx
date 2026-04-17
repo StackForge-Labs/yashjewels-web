@@ -7,6 +7,8 @@ import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import axiosInstance from "@/lib/api-client";
+import { toast } from "sonner";
 
 type OrderItem = {
     productId: string;
@@ -44,22 +46,13 @@ export default function OrdersPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:5066/api/v1/admin/orders/all", {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`API returned ${res.status}: ${errorText}`);
-            }
-
-            const data = await res.json();
+            const { data } = await axiosInstance.get("/admin/orders/all");
             if (data.success) {
                 setOrders(data.data);
             }
         } catch (error) {
             console.error("Failed to fetch orders:", error);
-            alert("Could not load orders. Please check if the backend is running and you have proper permissions.");
+            toast.error("Could not load orders. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -74,24 +67,20 @@ export default function OrdersPage() {
 
         setActionLoading(true);
         try {
-            const res = await fetch(`http://localhost:5066/api/v1/vendor/orders/${orderId}/decision`, {
-                method: "PUT",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ isApproved: approve, reason: approve ? "Approved by Admin" : "Inventory unavailable / Policy rejection" })
+            const { data } = await axiosInstance.put(`/vendor/orders/${orderId}/decision`, {
+                isApproved: approve,
+                reason: approve ? "Approved by Admin" : "Inventory unavailable / Policy rejection"
             });
-            const data = await res.json();
+            
             if (data.success) {
-                alert(approve ? "Order approved successfully!" : "Order rejected and refund initiated.");
+                toast.success(approve ? "Order approved successfully!" : "Order rejected and refund initiated.");
                 fetchOrders();
                 setIsDetailOpen(false);
             } else {
-                alert(data.message);
+                toast.error(data.message);
             }
-        } catch (error) {
-            alert("Action failed. Check console.");
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Action failed.");
         } finally {
             setActionLoading(false);
         }
@@ -103,19 +92,18 @@ export default function OrdersPage() {
 
         setActionLoading(true);
         try {
-            const res = await fetch(`http://localhost:5066/api/v1/vendor/orders/${orderId}/contact`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ attemptNumber: 1, isSuccess: false, note }) // Simplified for UI demo
+            const { data } = await axiosInstance.post(`/vendor/orders/${orderId}/contact`, {
+                attemptNumber: 1,
+                isSuccess: false,
+                note
             });
-            const data = await res.json();
+            
             if (data.success) {
-                alert("Contact attempt logged.");
+                toast.success("Contact attempt logged.");
                 fetchOrders();
             }
+        } catch(error: any) {
+            toast.error(error.response?.data?.message || "Failed to log contact.");
         } finally {
             setActionLoading(false);
         }
