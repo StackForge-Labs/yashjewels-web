@@ -18,7 +18,7 @@ import { getErrorMessage } from "@/lib/api-client";
 // Use the public key from env or fallback placeholder for UI testing
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder");
 
-function CheckoutForm({ orderId, depositAmount }: { orderId: string, depositAmount: number }) {
+function CheckoutForm({ orderId, amount, paymentType }: { orderId: string, amount: number, paymentType: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -42,7 +42,8 @@ function CheckoutForm({ orderId, depositAmount }: { orderId: string, depositAmou
       toast.error(error.message || "Payment failed");
       setIsProcessing(false);
     } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      toast.success("Deposit paid successfully!");
+      const successMsg = paymentType === "BALANCE" ? "Remaining balance paid successfully!" : "Deposit paid successfully!";
+      toast.success(successMsg);
       // We manually redirect to confirmation.
       // The webhook will handle the DB status update in the background.
       router.push(`/orders/${orderId}/confirmation`);
@@ -51,6 +52,8 @@ function CheckoutForm({ orderId, depositAmount }: { orderId: string, depositAmou
     }
   };
 
+  const btnLabel = paymentType === "BALANCE" ? "Pay Remaining Balance" : "Pay Deposit";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
@@ -58,7 +61,7 @@ function CheckoutForm({ orderId, depositAmount }: { orderId: string, depositAmou
         disabled={isProcessing || !stripe || !elements}
         className="w-full bg-gold disabled:opacity-50 group flex justify-center items-center gap-2 rounded-xl px-8 py-4 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105"
       >
-        {isProcessing ? "Processing..." : `Pay Deposit (${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(depositAmount)})`}
+        {isProcessing ? "Processing..." : `${btnLabel} (${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)})`}
         <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
       </button>
       <p className="flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
@@ -72,7 +75,8 @@ export default function OrderPaymentPage() {
   const params = useParams();
   const id = params?.id as string;
   const [clientSecret, setClientSecret] = useState("");
-  const [depositAmount, setDepositAmount] = useState(0);
+  const [amount, setAmount] = useState(0);
+  const [paymentType, setPaymentType] = useState("DEPOSIT");
   const [error, setError] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -88,7 +92,8 @@ export default function OrderPaymentPage() {
         const { data } = await axiosInstance.post("/payments/intent", { orderId: id });
         if (data.success && data.data) {
           setClientSecret(data.data.clientSecret);
-          setDepositAmount(data.data.depositAmount);
+          setAmount(data.data.depositAmount);
+          setPaymentType(data.data.paymentType || "DEPOSIT");
         } else {
           setError(data.message || "Could not initialize payment");
         }
@@ -112,11 +117,13 @@ export default function OrderPaymentPage() {
     );
   }
 
+  const isBalance = paymentType === "BALANCE";
+
   return (
     <>
       <PageHero
-        title="Order Deposit"
-        subtitle="Secure your order to proceed"
+        title={isBalance ? "Remaining Balance" : "Order Deposit"}
+        subtitle={isBalance ? "Finalize your jewelry acquisition" : "Secure your order to proceed"}
         breadcrumbs={[{ label: "Checkout", href: "/checkout" }, { label: "Payment" }]}
       />
 
@@ -126,14 +133,16 @@ export default function OrderPaymentPage() {
             <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-gold/10 text-gold">
               <ShieldCheck size={32} />
             </div>
-            <h2 className="text-center font-serif text-2xl text-gray-900 dark:text-white mb-2">Deposit Required</h2>
+            <h2 className="text-center font-serif text-2xl text-gray-900 dark:text-white mb-2">{isBalance ? "Final Payment" : "Deposit Required"}</h2>
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">
-              Please complete your deposit payment to confirm the order. The remaining balance will be requested after vendor processing.
+              {isBalance 
+                ? "Your jewelry is ready for delivery. Please complete the final payment to secure your acquisition."
+                : "Please complete your deposit payment to confirm the order. The remaining balance will be requested after vendor processing."}
             </p>
 
             {clientSecret ? (
               <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>
-                <CheckoutForm orderId={id} depositAmount={depositAmount} />
+                <CheckoutForm orderId={id} amount={amount} paymentType={paymentType} />
               </Elements>
             ) : (
               <div className="flex justify-center p-8">

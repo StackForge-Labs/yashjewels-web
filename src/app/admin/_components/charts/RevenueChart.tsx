@@ -1,47 +1,36 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Calendar } from "lucide-react";
+import { getDashboardChartsApi } from "@/services/admin.service";
 
-const monthlyData = [
-    { name: "Jan", revenue: 4000 },
-    { name: "Feb", revenue: 3000 },
-    { name: "Mar", revenue: 2000 },
-    { name: "Apr", revenue: 2780 },
-    { name: "May", revenue: 1890 },
-    { name: "Jun", revenue: 2390 },
-    { name: "Jul", revenue: 3490 },
-    { name: "Aug", revenue: 3100 },
-    { name: "Sep", revenue: 4200 },
-    { name: "Oct", revenue: 5300 },
-    { name: "Nov", revenue: 4800 },
-    { name: "Dec", revenue: 6000 },
-];
+export default function RevenueChart({ range: parentRange }: { range: string }) {
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-const weeklyData = [
-    { name: "Mon", revenue: 1200 },
-    { name: "Tue", revenue: 2100 },
-    { name: "Wed", revenue: 800 },
-    { name: "Thu", revenue: 1600 },
-    { name: "Fri", revenue: 3500 },
-    { name: "Sat", revenue: 2900 },
-    { name: "Sun", revenue: 2000 },
-];
+    const days = parentRange === "today" ? 1 : parentRange === "week" ? 7 : parentRange === "month" ? 30 : 365;
 
-const yearlyData = [
-    { name: "2022", revenue: 20000 },
-    { name: "2023", revenue: 35000 },
-    { name: "2024", revenue: 58000 },
-    { name: "2025", revenue: 45000 },
-    { name: "2026", revenue: 41660 },
-];
+    useEffect(() => {
+        const loadCharts = async () => {
+            setLoading(true);
+            try {
+                const res = await getDashboardChartsApi(days);
+                if (res.success) {
+                    const chartNodes = res.data.revenueHistory.map((node: any) => ({
+                        name: node.date,
+                        revenue: node.revenue
+                    }));
+                    setData(chartNodes);
+                }
+            } catch (error) {
+                console.error("Failed to load revenue charts", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadCharts();
+    }, [days]);
 
-export default function RevenueChart() {
-    const [range, setRange] = useState<"week" | "month" | "year">("month");
-
-    const data = range === "month" ? monthlyData : range === "week" ? weeklyData : yearlyData;
-    const gradientColors = range === "month" ? ["#3b82f6", "#60a5fa"] : range === "week" ? ["#10b981", "#34d399"] : ["#8b5cf6", "#a78bfa"];
+    const gradientColors = ["#3b82f6", "#60a5fa"];
 
     return (
         <div id="tour-revenue-chart" className="flex h-full flex-col justify-between rounded-3xl border border-gray-100 bg-white/70 p-8 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70">
@@ -49,23 +38,14 @@ export default function RevenueChart() {
                 <div>
                     <h3 className="font-plus-jakarta text-xl font-bold tracking-tight text-gray-900 dark:text-white">Revenue Analytics</h3>
                     <p className="mt-1 font-plus-jakarta text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                        {range === "month" ? "Monthly" : range === "week" ? "Weekly" : "Yearly"} performance
+                        {parentRange} performance
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-1.5 dark:bg-[#1a1a1a]">
-                    <Calendar className="ml-2 h-4 w-4 text-gray-400" />
-                    {(["week", "month", "year"] as const).map(t => (
-                        <button
-                            key={t}
-                            onClick={() => setRange(t)}
-                            className={`rounded-lg px-4 py-1.5 font-plus-jakarta text-xs font-bold capitalize transition-all ${
-                                range === t ? "bg-white text-gray-900 shadow-sm dark:bg-[#252525] dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            }`}
-                        >
-                            {t}
-                        </button>
-                    ))}
+                    <div className="flex items-center px-4 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        <Calendar className="mr-2 h-4 w-4" /> Live Sync
+                    </div>
                 </div>
             </div>
             

@@ -17,6 +17,7 @@ import { productService } from "@/services/product.service";
 import { catalogService, RefItem } from "@/services/catalog.service";
 import { categoryService } from "@/services/category.service";
 import { Category } from "@/types/category.types";
+import { toast } from "sonner";
 
 const productSchema = z.object({
     name: z.string().min(2, "Name is required"),
@@ -201,8 +202,9 @@ export default function ProductsPage() {
         if (res.success) {
             fetchData();
             setIsDeleteOpen(false);
+            toast.success("Product deleted.");
         } else {
-            alert(res.message);
+            toast.error(res.message);
         }
     };
 
@@ -212,8 +214,9 @@ export default function ProductsPage() {
         if (res.success) {
             fetchData();
             setIsRestoreOpen(false);
+            toast.success("Product restored.");
         } else {
-            alert(res.message);
+            toast.error(res.message);
         }
     };
 

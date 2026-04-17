@@ -44,8 +44,12 @@ export const goldRateService = {
         apiClient.get<any>("/gold-rates/current-usd-rate"),
       ]);
 
-      const rate24k = rateRes.data.currentGoldRateVnd;
-      const usdRate = usdRes.data.currentUsdToVndRate;
+      const rawRate = rateRes.data?.data;
+      const rawUsd = usdRes.data?.data;
+
+      const rate24k = typeof rawRate === 'number' ? rawRate : (rawRate?.currentGoldRateVnd || rawRate?.CurrentGoldRateVnd || 0);
+      const usdRate = typeof rawUsd === 'number' ? rawUsd : (rawUsd?.currentUsdToVndRate || rawUsd?.CurrentUsdToVndRate || 25000);
+
       return {
         rate24kPerGram: rate24k,
         rate18kPerGram:  Math.round(rate24k * KARAT_18K_RATIO),
@@ -53,7 +57,8 @@ export const goldRateService = {
         usdToVnd: usdRate,
         updatedAt: new Date().toISOString(),
       };
-    } catch {
+    } catch (err) {
+      console.error("Gold rate snapshot error:", err);
       return null;
     }
   },
@@ -67,5 +72,17 @@ export const goldRateService = {
     } catch {
       return null;
     }
+  },
+
+  getHistory: async (limit: number = 5) => {
+    return apiClient.get(`/gold-rates/history?limit=${limit}`).then((r) => r.data);
+  },
+
+  triggerFetch: async () => {
+    return apiClient.post("/gold-rates/trigger-fetch").then((r) => r.data);
+  },
+
+  manualOverride: async (manualRate: number, isManual: boolean) => {
+    return apiClient.post("/gold-rates/manual-override", { manualRate, isManual }).then((r) => r.data);
   },
 };

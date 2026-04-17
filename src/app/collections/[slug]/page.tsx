@@ -128,6 +128,9 @@ const CollectionsPage = () => {
             stone: "Diamond",
             readyToShip: p.quantity > 0,
             slug: p.slug,
+            productId: p.id,
+            quantity: p.quantity,
+            status: p.status,
         }));
     }, [products, brands, currentCategory]);
 

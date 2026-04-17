@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Category } from "@/types/category.types";
 import { categoryService } from "@/services/category.service";
+import { toast } from "sonner";
 
 const categorySchema = z.object({
     name: z.string().min(2, "Category name must be at least 2 characters"),
@@ -113,8 +114,9 @@ export default function CategoriesPage() {
         if (res.success) {
             fetchCategories();
             setIsDeleteOpen(false);
+            toast.success("Category deleted.");
         } else {
-            alert(res.message);
+            toast.error(res.message);
         }
     };
 
@@ -124,8 +126,9 @@ export default function CategoriesPage() {
         if (res.success) {
             fetchCategories();
             setIsRestoreOpen(false);
+            toast.success("Category restored.");
         } else {
-            alert(res.message);
+            toast.error(res.message);
         }
     };
 

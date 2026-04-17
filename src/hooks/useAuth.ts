@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { setUser, clearUser, updateAvatar } from "@/store/userSlice";
 import { setTokens, clearTokens, getRefreshToken, getAccessToken } from "@/lib/api-client";
@@ -331,7 +331,23 @@ export function useLoginVerify2Fa() {
         onSuccess: (res) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
+                router.push("/");
             }
         },
     });
+}
+
+/**
+ * Consolidated hook for components needing access to current auth state.
+ */
+export function useAuth() {
+    const user = useSelector((state: any) => state.user.user);
+    const isAuthenticated = useSelector((state: any) => state.user.isAuthenticated);
+    const token = getAccessToken();
+
+    return {
+        user,
+        isAuthenticated,
+        token
+    };
 }
