@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { orderService } from "@/services/order.service";
+import { returnRequestService } from "@/services/return-request.service";
 import { PageHero } from "@/app/_components/PageHero";
+import { Modal } from "@/app/admin/_components/ui/Modal";
+import { FormField, textareaCls, inputCls } from "@/app/admin/_components/ui/FormField";
+import { toast } from "sonner";
 import {
     Package,
     CheckCircle2,
@@ -21,7 +25,9 @@ import {
     MapPin,
     Calendar,
     Receipt,
-    Wallet
+    Wallet,
+    RotateCcw,
+    Camera
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -33,6 +39,7 @@ const StatusIcon = ({ status }: { status: string }) => {
     if (s.includes("paid") || s.includes("confirmed") || s.includes("completed")) return <CheckCircle2 className="text-emerald-500" size={18} />;
     if (s.includes("fail") || s.includes("reject") || s.includes("cancel")) return <AlertCircle className="text-rose-500" size={18} />;
     if (s.includes("ship") || s.includes("transit") || s.includes("deliver")) return <Truck className="text-blue-500" size={18} />;
+    if (s.includes("return") || s.includes("refund")) return <RotateCcw className="text-amber-500" size={18} />;
     if (s.includes("deposit") || s.includes("payment")) return <Wallet className="text-gold" size={18} />;
     return <Clock className="text-gold" size={18} />;
 };
@@ -54,8 +61,11 @@ export default function OrderTimelinePage() {
     const params = useParams();
     const router = useRouter();
     const orderId = params.id as string;
+    const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+    const [returnReason, setReturnReason] = useState("");
+    const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
 
-    const { data: orderResponse, isLoading, error } = useQuery({
+    const { data: orderResponse, isLoading, error, refetch } = useQuery({
         queryKey: ["order", orderId],
         queryFn: () => orderService.getOrderById(orderId),
         enabled: !!orderId,
@@ -99,6 +109,32 @@ export default function OrderTimelinePage() {
 
     const currentStatusIdx = orderSteps.map(s => s.statuses.includes(order.status)).lastIndexOf(true);
     const isCancelled = ["CANCELLED", "REFUNDING", "REFUNDED", "VENDOR_REJECTED"].includes(order.status);
+    const isReturnable = order.status === "DELIVERED";
+    const hasReturnRequest = !!order.returnRequestId;
+
+    const handleSubmitReturn = async () => {
+        if (!returnReason.trim()) {
+            toast.error("Please provide a reason for the return.");
+            return;
+        }
+
+        setIsSubmittingReturn(true);
+        const res = await returnRequestService.submit({
+            orderId,
+            reason: returnReason,
+            evidenceUrls: [] // We can add image upload logic later
+        });
+
+        if (res.success) {
+            toast.success("Return request submitted successfully. Our Maison will review it shortly.");
+            setIsReturnModalOpen(false);
+            setReturnReason("");
+            refetch();
+        } else {
+            toast.error(res.message);
+        }
+        setIsSubmittingReturn(false);
+    };
 
     return (
         <main className="min-h-screen bg-[#FAFAF9] pb-32 dark:bg-[#050505]">
@@ -240,6 +276,44 @@ export default function OrderTimelinePage() {
                                 </motion.div>
                             )}
 
+                            {isReturnable && !hasReturnRequest && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-8 rounded-3xl border border-gray-200 bg-white/60 p-8 dark:border-white/5 dark:bg-[#0C0A09]/60"
+                                >
+                                    <h3 className="mb-2 font-serif text-xl text-gray-900 dark:text-white">Assurance & Returns</h3>
+                                    <p className="mb-6 text-sm text-gray-500 leading-relaxed">If your jewelry does not meet our eternal standards of perfection, you may initiate a return request within 7 days of delivery.</p>
+                                    <button
+                                        onClick={() => setIsReturnModalOpen(true)}
+                                        className="flex items-center gap-3 rounded-xl bg-gray-950 px-6 py-3.5 text-[10px] font-bold tracking-[0.2em] text-white uppercase transition-all hover:bg-gray-800 active:scale-95 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-200"
+                                    >
+                                        <RotateCcw size={16} /> Request Return
+                                    </button>
+                                </motion.div>
+                            )}
+
+                            {hasReturnRequest && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-8 rounded-3xl border-2 border-amber-200/50 bg-amber-50/20 p-8 dark:border-amber-900/30 dark:bg-amber-900/10"
+                                >
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900/40">
+                                            <RotateCcw className="text-amber-600" size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-serif text-xl text-gray-900 dark:text-white uppercase tracking-wider">Return In Progress</h3>
+                                            <p className="text-xs text-amber-600/80 font-bold uppercase tracking-widest">{order.status.replace(/_/g, " ")}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic">
+                                        Our artisan review team is currently assessing your request. You will be notified of any updates via this timeline and secure notification.
+                                    </p>
+                                </motion.div>
+                            )}
+
                             <div className="relative rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
                                 <h3 className="mb-8 font-serif text-xl border-b border-gray-100 pb-4 dark:border-white/5 text-gray-900 dark:text-white">
                                     Tracking Logistics
@@ -294,6 +368,56 @@ export default function OrderTimelinePage() {
                     </div>
                 </div>
             </div>
+
+            {/* Return Request Modal */}
+            <Modal
+                isOpen={isReturnModalOpen}
+                onClose={() => setIsReturnModalOpen(false)}
+                title="Initiate Return Request"
+                size="md"
+                footer={
+                    <div className="flex gap-4 w-full">
+                        <button 
+                            onClick={() => setIsReturnModalOpen(false)}
+                            className="flex-1 rounded-xl border border-gray-200 py-3 text-xs font-bold uppercase tracking-widest text-gray-400 transition-all hover:bg-gray-50 dark:border-white/5"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleSubmitReturn}
+                            disabled={isSubmittingReturn}
+                            className="flex-2 rounded-xl bg-gray-950 py-3 px-8 text-xs font-bold uppercase tracking-widest text-white shadow-xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 dark:bg-white dark:text-gray-950"
+                        >
+                            {isSubmittingReturn ? "Transmitting..." : "Submit Request"}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-6 py-2">
+                    <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200/30">
+                        <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
+                            <strong>Note:</strong> Return requests are subject to physical inspection. Items must be in original condition with all Maison certifications and packaging.
+                        </p>
+                    </div>
+
+                    <FormField label="Reason for Return" required hint="Describe the issue in detail">
+                        <textarea 
+                            className={`${textareaCls} h-32 resize-none`}
+                            placeholder="e.g. The stone clarity does not match the certification provided..."
+                            value={returnReason}
+                            onChange={(e) => setReturnReason(e.target.value)}
+                        />
+                    </FormField>
+
+                    <div className="space-y-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Photo Evidence (Optional)</p>
+                        <div className="flex h-32 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50 transition-all hover:bg-gray-100 dark:border-white/5 dark:bg-white/5">
+                            <Camera className="text-gray-400 mb-2" size={24} />
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Connect Image Storage Service</p>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </main>
     );
 }
