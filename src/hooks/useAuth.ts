@@ -37,7 +37,7 @@ function useAuthSuccess() {
     const queryClient = useQueryClient();
 
     return (authData: AuthResponse) => {
-        setTokens(authData.accessToken, authData.refreshToken);
+        setTokens(authData.accessToken, authData.refreshToken, authData.user?.role);
         if (authData.user) {
             dispatch(setUser(authData.user));
         }
@@ -55,7 +55,12 @@ export function useLogin() {
         onSuccess: (res) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
-                router.push("/");
+                const role = res.data.user?.role?.toLowerCase();
+                if (role === "admin" || role === "vendor") {
+                    router.push("/admin");
+                } else {
+                    router.push("/");
+                }
             }
         },
     });
@@ -133,7 +138,12 @@ export function useGoogleLogin() {
         onSuccess: (res, variables) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
-                router.push("/");
+                const role = res.data.user?.role?.toLowerCase();
+                if (role === "admin" || role === "vendor") {
+                    router.push("/admin");
+                } else {
+                    router.push("/");
+                }
             } else if (res.requiresTwoFactor) {
                 // Since googleLoginApi might not return email easily from result, we assume we might need to look inside potential decoded token or just rely on backend's response message if it contains email. 
                 // However, the best way is for the backend to include email in the 2FA error response or for the hook to know it.
@@ -163,7 +173,12 @@ export function useFacebookLogin() {
         onSuccess: (res) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
-                router.push("/");
+                const role = res.data.user?.role?.toLowerCase();
+                if (role === "admin" || role === "vendor") {
+                    router.push("/admin");
+                } else {
+                    router.push("/");
+                }
             } else if (res.requiresTwoFactor) {
                 router.push(`/auth/verify-2fa?email=${encodeURIComponent(res.message || "")}`);
             }
@@ -331,7 +346,12 @@ export function useLoginVerify2Fa() {
         onSuccess: (res) => {
             if (res.success && res.data) {
                 onSuccess(res.data);
-                router.push("/");
+                const role = res.data.user?.role?.toLowerCase();
+                if (role === "admin" || role === "vendor") {
+                    router.push("/admin");
+                } else {
+                    router.push("/");
+                }
             }
         },
     });

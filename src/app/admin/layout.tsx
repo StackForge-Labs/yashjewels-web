@@ -3,9 +3,17 @@
 import { ReactNode, useState } from "react";
 import AdminSidebar from "./_components/AdminSidebar";
 import AdminHeader from "./_components/AdminHeader";
+import { useAdminGuard } from "@/hooks/useAuthGuard";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    // Block render until profile is confirmed as admin/vendor
+    // Prevents race condition where isLoading=false but profile=undefined
+    // causes double-header UI (admin + public layout stacking)
+    const { isLoading, profile, isError } = useAdminGuard();
+
+    // Show nothing while loading, when profile isn't ready, or during error redirect
+    if (isLoading || !profile || isError) return null;
 
     return (
         <div className="flex min-h-screen w-full bg-[#f8f9fa] text-gray-900 antialiased selection:bg-blue-500/30 dark:bg-[#0a0a0a] dark:text-gray-100 transition-colors duration-300">

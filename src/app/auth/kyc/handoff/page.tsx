@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInitKycSession, useKycSessionStatus } from "@/hooks/useAuth";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader2, Smartphone, CheckCircle2, RotateCcw } from "lucide-react";
+import { Loader2, CheckCircle2, RotateCcw, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function KycHandoffPage() {
     const { profile: user, isLoading: isAuthLoading } = useAuthGuard();
@@ -41,10 +40,7 @@ export default function KycHandoffPage() {
 
     useEffect(() => {
         if (status === "Completed") {
-            // Đánh dấu profile cần tải lại ngay
             queryClient.invalidateQueries({ queryKey: ["profile"] });
-
-            // Success! Redirect to profile or a success page
             setTimeout(() => {
                 router.push("/profile?kyc=success");
             }, 2000);
@@ -53,79 +49,102 @@ export default function KycHandoffPage() {
 
     if (isAuthLoading) {
         return (
-            <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <div className="min-h-screen bg-[#f3f2ef] dark:bg-black flex items-center justify-center">
+                <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#030303] flex items-center justify-center p-4">
-            <Card className="max-w-md w-full shadow-xl border-none overflow-hidden">
-                <div className="bg-primary h-2 w-full" />
-                <CardHeader className="text-center pb-2">
-                    <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Smartphone className="w-6 h-6 text-primary" />
-                        Xác minh bảo mật
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 text-center pt-4">
-                    {status === "Completed" ? (
-                        <div className="py-8 animate-in zoom-in duration-300">
-                            <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Xác thực thành công!</h3>
-                            <p className="text-slate-500">Đang quay trở lại trang cá nhân...</p>
-                        </div>
-                    ) : (
-                        <>
-                            <p className="text-slate-600 dark:text-slate-400">
-                                Để đảm bảo an toàn cho các giao dịch giá trị cao, vui lòng sử dụng điện thoại để thực hiện xác minh khuôn mặt.
-                            </p>
+        <div className="min-h-screen bg-[#f3f2ef] dark:bg-[#030303] flex items-center justify-center p-4">
+            <div className="w-full max-w-[620px] bg-white dark:bg-[#0a0a0a] rounded-xl shadow-sm border border-gray-100 dark:border-white/5 p-6 md:p-10 relative">
 
-                            <div className="relative group mx-auto w-[250px] h-[250px] bg-white p-2 rounded-2xl shadow-inner border border-slate-100 dark:border-white/5 flex items-center justify-center overflow-hidden">
-                                {initSession.isPending ? (
-                                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                                ) : qrUrl ? (
-                                    <img
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`}
-                                        alt="KYC QR Code"
-                                        className="w-full h-full rounded-xl transition-transform group-hover:scale-105 duration-300"
-                                    />
-                                ) : (
-                                    <Button variant="ghost" onClick={handleInit}>
-                                        <RotateCcw className="w-4 h-4 mr-2" /> Thử lại
-                                    </Button>
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white font-semibold mb-8 transition-colors"
+                >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Back
+                </button>
+
+                {status === "Completed" ? (
+                    <div className="py-12 text-center animate-in zoom-in duration-300">
+                        <CheckCircle2 className="w-20 h-20 text-emerald-500 mx-auto mb-4" />
+                        <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Verification Successful!</h3>
+                        <p className="text-gray-500">Redirecting to your profile...</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="mb-6 w-12 h-16 bg-[#5f6b80] rounded-lg relative overflow-hidden flex flex-col pt-2 items-center shrink-0">
+                            <div className="w-4 h-4 bg-emerald-700/80 rounded-full border-2 border-white/80 self-start ml-2 mb-1 z-10 shrink-0"></div>
+                            <div className="w-8 h-0.5 bg-white/40 mb-1 rounded-full shrink-0"></div>
+                            <div className="w-8 h-0.5 bg-white/40 mb-1 rounded-full shrink-0"></div>
+                            <div className="w-8 h-0.5 bg-white/40 mb-1 rounded-full shrink-0"></div>
+                            <div className="w-8 h-0.5 bg-white/40 mb-3 rounded-full shrink-0"></div>
+                            <div className="w-1.5 h-1.5 bg-white/50 rounded-full mx-auto shrink-0 mt-auto mb-1.5"></div>
+                        </div>
+
+                        <h1 className="text-[28px] leading-[1.2] font-semibold text-gray-900 dark:text-white mb-3 tracking-tight">
+                            Use your mobile device to verify
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400 mb-5 text-[15px] leading-relaxed">
+                            Follow the instructions below to verify your identity using our secure mobile platform.
+                        </p>
+
+                        <p className="font-bold text-gray-900 dark:text-white mb-6 text-[15px]">
+                            Camera app is required. <span className="text-[#0a66c2] dark:text-blue-400 cursor-pointer hover:underline">Using a smartphone</span>
+                        </p>
+
+                        <div className="flex flex-col md:flex-row gap-5 mb-6">
+                            <div className="shrink-0 self-start">
+                                <div className="w-[180px] h-[180px] border border-gray-300 dark:border-white/20 rounded-xl p-3.5 flex items-center justify-center bg-white shrink-0">
+                                    {initSession.isPending ? (
+                                        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                                    ) : qrUrl ? (
+                                        <div className="flex flex-col items-center">
+                                            <img
+                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrUrl)}`}
+                                                alt="KYC QR Code"
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <button onClick={handleInit} className="flex flex-col items-center text-gray-500 hover:text-gray-800">
+                                            <RotateCcw className="w-6 h-6 mb-2" />
+                                            <span className="text-sm">Retry</span>
+                                        </button>
+                                    )}
+                                </div>
+                                {qrUrl && (
+                                    <div className="mt-3 text-center">
+                                        <a
+                                            href={qrUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 underline truncate block max-w-[180px]"
+                                        >
+                                            [TEST ONLY: CLICK HERE]
+                                        </a>
+                                    </div>
                                 )}
                             </div>
 
-                            <div className="text-left bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/20">
-                                <h4 className="font-semibold text-blue-900 dark:text-blue-400 mb-2 flex items-center gap-2">
-                                    <span className="flex items-center justify-center w-5 h-5 bg-blue-600 text-white text-[10px] rounded-full">1</span>
-                                    Hướng dẫn:
-                                </h4>
-                                <ul className="text-sm text-blue-800 dark:text-blue-300/80 space-y-2 list-none ml-1">
-                                    <li className="flex gap-2">
-                                        <div className="mt-1 w-1 h-1 bg-blue-400 rounded-full flex-shrink-0" />
-                                        Mở ứng dụng Camera trên điện thoại của bạn
-                                    </li>
-                                    <li className="flex gap-2">
-                                        <div className="mt-1 w-1 h-1 bg-blue-400 rounded-full flex-shrink-0" />
-                                        Quét mã QR ở trên
-                                    </li>
-                                    <li className="flex gap-2">
-                                        <div className="mt-1 w-1 h-1 bg-blue-400 rounded-full flex-shrink-0" />
-                                        Làm theo các bước trên điện thoại của bạn
-                                    </li>
+                            <div className="flex-1 bg-[#f9fafb] dark:bg-white/5 rounded-xl p-5 md:min-h-[180px] self-start">
+                                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-[15px]">Instructions:</h3>
+                                <ul className="space-y-3.5 text-[15px] text-gray-800 dark:text-gray-200 leading-snug">
+                                    <li>1. Open the camera app on your phone</li>
+                                    <li>2. Scan the QR code on the left</li>
+                                    <li>3. Follow the steps on your phone</li>
                                 </ul>
                             </div>
+                        </div>
 
-                            <p className="text-[12px] text-slate-400 italic">
-                                Trang này sẽ tự động cập nhật khi bạn xác minh thành công.
-                            </p>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
+                        <p className="font-bold text-[16px] text-gray-900 dark:text-white">
+                            This page will refresh automatically once you've successfully verified.
+                        </p>
+                    </>
+                )}
+            </div>
         </div>
     );
 }

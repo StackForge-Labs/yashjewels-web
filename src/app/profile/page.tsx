@@ -134,7 +134,7 @@ function ProfileContent() {
                 breadcrumbs={[{ label: "Profile" }]}
             />
 
-            <section className="relative bg-gray-50/30 py-5 transition-colors dark:bg-[#050505]">
+            <section className="relative bg-gray-50/30 py-2 transition-colors dark:bg-[#050505]">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
                         {/* Sidebar */}
@@ -191,14 +191,14 @@ function ProfileContent() {
                                 <nav className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-white/5 dark:bg-[#0a0a0a]">
                                     <ul className="space-y-2">
                                         <li>
-                                            <button 
+                                            <button
                                                 onClick={() => setView("overview")}
                                                 className={`flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest uppercase transition-all ${view === "overview" ? "bg-gray-50 text-gold dark:bg-white/5" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5"}`}>
                                                 <User size={18} /> Account Overview
                                             </button>
                                         </li>
                                         <li>
-                                            <button 
+                                            <button
                                                 onClick={() => setView("orders")}
                                                 className={`flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest uppercase transition-all ${view === "orders" ? "bg-gray-50 text-gold dark:bg-white/5" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5"}`}>
                                                 <ShoppingBag size={18} /> Order History

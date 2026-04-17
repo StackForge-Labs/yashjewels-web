@@ -8,27 +8,13 @@ interface CartSummaryProps {
     total: string;
     itemCount: number;
     checkoutBlocked?: boolean;
+    onCheckout?: () => void;
 }
 
-export const CartSummary = ({ subtotal, shipping, tax, total, itemCount, checkoutBlocked }: CartSummaryProps) => {
+export const CartSummary = ({ subtotal, shipping, tax, total, itemCount, checkoutBlocked, onCheckout }: CartSummaryProps) => {
     return (
         <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-6 md:p-8 dark:border-white/5 dark:bg-white/2">
             <h3 className="mb-6 font-serif text-lg text-gray-900 dark:text-white">Order Summary</h3>
-
-            {/* Coupon Input */}
-            <div className="mb-6 flex gap-2">
-                <div className="relative flex-1">
-                    <Tag size={14} className="text-gold absolute top-1/2 left-3 -translate-y-1/2" />
-                    <input
-                        type="text"
-                        placeholder="Coupon code"
-                        className="w-full rounded-lg border border-gray-200 bg-white py-3 pr-4 pl-9 text-sm outline-none transition-colors focus:border-gold dark:border-white/10 dark:bg-white/5 dark:text-white"
-                    />
-                </div>
-                <button className="rounded-lg bg-gray-900 px-5 text-xs font-bold tracking-wider text-white uppercase transition-colors hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200">
-                    Apply
-                </button>
-            </div>
 
             {/* Price Breakdown */}
             <div className="space-y-4 border-t border-gray-100 pt-6 dark:border-white/5">
@@ -61,13 +47,13 @@ export const CartSummary = ({ subtotal, shipping, tax, total, itemCount, checkou
                     Checkout Disabled
                 </button>
             ) : (
-                <Link
-                    href="/checkout"
+                <button
+                    onClick={onCheckout}
                     className="bg-gold group mt-6 flex h-14 w-full items-center justify-center gap-3 rounded-xl text-[12px] font-bold tracking-[0.3em] text-white uppercase shadow-[0_20px_40px_rgba(202,162,71,0.25)] transition-all hover:brightness-105 active:scale-[0.98]"
                 >
                     Proceed to Checkout
                     <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-                </Link>
+                </button>
             )}
 
             {/* Trust Badges */}

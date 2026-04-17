@@ -25,7 +25,7 @@ export function useAuthGuard() {
         }
     }, [isError, router]);
 
-    return { profile, isLoading, isAuthenticated: !!profile };
+    return { profile, isLoading, isError, isAuthenticated: !!profile };
 }
 
 /**
@@ -47,4 +47,25 @@ export function useRedirectIfAuthenticated() {
             }
         }
     }, [router]);
+}
+
+/**
+ * Redirect to home if user IS NOT admin or vendor.
+ * Use in admin pages to prevent unauthorized access.
+ */
+export function useAdminGuard() {
+    const router = useRouter();
+    const { profile, isLoading, isError } = useAuthGuard();
+
+    useEffect(() => {
+        if (!isLoading && profile) {
+            const role = profile.role?.toLowerCase();
+            if (role !== "admin" && role !== "vendor") {
+                router.replace("/");
+            }
+        }
+    }, [profile, isLoading, router]);
+
+    // isError: profile fetch failed (e.g. token expired) — let redirect happen via useAuthGuard
+    return { profile, isLoading, isError };
 }

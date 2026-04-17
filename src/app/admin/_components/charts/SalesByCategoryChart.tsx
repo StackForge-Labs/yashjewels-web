@@ -17,12 +17,14 @@ export default function SalesByCategoryChart({ range: parentRange }: { range: st
             setLoading(true);
             try {
                 const res = await getDashboardChartsApi(days);
-                if (res.success) {
+                if (res.success && res.data?.categoryDistribution) {
                     const chartNodes = res.data.categoryDistribution.map((node: any) => ({
                         name: node.category,
                         value: node.count
                     }));
                     setData(chartNodes);
+                } else {
+                    setData([]);
                 }
             } catch (error) {
                 console.error("Failed to load category charts", error);

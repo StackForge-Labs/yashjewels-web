@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { MapPin, Plus, Trash2, Home, Briefcase, Star, Loader2, X, Check } from "lucide-react";
+import { MapPin, Plus, Trash2, Home, Briefcase, Star, Loader2, X, Check, Pencil } from "lucide-react";
 import { UserAddressDto, CreateAddressRequest } from "@/types/user.types";
-import { useAddresses, useCreateAddress, useDeleteAddress, useSetDefaultAddress } from "@/hooks/useUser";
+import { useAddresses, useCreateAddress, useDeleteAddress, useSetDefaultAddress, useUpdateAddress } from "@/hooks/useUser";
 import { cn } from "@/lib/utils";
 import { InlineToast } from "./TwoFactorSection";
 
@@ -13,7 +13,10 @@ export const AddressSection = () => {
     const deleteAddress = useDeleteAddress();
     const setDefault = useSetDefaultAddress();
 
+    const updateAddress = useUpdateAddress();
+
     const [isAdding, setIsAdding] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     // Form state
@@ -28,26 +31,51 @@ export const AddressSection = () => {
         isDefault: false,
     });
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const resetForm = () => {
+        setIsAdding(false);
+        setEditingId(null);
+        setFormData({
+            label: "Home",
+            recipientName: "",
+            recipientPhone: "",
+            addressLine1: "",
+            ward: "",
+            district: "",
+            province: "",
+            isDefault: false,
+        });
+    };
+
+    const handleEdit = (addr: UserAddressDto) => {
+        setFormData({
+            label: addr.label,
+            recipientName: addr.recipientName,
+            recipientPhone: addr.recipientPhone,
+            addressLine1: addr.addressLine1,
+            ward: addr.ward,
+            district: addr.district,
+            province: addr.province,
+            isDefault: addr.isDefault,
+        });
+        setEditingId(addr.id);
+        setIsAdding(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await createAddress.mutateAsync(formData);
+            let res;
+            if (editingId) {
+                res = await updateAddress.mutateAsync({ id: editingId, data: formData });
+            } else {
+                res = await createAddress.mutateAsync(formData);
+            }
             if (res.success) {
-                setToast({ message: "Địa chỉ mới đã được thêm!", type: "success" });
-                setIsAdding(false);
-                setFormData({
-                    label: "Home",
-                    recipientName: "",
-                    recipientPhone: "",
-                    addressLine1: "",
-                    ward: "",
-                    district: "",
-                    province: "",
-                    isDefault: false,
-                });
+                setToast({ message: editingId ? "Địa chỉ đã được cập nhật!" : "Địa chỉ mới đã được thêm!", type: "success" });
+                resetForm();
             }
         } catch (err) {
-            setToast({ message: "Không thể thêm địa chỉ. Vui lòng kiểm tra lại.", type: "error" });
+            setToast({ message: "Không thể lưu địa chỉ. Vui lòng kiểm tra lại.", type: "error" });
         }
     };
 
@@ -101,10 +129,10 @@ export const AddressSection = () => {
                 )}
 
                 {isAdding && (
-                    <form onSubmit={handleCreate} className="mb-10 p-6 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-gray-100 dark:border-white/5 space-y-6 animate-in slide-in-from-top duration-300">
+                    <form onSubmit={handleSubmit} className="mb-10 p-6 bg-gray-50 dark:bg-white/[0.02] rounded-2xl border border-gray-100 dark:border-white/5 space-y-6 animate-in slide-in-from-top duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">New Address Details</h4>
-                            <button type="button" onClick={() => setIsAdding(false)} className="text-gray-400 hover:text-gray-600">
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{editingId ? "Edit Address Details" : "New Address Details"}</h4>
+                            <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600">
                                 <X size={20} />
                             </button>
                         </div>
@@ -213,18 +241,18 @@ export const AddressSection = () => {
                         <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-white/5">
                             <button
                                 type="button"
-                                onClick={() => setIsAdding(false)}
+                                onClick={resetForm}
                                 className="px-6 py-3 rounded-xl text-xs font-bold text-gray-400 uppercase hover:text-gray-600 transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                disabled={createAddress.isPending}
+                                disabled={createAddress.isPending || updateAddress.isPending}
                                 className="bg-gold text-white px-8 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
                             >
-                                {createAddress.isPending && <Loader2 size={14} className="animate-spin" />}
-                                Add Address
+                                {(createAddress.isPending || updateAddress.isPending) && <Loader2 size={14} className="animate-spin" />}
+                                {editingId ? "Update Address" : "Add Address"}
                             </button>
                         </div>
                     </form>
@@ -276,6 +304,13 @@ export const AddressSection = () => {
                                                 <Star size={16} />
                                             </button>
                                         )}
+                                        <button 
+                                            onClick={() => handleEdit(addr)}
+                                            className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                                            title="Edit Address"
+                                        >
+                                            <Pencil size={16} />
+                                        </button>
                                         <button 
                                             onClick={() => handleDelete(addr.id)}
                                             className="p-2 text-gray-400 hover:text-red-500 transition-colors"

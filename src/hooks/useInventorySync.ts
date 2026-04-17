@@ -1,16 +1,28 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 // @ts-ignore - The user will install this package later
 import * as signalR from "@microsoft/signalr";
-import { toast } from "sonner";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
 import { updateProductStatus } from "@/store/productRealtimeSlice";
+import { fetchCart } from "@/store/cartSlice";
 
 export const useInventorySync = () => {
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
     const dispatch = useDispatch<AppDispatch>();
+    const cartItems = useSelector((state: RootState) => state.cart.items);
+    const { isAuthenticated } = useSelector((state: RootState) => state.user);
+
+    // Dùng Ref để listener luôn lấy được giá trị mới nhất mà ko cần re-subscribe
+    const cartItemsRef = useRef(cartItems);
+    const authRef = useRef(isAuthenticated);
+
+    useEffect(() => {
+        cartItemsRef.current = cartItems;
+        authRef.current = isAuthenticated;
+    }, [cartItems, isAuthenticated]);
 
     useEffect(() => {
         // Initialize SignalR Connection
@@ -33,12 +45,29 @@ export const useInventorySync = () => {
                     // Listeners
                     connection.on("ItemLocked", (productId: string) => {
                         dispatch(updateProductStatus({ productId, quantity: 1 }));
-                        toast.info("Một món đồ vừa được giữ chỗ!");
+                        
+                        // Nếu item đang ở trong giỏ hàng, re-fetch giỏ hàng để cập nhật stock realtime
+                        if (authRef.current && cartItemsRef.current.some(item => item.productId.toLowerCase() === productId.toLowerCase())) {
+                            dispatch(fetchCart());
+                        }
                     });
 
                     connection.on("InventoryDepleted", (productId: string) => {
                         dispatch(updateProductStatus({ productId, quantity: 0, status: "SOLD_OUT" }));
-                        toast.error("Một món đồ vừa hết hàng!");
+
+                        // Nếu item đang ở trong giỏ hàng, re-fetch giỏ hàng để cập nhật nhãn Hết hàng
+                        if (authRef.current && cartItemsRef.current.some(item => item.productId.toLowerCase() === productId.toLowerCase())) {
+                            dispatch(fetchCart());
+                        }
+                    });
+
+                    connection.on("InventoryRestocked", (productId: string) => {
+                        dispatch(updateProductStatus({ productId, quantity: 1, status: "ACTIVE" }));
+
+                        // Nếu item đang ở trong giỏ hàng, re-fetch giỏ hàng để cập nhật UI
+                        if (authRef.current && cartItemsRef.current.some(item => item.productId.toLowerCase() === productId.toLowerCase())) {
+                            dispatch(fetchCart());
+                        }
                     });
                 })
                 .catch(e => console.error("Connection failed: ", e));

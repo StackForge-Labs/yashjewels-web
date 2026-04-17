@@ -9,7 +9,7 @@ import { Modal } from "../_components/ui/Modal";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { adminService } from "@/services/admin.service";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 type OrderItem = {
     productId: string;
@@ -65,11 +65,19 @@ export default function OrdersPage() {
     }, []);
 
     const handleDecision = async (orderId: string, approve: boolean) => {
+        if (!selectedOrder) return;
         if (!confirm(`Are you sure you want to ${approve ? 'APPROVE' : 'REJECT'} this order?`)) return;
 
         setActionLoading(true);
         try {
-            const res = await adminService.confirmOrderApi(orderId, approve, approve ? "Approved by Admin" : "Inventory unavailable / Policy rejection");
+            const reason = approve ? "Approved by Admin" : "Inventory unavailable / Policy rejection";
+            
+            // Branch logic based on order status for correct backend endpoint
+            const apiCall = selectedOrder.status === "DEPOSIT_PAID" 
+                ? adminService.confirmOrderDecisionApi 
+                : adminService.confirmOrderApi;
+
+            const res = await apiCall(orderId, approve, reason);
             
             if (res.success) {
                 toast.success(approve ? "Order approved successfully!" : "Order rejected and refund initiated.");

@@ -40,6 +40,11 @@ const setDefaultAddressApi = async (id: string) => {
     return res.data;
 };
 
+const updateAddressApi = async (params: { id: string, data: CreateAddressRequest }) => {
+    const res = await apiClient.put<ApiResponse<UserAddressDto>>(`/user/addresses/${params.id}`, params.data);
+    return res.data;
+};
+
 // ── Hooks ──────────────────────────────────────────────────────
 
 export function useUpdateProfile() {
@@ -102,6 +107,18 @@ export function useSetDefaultAddress() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: setDefaultAddressApi,
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ["addresses"] });
+            }
+        },
+    });
+}
+
+export function useUpdateAddress() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateAddressApi,
         onSuccess: (res) => {
             if (res.success) {
                 queryClient.invalidateQueries({ queryKey: ["addresses"] });

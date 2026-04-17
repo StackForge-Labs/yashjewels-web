@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { setCartStart, setCartSuccess, setCartFailure, clearCartLocal } from "@/store/cartSlice";
+import { clearCartLocal, fetchCart as fetchCartThunk } from "@/store/cartSlice";
 import axiosInstance from "@/lib/api-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -14,18 +14,7 @@ export const useCart = () => {
 
     const fetchCart = useCallback(async () => {
         if (!isAuthenticated) return;
-
-        try {
-            dispatch(setCartStart());
-            const { data } = await axiosInstance.get("/cart");
-            if (data.success) {
-                dispatch(setCartSuccess(data.data));
-            } else {
-                dispatch(setCartFailure(data.message || "Failed to load cart."));
-            }
-        } catch (error: any) {
-            dispatch(setCartFailure(error.response?.data?.message || "Error loading cart."));
-        }
+        dispatch(fetchCartThunk());
     }, [dispatch, isAuthenticated]);
 
     const addToCart = async (productId: string, quantity: number = 1, isGift: boolean = false, giftMessage?: string) => {

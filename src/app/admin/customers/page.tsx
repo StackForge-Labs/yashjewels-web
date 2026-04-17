@@ -6,7 +6,7 @@ import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
-import { getCustomersApi, getCustomerDetailApi } from "@/services/admin.service";
+import { getCustomersApi, getCustomerDetailApi, updateUserStatusApi } from "@/services/admin.service";
 import toast from "react-hot-toast";
 
 export default function CustomersPage() {
@@ -50,8 +50,21 @@ export default function CustomersPage() {
     );
 
     const toggleStatus = async () => {
-        toast.error("Status update not implemented in backend yet");
-        setIsDeactivateOpen(false);
+        if (!selected) return;
+        const newStatus = selected.isActive ? 2 : 1; // 1: ACTIVE, 2: INACTIVE
+        try {
+            const res = await updateUserStatusApi(selected.id, newStatus);
+            if (res.success) {
+                toast.success(res.message || "Status updated successfully");
+                loadCustomers();
+            } else {
+                toast.error(res.message || "Failed to update status");
+            }
+        } catch (error) {
+            toast.error("An error occurred while updating status");
+        } finally {
+            setIsDeactivateOpen(false);
+        }
     };
 
     return (
@@ -100,8 +113,8 @@ export default function CustomersPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <button onClick={() => handleViewProfile(c.id)} className="rounded-lg bg-gray-100 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:bg-gray-800 dark:text-gray-300">Profile</button>
-                                                <button onClick={() => { setSelected(c); setIsDeactivateOpen(true); }} className={`rounded-lg px-3 py-1.5 font-plus-jakarta text-xs font-bold transition-colors ${c.isEmailVerified ? "bg-rose-50 text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}`}>
-                                                    {c.isEmailVerified ? "Deactivate" : "Activate"}
+                                                <button onClick={() => { setSelected(c); setIsDeactivateOpen(true); }} className={`rounded-lg px-3 py-1.5 font-plus-jakarta text-xs font-bold transition-colors ${c.isActive ? "bg-rose-50 text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}`}>
+                                                    {c.isActive ? "Deactivate" : "Activate"}
                                                 </button>
                                             </div>
                                         </td>
@@ -121,47 +134,105 @@ export default function CustomersPage() {
             <Drawer isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} title={selected?.fullName ?? "Loading..."} subtitle={selected?.email}
                 footer={<button onClick={() => setIsProfileOpen(false)} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700">Close</button>}>
                 {selected && (
-                    <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-6">
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 { label: "UID", value: selected.id.substring(0, 8) },
                                 { label: "Joined", value: new Date(selected.createdAt).toLocaleDateString() },
-                                { label: "LTV", value: `${selected.lifetimeValue?.toLocaleString() ?? 0} VND` },
-                                { label: "2FA", value: selected.hasTwoFactorEnabled ? "Enabled" : "Disabled" },
+                                { label: "Last Login", value: selected.lastLoginAt ? new Date(selected.lastLoginAt).toLocaleString() : "Never" },
+                                { label: "Birthday", value: selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : "N/A" },
                             ].map(({ label, value }) => (
                                 <div key={label} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
                                     <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-                                    <p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{value}</p>
+                                    <p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white capitalize">{value}</p>
                                 </div>
                             ))}
                         </div>
-                        <div className="flex gap-3">
-                            <StatusBadge status={selected.isEmailVerified ? "active" : "inactive"} />
-                            <StatusBadge status={selected.kycStatus.toLowerCase()} label={`KYC: ${selected.kycStatus}`} />
-                        </div>
-                        <div>
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Saved Addresses</p>
-                            {!selected.addresses || selected.addresses.length === 0 ? (
-                                <p className="font-plus-jakarta text-sm text-gray-400">No addresses saved.</p>
-                            ) : selected.addresses.map((addr: any, i: number) => (
-                                <div key={i} className="flex items-start gap-3 rounded-xl border border-gray-100 p-4 dark:border-gray-800 mb-2">
-                                    <MapPin className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                                    <div>
-                                        <p className="font-plus-jakarta text-xs font-bold uppercase tracking-wider text-gray-500">{addr.label} {addr.isDefault && <span className="text-blue-600">(Default)</span>}</p>
-                                        <p className="font-plus-jakarta text-sm font-medium text-gray-900 dark:text-white">{addr.addressLine1}, {addr.district}, {addr.city}</p>
+
+                        <div className="rounded-2xl bg-gray-50/50 p-4 dark:bg-gray-800/20">
+                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">Shopping Vitality</p>
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { label: "LTV", value: `${selected.lifetimeValue?.toLocaleString() ?? 0} VND` },
+                                    { label: "Orders", value: selected.orderCount },
+                                    { label: "Items", value: selected.totalItemsPurchased },
+                                ].map(({ label, value }) => (
+                                    <div key={label} className="text-center">
+                                        <p className="font-plus-jakarta text-lg font-black text-gray-900 dark:text-white">{value}</p>
+                                        <p className="text-[9px] font-bold uppercase text-gray-400">{label}</p>
                                     </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            <StatusBadge status={selected.isEmailVerified ? "active" : "inactive"} label={selected.isEmailVerified ? "Email Verified" : "Email Unverified"} />
+                            <StatusBadge status={selected.kycStatus.toLowerCase()} label={`KYC ${selected.kycStatus}`} />
+                            {selected.kycScore > 0 && (
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${selected.kycScore > 0.8 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
+                                    Score: {(selected.kycScore * 100).toFixed(0)}%
+                                </span>
+                            )}
+                        </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Recent Activity</p>
+                                <span className="text-[10px] font-bold text-blue-600">Last: {selected.lastOrderAt ? new Date(selected.lastOrderAt).toLocaleDateString() : "None"}</span>
+                            </div>
+                            {(!selected.recentOrders || selected.recentOrders.length === 0) ? (
+                                <p className="font-plus-jakarta text-xs text-gray-400">No recent orders.</p>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    {selected.recentOrders.map((order: any) => (
+                                        <div key={order.orderNumber} className="flex items-center justify-between rounded-xl border border-gray-100 p-3 dark:border-gray-800 hover:bg-gray-50/50 transition-colors">
+                                            <div>
+                                                <p className="font-plus-jakarta text-xs font-bold text-gray-900 dark:text-white">{order.orderNumber}</p>
+                                                <p className="text-[10px] text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-plus-jakarta text-xs font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} VND</p>
+                                                <span className="text-[9px] font-bold uppercase text-gray-400">{order.status}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
+                        </div>
+
+                        <div>
+                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Stored Addresses</p>
+                            {!selected.addresses || selected.addresses.length === 0 ? (
+                                <p className="font-plus-jakarta text-xs text-gray-400">No addresses saved.</p>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    {selected.addresses.map((addr: any, i: number) => (
+                                        <div key={i} className="flex items-start gap-3 rounded-xl border border-gray-100 p-4 dark:border-gray-800">
+                                            <MapPin className="h-4 w-4 shrink-0 text-gray-400 mt-0.5" />
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-gray-500">{addr.label}</p>
+                                                    {addr.isDefault && <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] font-bold text-blue-600 uppercase">Default</span>}
+                                                </div>
+                                                <p className="mt-1 font-plus-jakarta text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                    {addr.addressLine1}, {addr.ward || addr.district}, {addr.province || addr.city}
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 mt-1">{addr.recipientName} • {addr.recipientPhone}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
             </Drawer>
 
             <ConfirmDialog isOpen={isDeactivateOpen} onClose={() => setIsDeactivateOpen(false)} onConfirm={toggleStatus}
-                title={selected?.status === "active" ? "Deactivate Customer" : "Activate Customer"}
-                description={`Are you sure you want to ${selected?.status === "active" ? "deactivate" : "activate"} ${selected?.name}'s account?`}
-                confirmLabel={selected?.status === "active" ? "Deactivate" : "Activate"}
-                isDestructive={selected?.status === "active"} />
+                title={selected?.isActive ? "Deactivate Customer" : "Activate Customer"}
+                description={`Are you sure you want to ${selected?.isActive ? "deactivate" : "activate"} ${selected?.fullName}'s account?`}
+                confirmLabel={selected?.isActive ? "Deactivate" : "Activate"}
+                isDestructive={selected?.isActive} />
         </div>
     );
 }

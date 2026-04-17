@@ -36,8 +36,14 @@ export const getOrdersApi = () =>
 export const confirmOrderApi = (orderId: string, approve: boolean, reason?: string) =>
     apiClient.put<ApiResponse<boolean>>(`/admin/orders/${orderId}/override`, { orderId, approve, reason }).then((r) => r.data);
 
+export const confirmOrderDecisionApi = (orderId: string, approve: boolean, reason?: string) =>
+    apiClient.put<ApiResponse<boolean>>(`/vendor/orders/${orderId}/decision`, { isApproved: approve, reason }).then((r) => r.data);
+
 export const recordOrderContactApi = (data: { orderId: string, method: number, result: number, notes?: string }) =>
     apiClient.post<ApiResponse<boolean>>("/admin/orders/contact-log", data).then((r) => r.data);
+
+export const updateUserStatusApi = (userId: string, status: number) =>
+    apiClient.put<ApiResponse<string>>(`/admin/customers/${userId}/status`, { userId, status }).then((r) => r.data);
 
 export const adminService = {
     getPendingKycApi,
@@ -52,5 +58,7 @@ export const adminService = {
     getFinanceOverview,
     getOrdersApi,
     confirmOrderApi,
-    recordOrderContactApi
+    confirmOrderDecisionApi,
+    recordOrderContactApi,
+    updateUserStatusApi
 };

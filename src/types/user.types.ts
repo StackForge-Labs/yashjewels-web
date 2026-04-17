@@ -66,6 +66,7 @@ export interface UserProfile {
     dateOfBirth: string | null;
     createdAt: string;
     twoFaEnabled: boolean;
+    role: string;
 }
 
 export interface UserAddressDto {

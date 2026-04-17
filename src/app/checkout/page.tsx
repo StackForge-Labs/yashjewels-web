@@ -28,7 +28,6 @@ export default function CheckoutPage() {
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
     const [payment, setPayment] = useState("card");
-    const [pay100Percent, setPay100Percent] = useState(false);
     const [isGift, setIsGift] = useState(false);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
@@ -42,6 +41,7 @@ export default function CheckoutPage() {
     const [selectedAddress, setSelectedAddress] = useState<UserAddressDto | null>(null);
     const [idempotencyKey] = useState(() => crypto.randomUUID());
     const [isFaceScanning, setIsFaceScanning] = useState(false);
+    const [isBiometricVerified, setIsBiometricVerified] = useState(false);
 
     useEffect(() => {
         fetchCart();
@@ -69,13 +69,13 @@ export default function CheckoutPage() {
     };
 
     const insuranceFee = getInsuranceFee(insurance);
-    const vatAmount = 0; 
+    const vatAmount = 0;
 
     // Apply Coupon Discount
     let discountAmount = 0;
     if (appliedCoupon && cart.totalLiveMrp > 0) {
         if (appliedCoupon.minOrderAmount && cart.totalLiveMrp < appliedCoupon.minOrderAmount) {
-             // Does not meet minimum order required. Silently fail discount here but we shouldn't apply it anyway
+            // Does not meet minimum order required. Silently fail discount here but we shouldn't apply it anyway
         } else {
             if (appliedCoupon.discountType === 0) { // percentage
                 discountAmount = (cart.totalLiveMrp * appliedCoupon.discountValue) / 100;
@@ -90,7 +90,7 @@ export default function CheckoutPage() {
 
     // Calculate dynamic deposit based on exact backend logic
     const getDepositRequired = () => {
-        if (pay100Percent || grandTotal >= 50000000) return grandTotal; // 100%
+        if (grandTotal >= 50000000) return grandTotal; // 100%
         if (grandTotal >= 10000000) return grandTotal * 0.5; // 50%
         return grandTotal * 0.3; // 30%
     };
@@ -100,9 +100,9 @@ export default function CheckoutPage() {
     // KYC Tier System logic
     const kycStatus = user?.kycStatus?.toLowerCase();
     const isKycApproved = kycStatus === "verified" || kycStatus === "approved";
-    
+
     // Level 1 Error (Missing Profile KYC) - MOVED TO RENDER BLOCK
-    
+
     const handlePlaceOrder = async () => {
         if (step !== 3) {
             setStep(3);
@@ -122,7 +122,6 @@ export default function CheckoutPage() {
                 shippingPhone: selectedAddress.recipientPhone,
                 shippingAddressId: selectedAddress.id,
                 idempotencyKey,
-                pay100Percent: pay100Percent,
                 insuranceType: insurance,
                 couponCode: appliedCoupon ? couponCode : undefined
             });
@@ -172,7 +171,7 @@ export default function CheckoutPage() {
         }
 
         // Tier 2 eKYC Face Scan trigger
-        if (step === 2 && grandTotal > 20000000) {
+        if (step === 2 && grandTotal > 20000000 && !isBiometricVerified) {
             setIsFaceScanning(true);
             return;
         }
@@ -184,21 +183,22 @@ export default function CheckoutPage() {
         // Here we would normally upload the scan for server-side Liveness check
         // For checkout flow, we verify if it matches the current user's profile
         toast.loading("Verifying Biometrics...");
-        
+
         try {
             const formData = new FormData();
-            formData.append("faceImage", file);
-            
+            formData.append("file", file); // Must match IFormFile parameter name in backend
+
             // Call high-security endpoint for checkout verification
-            const { data } = await axiosInstance.post("/auth/kyc/verify-liveness", formData, {
+            const { data } = await axiosInstance.post("/user/kyc/verify-liveness", formData, {
                 headers: { "Content-Type": "multipart/form-data" }
             });
-            
+
             toast.dismiss();
             setIsFaceScanning(false);
-            
+
             if (data?.success || data?.isMatch) {
                 toast.success("Biometric verification successful. Identity matches KYC record.");
+                setIsBiometricVerified(true);
                 setStep(3); // Move to review step
             } else {
                 toast.error("Biometric verification failed: Identity mismatch. Please try again.");
@@ -266,18 +266,21 @@ export default function CheckoutPage() {
                 breadcrumbs={[{ label: "Cart", href: "/cart" }, { label: "Checkout" }]}
             />
 
-            <section className="bg-white py-12 md:py-24 transition-colors dark:bg-dark-bg">
+            <section className="bg-white py-12 md:pt-12 md:pb-24 transition-colors dark:bg-dark-bg">
                 <div className="container mx-auto px-4 lg:px-12">
                     {/* Progress Steps */}
                     <div className="mx-auto mb-12 flex max-w-2xl items-center justify-between">
                         {STEPS.map((s, i) => (
                             <div key={s} className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setStep(i)}
+                                    type="button"
+                                    onClick={() => {
+                                        if (i < step) setStep(i);
+                                    }}
                                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${i <= step
                                         ? "bg-gold text-white shadow-lg shadow-gold/20"
                                         : "border border-gray-200 text-gray-400 dark:border-white/10"
-                                        }`}
+                                        } ${i < step ? "cursor-pointer hover:scale-110" : i > step ? "cursor-not-allowed opacity-60" : "cursor-default"}`}
                                 >
                                     {i < step ? <Check size={14} /> : i + 1}
                                 </button>
@@ -355,10 +358,10 @@ export default function CheckoutPage() {
                                             onClick={() => !opt.disabled && setPayment(opt.id)}
                                             disabled={opt.disabled}
                                             className={`flex w-full items-center gap-4 rounded-xl border-2 p-5 text-left transition-all ${payment === opt.id
-                                                    ? "border-gold bg-gold/5"
-                                                    : opt.disabled 
-                                                        ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed dark:border-white/5 dark:bg-white/5" 
-                                                        : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
+                                                ? "border-gold bg-gold/5"
+                                                : opt.disabled
+                                                    ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed dark:border-white/5 dark:bg-white/5"
+                                                    : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
                                                 }`}
                                         >
                                             <div className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${payment === opt.id ? "border-gold" : "border-gray-300 dark:border-white/20"}`}>
@@ -379,17 +382,8 @@ export default function CheckoutPage() {
                                         <div className="flex items-center justify-between mb-4 border-b border-gold/10 pb-4">
                                             <div>
                                                 <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">Settlement Preference</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select how you would like to settle your balance.</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Your deposit requirement is calculated based on the order value.</p>
                                             </div>
-                                            <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="accent-gold h-4 w-4"
-                                                    checked={pay100Percent}
-                                                    onChange={(e) => setPay100Percent(e.target.checked)}
-                                                />
-                                                Full Settlement
-                                            </label>
                                         </div>
 
                                         <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Required Deposit: {depositPct}</p>
@@ -410,37 +404,64 @@ export default function CheckoutPage() {
                                     <h2 className="font-serif text-xl text-gray-900 dark:text-white">Review Your Order</h2>
 
                                     <div className="space-y-4">
-                                        {cart.items.map((item) => (
-                                            <div key={item.cartItemId} className="flex items-center gap-4 rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                                                <img src={item.primaryImageUrl || "/images/placeholder-jewelry.png"} alt={item.productName} className="h-16 w-16 rounded-lg object-cover" />
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.productName}</p>
-                                                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">REF: {item.styleCode} • QTY: {item.quantity}</p>
-                                                </div>
-                                                <p className="text-gold text-sm font-bold">{formatCurrency(item.currentLiveMrp)}</p>
+                                        {/* Address Row */}
+                                        <div className="flex items-start gap-4 rounded-xl bg-gray-50 p-5 dark:bg-white/5 border border-transparent hover:border-gold/30 transition-colors cursor-pointer" onClick={() => setStep(0)}>
+                                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-gold/10 text-gold">
+                                                <MapPin size={18} />
                                             </div>
-                                        ))}
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Delivery Address</p>
+                                                    <span className="text-gold text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                                    {selectedAddress ? (
+                                                        <>
+                                                            <span className="font-medium text-gray-700 dark:text-gray-300">{selectedAddress.recipientName}</span> — {selectedAddress.recipientPhone} <br />
+                                                            {selectedAddress.addressLine1}, {selectedAddress.ward}, {selectedAddress.district}, {selectedAddress.province}
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-red-500">Not selected</span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Insurance Row */}
+                                        <div className="flex items-start gap-4 rounded-xl bg-gray-50 p-5 dark:bg-white/5 border border-transparent hover:border-gold/30 transition-colors cursor-pointer" onClick={() => setStep(1)}>
+                                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-gold/10 text-gold">
+                                                <ShieldCheck size={18} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Order Protection</p>
+                                                    <span className="text-gold text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                                    Plan: <span className="capitalize font-medium text-gray-700 dark:text-gray-300">{insurance === "none" ? "No Insurance" : insurance + " Protection"}</span><br />
+                                                    {insurance === "none" ? "Standard delivery at your own risk." : "Covered against transit loss or damage."}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Payment Row */}
+                                        <div className="flex items-start gap-4 rounded-xl bg-gray-50 p-5 dark:bg-white/5 border border-transparent hover:border-gold/30 transition-colors cursor-pointer" onClick={() => setStep(2)}>
+                                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-gold/10 text-gold">
+                                                <CreditCard size={18} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Payment Method</p>
+                                                    <span className="text-gold text-[10px] font-bold uppercase tracking-widest hover:underline">Edit</span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                                    Method: <span className="capitalize font-medium text-gray-700 dark:text-gray-300">{payment.replace("-", " ")}</span><br />
+                                                    {payment === "cod" ? "Pay securely upon delivery." : `A deposit of ${depositPct} is required to secure the order.`}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                                            <p className="mb-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Delivery Address</p>
-                                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                                                {selectedAddress ? (
-                                                    <>
-                                                        <span className="font-bold">{selectedAddress.recipientName}</span><br />
-                                                        {selectedAddress.recipientPhone}<br />
-                                                        {selectedAddress.addressLine1}, {selectedAddress.ward}, {selectedAddress.district}, {selectedAddress.province}
-                                                    </>
-                                                ) : "Not selected"}
-                                            </p>
-                                        </div>
-                                        <div className="rounded-xl border border-gray-100 p-4 dark:border-white/5">
-                                            <p className="mb-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase">Payment Method</p>
-                                            <p className="text-sm text-gray-700 dark:text-gray-300 capitalize">{payment.replace("-", " ")}</p>
-                                        </div>
-                                    </div>
-                                    
                                     {/* Trust Elements UI */}
                                     <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-4 text-center md:flex-row md:items-center md:justify-between md:text-left">
                                         <div className="flex items-center justify-center gap-2 text-xs font-medium text-gray-500">
@@ -523,9 +544,9 @@ export default function CheckoutPage() {
                                     <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Voucher / Coupon</p>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
-                                            <input 
-                                                type="text" 
-                                                placeholder="Enter code..." 
+                                            <input
+                                                type="text"
+                                                placeholder="Enter code..."
                                                 value={couponCode}
                                                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                                                 disabled={appliedCoupon !== null}
@@ -538,7 +559,7 @@ export default function CheckoutPage() {
                                             )}
                                         </div>
                                         {appliedCoupon == null && (
-                                            <button 
+                                            <button
                                                 onClick={handleApplyCoupon}
                                                 disabled={!couponCode || isApplyingCoupon}
                                                 className="rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-gold disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gold dark:hover:text-white"
@@ -585,7 +606,7 @@ export default function CheckoutPage() {
                             </div>
 
                             <div className="flex w-full gap-4">
-                                <button 
+                                <button
                                     onClick={() => setIsFaceScanning(false)}
                                     className="flex-1 py-3 px-4 rounded-xl border border-gray-200 dark:border-white/10 text-xs font-bold uppercase hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                                 >

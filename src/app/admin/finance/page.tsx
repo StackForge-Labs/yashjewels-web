@@ -77,14 +77,14 @@ export default function FinancePage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
                                 {payments.length > 0 ? payments.map((p: any) => (
-                                    <tr key={p.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.orderId.substring(0, 8)}...</td>
+                                    <tr key={p.paymentId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.orderNumber}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.amount.toLocaleString()} VND</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500 capitalize">{p.paymentMethod.toLowerCase()}</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-600 dark:text-gray-400">{p.paymentGateway}</td>
-                                        <td className="px-6 py-4 font-mono text-xs text-gray-400 max-w-[140px] truncate">{p.transactionRef}</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-xs text-gray-500">{new Date(p.paymentDate).toLocaleString()}</td>
-                                        <td className="px-6 py-4"><StatusBadge status={p.transactionRef ? "paid" : "pending"} label={p.transactionRef ? "Success" : "Pending"} /></td>
+                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-600 dark:text-gray-400">{p.gateway}</td>
+                                        <td className="px-6 py-4 font-mono text-xs text-gray-400 max-w-[140px] truncate">{p.transactionRef || "N/A"}</td>
+                                        <td className="px-6 py-4 font-plus-jakarta text-xs text-gray-500">{new Date(p.timestamp).toLocaleString()}</td>
+                                        <td className="px-6 py-4"><StatusBadge status={p.status.toLowerCase() === "succeeded" ? "paid" : "pending"} label={p.status} /></td>
                                         <td className="px-6 py-4">
                                             <button onClick={() => { setSelected(p); setIsDetailOpen(true); }} className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-800"><Eye className="h-4 w-4" /></button>
                                         </td>
@@ -110,12 +110,12 @@ export default function FinancePage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { label: "Order Link", value: selected.orderId.substring(0, 12) },
-                                { label: "Total Recieved", value: `${selected.amount.toLocaleString()} VND` },
-                                { label: "Gateway", value: selected.paymentGateway },
+                                { label: "Order Number", value: selected.orderNumber },
+                                { label: "Amount Received", value: `${selected.amount.toLocaleString()} VND` },
+                                { label: "Gateway", value: selected.gateway },
                                 { label: "Method", value: selected.paymentMethod },
-                                { label: "Timestamp", value: new Date(selected.paymentDate).toLocaleString() },
-                                { label: "Status", value: selected.transactionRef ? "Captured" : "Awaiting" },
+                                { label: "Timestamp", value: new Date(selected.timestamp).toLocaleString() },
+                                { label: "Status", value: selected.status },
                             ].map(({ label, value }) => (
                                 <div key={label} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
                                     <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">{label}</p>

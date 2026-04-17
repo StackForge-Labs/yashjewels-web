@@ -53,7 +53,7 @@ export const productService = {
 
   update: async (id: string, payload: ProductUpdateRequest): Promise<{ success: boolean; message: string; data?: Product }> => {
     try {
-      const { data } = await apiClient.put(`/products/${id}`, payload);
+      const { data } = await apiClient.patch(`/products/${id}`, payload);
       return { success: data.success, message: data.message || "Updated successfully", data: data.data };
     } catch (error) {
       return { success: false, message: getErrorMessage(error) ?? "An error occurred" };

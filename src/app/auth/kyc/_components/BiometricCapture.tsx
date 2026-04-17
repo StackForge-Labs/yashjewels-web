@@ -22,6 +22,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
     const [isDetecting, setIsDetecting] = useState(false);
     const [faceApi, setFaceApi] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const isCapturing = useRef(false);
 
     const [livenessStatus, setLivenessStatus] = useState({
         turnedLeft: false,
@@ -108,22 +109,36 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                         const avgEAR = (earL + earR) / 2;
 
                         setLivenessStatus(prev => {
-                            const nextStatus = { ...prev };
+                            let changed = false;
+                            let turnedLeft = prev.turnedLeft;
+                            let turnedRight = prev.turnedRight;
+                            let isCenter = prev.isCenter;
 
                             // Step 1: Turn Left
                             if (!prev.turnedLeft && ratio > 1.8) {
-                                nextStatus.turnedLeft = true;
+                                turnedLeft = true;
+                                changed = true;
                             }
                             // Step 2: Turn Right
                             else if (prev.turnedLeft && !prev.turnedRight && ratio < 0.55) {
-                                nextStatus.turnedRight = true;
+                                turnedRight = true;
+                                changed = true;
                             }
 
-                            nextStatus.isCenter = (ratio >= 0.8 && ratio <= 1.25);
-                            return nextStatus;
+                            const newIsCenter = (ratio >= 0.8 && ratio <= 1.25);
+                            if (prev.isCenter !== newIsCenter) {
+                                isCenter = newIsCenter;
+                                changed = true;
+                            }
+
+                            if (!changed) return prev; // Crucial: avoid thrashing the useEffect dependency
+                            return { turnedLeft, turnedRight, isCenter };
                         });
                     } else {
-                        setLivenessStatus(prev => ({ ...prev, isCenter: false }));
+                        setLivenessStatus(prev => {
+                            if (!prev.isCenter) return prev;
+                            return { ...prev, isCenter: false };
+                        });
                     }
                 }
             }, 100); // 10fps for better blink detection speed
@@ -131,7 +146,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
         return () => clearInterval(interval);
     }, [isDetecting, isModelsLoaded, photo, faceApi]);
 
-    // Final Stage Counter Logic (Hold Center for 2.5s)
+    // Final Stage Counter Logic (Hold Center for 3s)
     useEffect(() => {
         let timer: any;
         if (livenessStatus.turnedLeft && livenessStatus.turnedRight && !photo) {
@@ -139,7 +154,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
                 timer = setInterval(() => {
                     setCenterDuration(prev => {
                         const next = prev + 100;
-                        if (next >= 2500) {
+                        if (next >= 3000) {
                             clearInterval(timer);
                             capturePhoto();
                         }
@@ -154,7 +169,8 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
     }, [livenessStatus, photo]);
 
     const capturePhoto = useCallback(() => {
-        if (!videoRef.current) return;
+        if (!videoRef.current || isCapturing.current) return;
+        isCapturing.current = true;
 
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
@@ -179,6 +195,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
 
 
     const reset = () => {
+        isCapturing.current = false;
         setPhoto(null);
         setLivenessStatus({ turnedLeft: false, turnedRight: false, isCenter: false });
         setCenterDuration(0);
@@ -188,7 +205,7 @@ export const BiometricCapture: React.FC<BiometricCaptureProps> = ({ onCapture })
 
     // Derived Logic for Instructions
     const currentStep = !livenessStatus.turnedLeft ? 1 : (!livenessStatus.turnedRight ? 2 : 3);
-    const centerProgressPercentage = Math.min(100, (centerDuration / 2500) * 100);
+    const centerProgressPercentage = Math.min(100, (centerDuration / 3000) * 100);
 
     return (
         <div className="relative overflow-hidden rounded-3xl bg-gray-50 dark:bg-black/20 border-2 border-gray-100 dark:border-white/5">

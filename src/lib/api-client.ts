@@ -27,14 +27,18 @@ const deleteCookie = (name: string) => {
 export const getAccessToken = () => getCookie("access_token");
 export const getRefreshToken = () => getCookie("refresh_token");
 
-export const setTokens = (accessToken: string, refreshToken: string) => {
+export const setTokens = (accessToken: string, refreshToken: string, role?: string) => {
     setCookie("access_token", accessToken, 1); // 1 day for access token
     setCookie("refresh_token", refreshToken, 7); // 7 days for refresh token
+    if (role) {
+        setCookie("user_role", role, 7);
+    }
 };
 
 export const clearTokens = () => {
     deleteCookie("access_token");
     deleteCookie("refresh_token");
+    deleteCookie("user_role");
 };
 
 // ── Axios instance ─────────────────────────────────────────────
