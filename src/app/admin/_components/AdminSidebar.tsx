@@ -82,7 +82,6 @@ const navGroups = [
         items: [
             { name: "Vendors Master", href: "/admin/vendors", icon: Store },
             { name: "Shipper Leads", href: "/admin/shippers", icon: Truck },
-            { name: "Warranties & Claims", href: "/admin/warranties", icon: ShieldCheck },
             { name: "Settings", href: "/admin/settings", icon: Settings },
         ],
     },
