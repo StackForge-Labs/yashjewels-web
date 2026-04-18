@@ -1,13 +1,20 @@
 "use client";
 
-import { Bell, Search, Menu, UserCircle } from "lucide-react";
+import { Bell, Search, Menu, UserCircle, LogOut, Loader2 } from "lucide-react";
 import ThemeToggle from "@/app/_components/ThemeToggle";
+import { useLogout } from "@/hooks/useAuth";
 
 interface AdminHeaderProps {
     onToggleSidebar: () => void;
 }
 
 export default function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
+    const logout = useLogout();
+
+    const handleLogout = () => {
+        logout.mutate();
+    };
+
     return (
         <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-gray-100 bg-white/70 px-4 backdrop-blur-xl dark:border-gray-800/50 dark:bg-[#0a0a0a]/70 lg:h-20 lg:px-10">
             <div className="flex flex-1 items-center gap-3 lg:gap-6">
@@ -32,9 +39,27 @@ export default function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
 
             <div className="flex items-center gap-4 lg:gap-6">
                 <ThemeToggle />
+                
                 <button className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white/50 text-gray-500 shadow-sm transition-all hover:border-gray-300 hover:text-gray-900 dark:border-gray-800 dark:bg-[#111] dark:hover:border-gray-700 dark:hover:text-gray-100">
                     <Bell className="h-5 w-5" />
                     <span className="absolute right-3 top-3 flex h-2.5 w-2.5 rounded-full bg-blue-600 ring-4 ring-white dark:ring-[#0a0a0a]"></span>
+                </button>
+
+                <div className="h-8 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
+
+                <button 
+                    onClick={handleLogout}
+                    disabled={logout.isPending}
+                    className="flex h-11 items-center gap-2 rounded-xl bg-red-50 px-4 py-2 text-sm font-bold tracking-wide text-red-600 transition-all hover:bg-red-100 dark:bg-red-500/10 dark:text-red-500 dark:hover:bg-red-500/20 disabled:opacity-50"
+                >
+                    {logout.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <>
+                            <LogOut className="h-4 w-4" />
+                            <span className="hidden sm:inline">Logout</span>
+                        </>
+                    )}
                 </button>
             </div>
         </header>

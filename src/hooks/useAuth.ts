@@ -56,8 +56,12 @@ export function useLogin() {
             if (res.success && res.data) {
                 onSuccess(res.data);
                 const role = res.data.user?.role?.toLowerCase();
-                if (role === "admin" || role === "vendor") {
+                if (role === "admin") {
                     router.push("/admin");
+                } else if (role === "vendor") {
+                    router.push("/vendor");
+                } else if (role === "shipper") {
+                    router.push("/shipper");
                 } else {
                     router.push("/");
                 }
@@ -139,8 +143,12 @@ export function useGoogleLogin() {
             if (res.success && res.data) {
                 onSuccess(res.data);
                 const role = res.data.user?.role?.toLowerCase();
-                if (role === "admin" || role === "vendor") {
+                if (role === "admin") {
                     router.push("/admin");
+                } else if (role === "vendor") {
+                    router.push("/vendor");
+                } else if (role === "shipper") {
+                    router.push("/shipper");
                 } else {
                     router.push("/");
                 }
@@ -174,8 +182,12 @@ export function useFacebookLogin() {
             if (res.success && res.data) {
                 onSuccess(res.data);
                 const role = res.data.user?.role?.toLowerCase();
-                if (role === "admin" || role === "vendor") {
+                if (role === "admin") {
                     router.push("/admin");
+                } else if (role === "vendor") {
+                    router.push("/vendor");
+                } else if (role === "shipper") {
+                    router.push("/shipper");
                 } else {
                     router.push("/");
                 }
@@ -347,8 +359,12 @@ export function useLoginVerify2Fa() {
             if (res.success && res.data) {
                 onSuccess(res.data);
                 const role = res.data.user?.role?.toLowerCase();
-                if (role === "admin" || role === "vendor") {
+                if (role === "admin") {
                     router.push("/admin");
+                } else if (role === "vendor") {
+                    router.push("/vendor");
+                } else if (role === "shipper") {
+                    router.push("/shipper");
                 } else {
                     router.push("/");
                 }

@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { getAccessToken } from "@/lib/api-client";
 import { useProfile } from "./useAuth";
 
+const getHomeUrl = (role?: string) => {
+    const r = role?.toLowerCase();
+    if (r === "admin") return "/admin";
+    if (r === "vendor") return "/vendor";
+    if (r === "shipper") return "/shipper";
+    return "/";
+};
+
 /**
  * Redirect to login if user is not authenticated.
  * Use in pages that require auth.
@@ -60,8 +68,8 @@ export function useAdminGuard() {
     useEffect(() => {
         if (!isLoading && profile) {
             const role = profile.role?.toLowerCase();
-            if (role !== "admin" && role !== "vendor") {
-                router.replace("/");
+            if (role !== "admin") {
+                router.replace(getHomeUrl(role));
             }
         }
     }, [profile, isLoading, router]);
@@ -81,7 +89,7 @@ export function useVendorGuard() {
         if (!isLoading && profile) {
             const role = profile.role?.toLowerCase();
             if (role !== "vendor" && role !== "admin") {
-                router.replace("/");
+                router.replace(getHomeUrl(role));
             }
         }
     }, [profile, isLoading, router]);
@@ -101,7 +109,7 @@ export function useShipperGuard() {
         if (!isLoading && profile) {
             const role = profile.role?.toLowerCase();
             if (role !== "shipper" && role !== "admin") {
-                router.replace("/");
+                router.replace(getHomeUrl(role));
             }
         }
     }, [profile, isLoading, router]);

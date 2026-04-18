@@ -7,22 +7,39 @@ export function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('access_token')?.value
   const userRole = request.cookies.get('user_role')?.value?.toLowerCase()
 
-  // 2. Protect /admin routes
+  // Helper to determine home dashboard based on role
+  const getHomeUrl = (role?: string) => {
+    if (role === 'admin') return '/admin'
+    if (role === 'vendor') return '/vendor'
+    if (role === 'shipper') return '/shipper'
+    return '/'
+  }
+
+  // 2. Protect /admin routes (Admin ONLY)
   if (pathname.startsWith('/admin')) {
-    // If no token or role is not admin/vendor, redirect to home
-    if (!accessToken || (userRole !== 'admin' && userRole !== 'vendor')) {
-      return NextResponse.redirect(new URL('/', request.url))
+    if (!accessToken || userRole !== 'admin') {
+      return NextResponse.redirect(new URL(getHomeUrl(userRole), request.url))
     }
   }
 
-  // 3. Optional: Redirect authenticated users away from /auth pages (except KYC/Logout)
+  // 3. Protect /vendor routes (Vendor or Admin)
+  if (pathname.startsWith('/vendor')) {
+    if (!accessToken || (userRole !== 'vendor' && userRole !== 'admin')) {
+      return NextResponse.redirect(new URL(getHomeUrl(userRole), request.url))
+    }
+  }
+
+  // 4. Protect /shipper routes (Shipper or Admin)
+  if (pathname.startsWith('/shipper')) {
+    if (!accessToken || (userRole !== 'shipper' && userRole !== 'admin')) {
+      return NextResponse.redirect(new URL(getHomeUrl(userRole), request.url))
+    }
+  }
+
+  // 5. Redirect authenticated users away from /auth pages (except KYC/Logout)
   if (pathname.startsWith('/auth') && pathname !== '/auth/logout' && !pathname.startsWith('/auth/kyc')) {
     if (accessToken) {
-        // If they are admin/vendor, they should stay in /admin, else /
-        if (userRole === 'admin' || userRole === 'vendor') {
-            return NextResponse.redirect(new URL('/admin', request.url))
-        }
-        return NextResponse.redirect(new URL('/', request.url))
+        return NextResponse.redirect(new URL(getHomeUrl(userRole), request.url))
     }
   }
 
