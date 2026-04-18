@@ -9,7 +9,9 @@ export default function SearchModal() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        requestAnimationFrame(() => {
+            setMounted(true);
+        });
     }, []);
 
     // Close on escape key

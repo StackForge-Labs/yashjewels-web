@@ -10,7 +10,9 @@ export const ConsultantModal = () => {
     const [delay, setDelay] = useState(30000); // Initial 30s
 
     useEffect(() => {
-        setMounted(true);
+        requestAnimationFrame(() => {
+            setMounted(true);
+        });
 
         const checkAndSchedule = () => {
             const lastSubmitted = localStorage.getItem("consultant_last_submitted");

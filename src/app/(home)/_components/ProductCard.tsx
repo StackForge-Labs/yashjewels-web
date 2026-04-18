@@ -34,7 +34,6 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
-    sku,
     name,
     category,
     image1,

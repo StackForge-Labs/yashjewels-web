@@ -1,7 +1,7 @@
 "use client";
 
 import ProductCard from "./ProductCard";
-import { ArrowRight, MapPin, Clock, Flame } from "lucide-react";
+import { ArrowRight, MapPin, Clock } from "lucide-react";
 import { Hero } from "./Hero";
 import { ScrollDiamond } from "./ScrollDiamond";
 import { TrustMetrics } from "./TrustMetrics";
@@ -124,7 +124,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                             <span className="font-light text-gray-500 italic">Collection</span>
                         </h2>
                         <p className="mb-10 text-base leading-relaxed font-light text-gray-600 dark:text-gray-400">
-                            A perfect intersection between centuries-old craftsmanship and the raw beauty of the world's
+                            A perfect intersection between centuries-old craftsmanship and the raw beauty of the world&apos;s
                             most scarce diamonds. Every masterpiece is an impeccable statement of class.
                         </p>
                         <button className="hover:bg-gold dark:hover:bg-gold bg-gray-900 px-10 py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-colors duration-300 dark:bg-white dark:text-black dark:hover:text-white">
@@ -262,7 +262,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                 Radiant Elegance
                             </span>
                             <h2 className="mb-8 font-serif text-4xl text-white lg:text-6xl" data-aos="fade-up">
-                                Women's Jewelry
+                                Women&apos;s Jewelry
                             </h2>
                             <button
                                 className="hover:bg-gold bg-white px-8 py-3 text-xs font-bold tracking-[0.2em] text-black uppercase transition-colors hover:text-white"
@@ -326,7 +326,7 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                 Sophisticated Power
                             </span>
                             <h2 className="mb-8 font-serif text-4xl text-white lg:text-6xl" data-aos="fade-up">
-                                Men's Jewelry
+                                Men&apos;s Jewelry
                             </h2>
                             <button
                                 className="hover:bg-gold bg-white px-8 py-3 text-xs font-bold tracking-[0.2em] text-black uppercase transition-colors hover:text-white"
@@ -542,8 +542,8 @@ export const HomeViews = ({ diamonds }: { diamonds: DiamondData[] }) => {
                                         <ArrowRight className="text-gold h-6 w-6 animate-pulse" />
                                     </div>
                                     <h3 className="mb-2 font-serif text-xl text-white">Singapore Pavilion</h3>
-                                    <p className="mb-6 text-sm font-light text-gray-400">
-                                        Opening Winter 2026 at Marina Bay Sands.
+                                    <p className="text-sm text-gray-500 line-clamp-2">
+                                        &apos;The perfect piece to complement your timeless beauty, crafted with precision.&apos;
                                     </p>
                                     <span className="text-gold group-hover/box:border-gold border-b border-transparent text-[10px] tracking-widest uppercase transition-colors">
                                         Join Waiting List

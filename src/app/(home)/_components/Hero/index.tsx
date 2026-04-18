@@ -1,4 +1,4 @@
-import { ArrowRight, Flame, Diamond, Gem, ShoppingBag, Wind } from "lucide-react";
+import { ArrowRight, Diamond, Gem, ShoppingBag } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import styles from "./Hero.module.css";
