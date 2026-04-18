@@ -1,25 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, Filter, Edit2, Trash2, Tag, ArrowRight } from "lucide-react";
+import { Search, Plus, Filter, MoreVertical, Edit2, Trash2 } from "lucide-react";
 
-interface CategoryData {
+interface GoldKaratData {
     id: string;
-    name: string;
-    slug: string;
-    description: string;
+    caratLabel: string;
+    purityPct: number;
     isActive: boolean;
     productCount: number;
 }
 
-const mockData: CategoryData[] = [
-    { id: "CAT-001", name: "Nhẫn Cưới", slug: "nhan-cuoi", description: "Các mẫu nhẫn cưới sang trọng dành cho cặp đôi phu thê.", isActive: true, productCount: 120 },
-    { id: "CAT-002", name: "Dây Chuyền", slug: "day-chuyen", description: "Dây chuyền vàng nguyên khối và dây đính kim cương.", isActive: true, productCount: 85 },
-    { id: "CAT-003", name: "Lắc Tay", slug: "lac-tay", description: "Vòng tay và lắc tay phong cách High Jewelry.", isActive: true, productCount: 45 },
-    { id: "CAT-004", name: "Bông Tai", slug: "bong-tai", description: "Khuyên tai giọt nước và các thiết kế độc bản.", isActive: false, productCount: 0 },
+const mockData: GoldKaratData[] = [
+    { id: "GK-001", caratLabel: "24K", purityPct: 99.99, isActive: true, productCount: 42 },
+    { id: "GK-002", caratLabel: "22K", purityPct: 91.60, isActive: true, productCount: 156 },
+    { id: "GK-003", caratLabel: "18K", purityPct: 75.00, isActive: true, productCount: 890 },
+    { id: "GK-004", caratLabel: "14K", purityPct: 58.30, isActive: true, productCount: 345 },
+    { id: "GK-005", caratLabel: "10K", purityPct: 41.70, isActive: false, productCount: 12 },
 ];
 
-export default function AdminCategoriesPage() {
+export default function AdminGoldKaratsPage() {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -27,12 +27,12 @@ export default function AdminCategoriesPage() {
     // Modal & Drawer State
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerMode, setDrawerMode] = useState<"CREATE" | "EDIT">("CREATE");
-    const [selectedItem, setSelectedItem] = useState<CategoryData | null>(null);
+    const [selectedItem, setSelectedItem] = useState<GoldKaratData | null>(null);
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const filtered = mockData.filter(d => {
-        const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.slug.toLowerCase().includes(search.toLowerCase());
+        const matchSearch = d.caratLabel.toLowerCase().includes(search.toLowerCase());
         const matchStatus = filterStatus === "ALL" ? true : filterStatus === "ACTIVE" ? d.isActive : !d.isActive;
         return matchSearch && matchStatus;
     });
@@ -43,13 +43,13 @@ export default function AdminCategoriesPage() {
         setIsDrawerOpen(true);
     };
 
-    const openEdit = (item: CategoryData) => {
+    const openEdit = (item: GoldKaratData) => {
         setDrawerMode("EDIT");
         setSelectedItem(item);
         setIsDrawerOpen(true);
     };
 
-    const openDelete = (item: CategoryData) => {
+    const openDelete = (item: GoldKaratData) => {
         setSelectedItem(item);
         setIsDeleteModalOpen(true);
     };
@@ -60,16 +60,16 @@ export default function AdminCategoriesPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                     <h1 className="font-serif text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Danh Mục Sản Phẩm (Categories)
+                        Gold Karats
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Quản lý cây danh mục gốc để phân loại toàn bộ hệ thống bán lẻ.
+                        Quản lý các chuẩn tuổi vàng và độ tinh khiết (Purity %) phục vụ cho tính giá tự động.
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Tạo Danh Mục
+                    <Plus className="h-4 w-4" /> Thêm Chuẩn Vàng
                 </button>
             </div>
 
@@ -80,7 +80,7 @@ export default function AdminCategoriesPage() {
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Tìm kiếm theo Tên hoặc Slug..."
+                        placeholder="Tìm kiếm theo tem (VD: 18K)..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -127,11 +127,11 @@ export default function AdminCategoriesPage() {
                     <table className="w-full whitespace-nowrap text-left text-sm">
                         <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                             <tr>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Tên Danh Mục & Slug</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 max-w-[200px]">Mô Tả</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Mã Vàng (Label)</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Độ Tinh Khiết (%)</th>
                                 <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Trạng Thái</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Tổng Sản Phẩm</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Hành Động</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Sản Phẩm Gắn Kèm</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
@@ -139,23 +139,29 @@ export default function AdminCategoriesPage() {
                                 <tr key={item.id} className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                                                <Tag className="h-4 w-4" />
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+                                                <span className="font-serif font-bold">{item.caratLabel.replace('K', '')}</span>
                                             </div>
                                             <div>
-                                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white pb-0.5">{item.name}</p>
-                                                <div className="flex items-center gap-1.5 font-mono text-[10px] text-gray-400">
-                                                    <span>/</span>
-                                                    <span>{item.slug}</span>
-                                                </div>
+                                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.caratLabel} Gold</p>
+                                                <p className="font-plus-jakarta text-xs text-gray-400">{item.id}</p>
                                             </div>
                                         </div>
                                     </td>
                                     
                                     <td className="px-6 py-4">
-                                        <p className="max-w-[280px] overflow-hidden text-ellipsis whitespace-nowrap font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
-                                            {item.description}
-                                        </p>
+                                        <div className="w-full max-w-[200px]">
+                                            <div className="mb-1 flex justify-between font-plus-jakarta text-xs font-semibold">
+                                                <span className="text-gray-900 dark:text-gray-200">{item.purityPct}%</span>
+                                                <span className="text-gray-400">Mức Purity</span>
+                                            </div>
+                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                                                <div 
+                                                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-600"
+                                                    style={{ width: `${item.purityPct}%` }}
+                                                />
+                                            </div>
+                                        </div>
                                     </td>
 
                                     <td className="px-6 py-4">
@@ -167,15 +173,14 @@ export default function AdminCategoriesPage() {
                                         ) : (
                                             <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                                                 <span className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
-                                                Hidden
+                                                Inactive
                                             </span>
                                         )}
                                     </td>
 
                                     <td className="px-6 py-4 text-right">
-                                        <div className="inline-flex items-center gap-2">
-                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.productCount}</span>
-                                            <span className="font-plus-jakarta text-[10px] text-gray-400">món</span>
+                                        <div className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 font-plus-jakarta text-xs font-bold text-gray-700 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
+                                            {item.productCount} SP
                                         </div>
                                     </td>
 
@@ -199,25 +204,35 @@ export default function AdminCategoriesPage() {
                     </table>
                 </div>
 
-                {/* Footer */}
+                {/* Generic Pagination Footer */}
                 <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-gray-800/50">
                     <span className="font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
-                        Tổng cộng {filtered.length} danh mục cha
+                        Hiển thị 1 - {filtered.length} của {filtered.length} kết quả
                     </span>
+                    <div className="flex items-center gap-2">
+                        <button disabled className="rounded-lg border border-gray-200 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 opacity-50 dark:border-gray-800">Trước</button>
+                        <button disabled className="rounded-lg border border-gray-200 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 opacity-50 dark:border-gray-800">Tiếp</button>
+                    </div>
                 </div>
             </div>
 
             {/* --- Slide-over Drawer for Create / Edit --- */}
             {isDrawerOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end">
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setIsDrawerOpen(false)} />
-                    <div className="relative w-full max-w-md bg-white shadow-2xl dark:bg-[#111] flex flex-col h-full border-l border-gray-100 dark:border-gray-800">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" 
+                        onClick={() => setIsDrawerOpen(false)}
+                    />
+                    
+                    {/* Panel */}
+                    <div className="relative w-full max-w-md bg-white shadow-2xl transition-transform dark:bg-[#111] flex flex-col h-full border-l border-gray-100 dark:border-gray-800">
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "Tạo Danh Mục Mới" : "Cập Nhật Danh Mục"}
+                                    {drawerMode === "CREATE" ? "Tạo Chuẩn Vàng Mới" : "Cập Nhật Chuẩn Vàng"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Phân loại cấu trúc sản phẩm cốt lõi.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Điền thông số chuẩn Karat cho hệ thống</p>
                             </div>
                         </div>
 
@@ -225,40 +240,34 @@ export default function AdminCategoriesPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Tên Danh Mục <span className="text-rose-500">*</span>
+                                        Mã Định Danh (Carat Label) <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
-                                        defaultValue={selectedItem?.name || ""}
-                                        placeholder="Ví dụ: Nhẫn Cưới"
+                                        defaultValue={selectedItem?.caratLabel || ""}
+                                        placeholder="Ví dụ: 18K"
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
+                                    <p className="mt-1 text-[10px] text-gray-400">Ký hiệu ngắn gọn để hiển thị trên tem mác</p>
                                 </div>
+
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Đường Liên Kết (Slug) <span className="text-rose-500">*</span>
+                                        Độ Tinh Khiết / Hàm Lượng Vàng (%) <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
-                                        type="text" 
-                                        defaultValue={selectedItem?.slug || ""}
-                                        placeholder="Ví dụ: nhan-cuoi"
-                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
-                                    />
-                                    <p className="mt-1 text-[10px] text-gray-400">Được dùng trên thanh địa chỉ Trình duyệt.</p>
-                                </div>
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Mô Tả Danh Mục</label>
-                                    <textarea 
-                                        rows={3}
-                                        defaultValue={selectedItem?.description || ""}
-                                        placeholder="Viết một đoạn mô tả ngắn phục vụ cho SEO..."
+                                        type="number" 
+                                        step="0.01"
+                                        defaultValue={selectedItem?.purityPct || ""}
+                                        placeholder="Ví dụ: 75.00"
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
+
                                 <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
                                     <div>
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Hiển Thị Lên Web</p>
-                                        <p className="text-xs text-gray-500">Khách hàng sẽ nhìn thấy danh mục này trên cửa hàng.</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Kích Hoạt (Active)</p>
+                                        <p className="text-xs text-gray-500">Cho phép áp dụng chuẩn này cho sản phẩm mới.</p>
                                     </div>
                                     <label className="relative inline-flex cursor-pointer items-center">
                                         <input type="checkbox" defaultChecked={selectedItem ? selectedItem.isActive : true} className="peer sr-only" />
@@ -270,11 +279,13 @@ export default function AdminCategoriesPage() {
 
                         <div className="border-t border-gray-100 bg-gray-50/50 p-6 dark:border-gray-800 dark:bg-[#1a1a1a]/50">
                             <div className="flex gap-3">
-                                <button onClick={() => setIsDrawerOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
+                                <button 
+                                    onClick={() => setIsDrawerOpen(false)}
+                                    className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
                                     Hủy
                                 </button>
                                 <button className="flex-1 rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95">
-                                    {drawerMode === "CREATE" ? "Tạo Danh Mục" : "Lưu Thay Đổi"}
+                                    {drawerMode === "CREATE" ? "Tạo Mới" : "Lưu Thay Đổi"}
                                 </button>
                             </div>
                         </div>
@@ -285,20 +296,29 @@ export default function AdminCategoriesPage() {
             {/* --- Modal Confirmation for Delete --- */}
             {isDeleteModalOpen && selectedItem && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
-                    <div className="relative w-full max-w-md scale-100 rounded-3xl bg-white p-6 shadow-2xl dark:bg-[#161616] border border-gray-100 dark:border-gray-800">
+                    <div 
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setIsDeleteModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-md scale-100 rounded-3xl bg-white p-6 shadow-2xl transition-all dark:bg-[#161616] border border-gray-100 dark:border-gray-800">
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-500/20">
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Xóa {selectedItem.name}?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Xóa chuẩn {selectedItem.caratLabel}?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                Bạn có chắc chắn muốn xóa danh mục này? Hệ thống có <strong className="text-rose-500">{selectedItem.productCount} sản phẩm</strong> phụ thuộc sẽ trở nên vô gia cư.
+                                Bạn có chắc chắn muốn xóa mã này? Hành động này sẽ gây lỗi cho <strong className="text-rose-500 dark:text-rose-400">{selectedItem.productCount} sản phẩm</strong> đang liên kết. KHÔNG THỂ HOÀN TÁC!
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">
-                            <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">Hủy Xóa</button>
-                            <button className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20">Vẫn Xóa</button>
+                            <button 
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
+                                Trở về
+                            </button>
+                            <button className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20">
+                                Vẫn Xóa
+                            </button>
                         </div>
                     </div>
                 </div>
