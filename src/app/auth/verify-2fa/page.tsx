@@ -30,11 +30,20 @@ const Verify2FaContent = () => {
         
         loginVerify.mutate({ email, otp: otpCode }, {
             onSuccess: (res) => {
-                if (res.success) {
+                if (res.success && res.data) {
                     setIsVerifyingSuccess(true);
+                    const role = res.data.user?.role?.toLowerCase();
                     // Artificial delay to show smooth transition
                     setTimeout(() => {
-                        router.push("/");
+                        if (role === "admin") {
+                            router.push("/admin");
+                        } else if (role === "vendor") {
+                            router.push("/vendor");
+                        } else if (role === "shipper") {
+                            router.push("/shipper");
+                        } else {
+                            router.push("/");
+                        }
                     }, 1200);
                 }
             }
