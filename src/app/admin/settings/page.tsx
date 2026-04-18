@@ -53,7 +53,6 @@ export default function SettingsPage() {
                             <FormField label="Locale">
                                 <select className={selectCls} value={profile.locale} onChange={e => setProfile({ ...profile, locale: e.target.value })}>
                                     <option value="en-US">English (US)</option>
-                                    <option value="vi-VN">Tiếng Việt</option>
                                     <option value="zh-CN">中文 (简体)</option>
                                 </select>
                             </FormField>

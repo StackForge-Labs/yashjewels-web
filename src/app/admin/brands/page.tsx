@@ -56,16 +56,16 @@ export default function AdminBrandsPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                     <h1 className="font-serif text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Danh Sách Thương Hiệu (Brands)
+                        Brand Partners
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Quản lý nhãn hàng, chứng nhận nguồn gốc quốc tế.
+                        Manage luxury jewelry brands and international design partners.
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Thêm Dữ Liệu
+                    <Plus className="h-4 w-4" /> Add Brand
                 </button>
             </div>
 
@@ -76,7 +76,7 @@ export default function AdminBrandsPage() {
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Tìm kiếm..."
+                        placeholder="Search brands..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -90,23 +90,22 @@ export default function AdminBrandsPage() {
                         }`}
                     >
                         <Filter className="h-4 w-4" /> 
-                        {filterStatus === "ALL" ? "Bộ Lọc" : filterStatus === "ACTIVE" ? "Đang Hoạt Động" : "Đã Ẩn"}
+                        {filterStatus === "ALL" ? "Filters" : filterStatus === "ACTIVE" ? "Active" : "Inactive"}
                     </button>
                     {isFilterOpen && (
                         <div className="absolute right-0 top-full mt-2 w-48 z-10 rounded-xl border border-gray-100 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-[#1a1a1a]">
-                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Trạng Thái</p>
                             <div className="flex flex-col gap-1">
-                                {["ALL", "ACTIVE", "INACTIVE"].map((status) => (
+                                {(["ALL", "ACTIVE", "INACTIVE"] as const).map((status) => (
                                     <button
                                         key={status}
-                                        onClick={() => { setFilterStatus(status as any); setIsFilterOpen(false); }}
+                                        onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }}
                                         className={`flex items-center rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                                             filterStatus === status 
                                             ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" 
                                             : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                         }`}
                                     >
-                                        {status === "ALL" ? "Tất Cả" : status === "ACTIVE" ? "Đang Hoạt Động" : "Đã Ẩn"}
+                                        {status === "ALL" ? "All Brands" : status === "ACTIVE" ? "Active Only" : "Inactive Only"}
                                     </button>
                                 ))}
                             </div>
@@ -121,11 +120,11 @@ export default function AdminBrandsPage() {
                     <table className="w-full whitespace-nowrap text-left text-sm">
                         <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                             <tr>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Tên Thuộc Tính</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 max-w-[200px]">Mô Tả / Giá Trị</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Trạng Thái</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Tổng Mẫu Tham Chiếu</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Thao Tác</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Brand Name</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 max-w-[200px]">Description / Origin</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Total Products</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
@@ -198,9 +197,9 @@ export default function AdminBrandsPage() {
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "Tạo Thông Số Mới" : "Cập Nhật Thông Số"}
+                                    {drawerMode === "CREATE" ? "Add New Brand" : "Update Brand"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Quản lý nhãn hàng, chứng nhận nguồn gốc quốc tế.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Manage brand information and heritage details.</p>
                             </div>
                         </div>
 
@@ -208,28 +207,28 @@ export default function AdminBrandsPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Tên Thuộc Tính <span className="text-rose-500">*</span>
+                                        Brand Name <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
                                         defaultValue={selectedItem?.name || ""}
-                                        placeholder="Nhập tên..."
+                                        placeholder="Example: Cartier"
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Giá Trị Cụ Thể</label>
+                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Description / Origin</label>
                                     <textarea 
                                         rows={3}
                                         defaultValue={selectedItem?.description || ""}
-                                        placeholder="Mô tả kỹ thuật..."
+                                        placeholder="Brand heritage and details..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
                                 <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
                                     <div>
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Trạng Thái Kích Hoạt</p>
-                                        <p className="text-xs text-gray-500">Khách hàng sẽ nhìn thấy lựa chọn này.</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Activation Status</p>
+                                        <p className="text-xs text-gray-500">Customers will see this brand in the shop filters.</p>
                                     </div>
                                     <label className="relative inline-flex cursor-pointer items-center">
                                         <input type="checkbox" defaultChecked={selectedItem ? selectedItem.isActive : true} className="peer sr-only" />
@@ -242,10 +241,10 @@ export default function AdminBrandsPage() {
                         <div className="border-t border-gray-100 bg-gray-50/50 p-6 dark:border-gray-800 dark:bg-[#1a1a1a]/50">
                             <div className="flex gap-3">
                                 <button onClick={() => setIsDrawerOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
-                                    Hủy
+                                    Cancel
                                 </button>
                                 <button className="flex-1 rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95">
-                                    {drawerMode === "CREATE" ? "Tạo Dữ Liệu" : "Lưu Thay Đổi"}
+                                    {drawerMode === "CREATE" ? "Add Brand" : "Save Changes"}
                                 </button>
                             </div>
                         </div>
@@ -262,14 +261,14 @@ export default function AdminBrandsPage() {
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Xóa {selectedItem.name}?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.name}?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                Hành động này cực kỳ nguy hiểm. Hệ thống có <strong className="text-rose-500">{selectedItem.productCount} mục</strong> phụ thuộc.
+                                This action is high-risk. There are <strong className="text-rose-500">{selectedItem.productCount} items</strong> linked to this brand which will be affected.
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">
-                            <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">Hủy</button>
-                            <button className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20">Vẫn Xóa</button>
+                            <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">Cancel</button>
+                            <button className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20">Confirm Delete</button>
                         </div>
                     </div>
                 </div>

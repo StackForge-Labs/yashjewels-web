@@ -8,10 +8,30 @@ import { Modal } from "../_components/ui/Modal";
 import { getFinanceOverviewApi } from "@/services/admin.service";
 import toast from "react-hot-toast";
 
+interface FinanceTransaction {
+    paymentId: string;
+    id: string; // Used in modal
+    orderNumber: string;
+    amount: number;
+    paymentMethod: string;
+    gateway: string;
+    transactionRef: string | null;
+    timestamp: string;
+    status: string;
+}
+
+interface FinanceOverview {
+    totalRevenue: number;
+    pendingSettlement: number;
+    successRate: number;
+    recentTransactions: FinanceTransaction[];
+    paymentMethodDistribution: any[]; // Keep as any[] for now as its structure isn't fully used in UI
+}
+
 export default function FinancePage() {
-    const [financeData, setFinanceData] = useState<any>(null);
+    const [financeData, setFinanceData] = useState<FinanceOverview | null>(null);
     const [loading, setLoading] = useState(true);
-    const [selected, setSelected] = useState<any | null>(null);
+    const [selected, setSelected] = useState<FinanceTransaction | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const loadFinance = async () => {
@@ -76,7 +96,7 @@ export default function FinancePage() {
                                 <tr>{["Order ID", "Amount", "Method", "Gateway", "Ref #", "Date", "Status", ""].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                                {payments.length > 0 ? payments.map((p: any) => (
+                                {payments.length > 0 ? payments.map((p: FinanceTransaction) => (
                                     <tr key={p.paymentId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.orderNumber}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.amount.toLocaleString()} VND</td>

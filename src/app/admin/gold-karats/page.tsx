@@ -63,13 +63,13 @@ export default function AdminGoldKaratsPage() {
                         Gold Karats
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Quản lý các chuẩn tuổi vàng và độ tinh khiết (Purity %) phục vụ cho tính giá tự động.
+                        Manage gold purity standards and karat labels for automated pricing and specifications.
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Thêm Chuẩn Vàng
+                    <Plus className="h-4 w-4" /> Add Gold Karat
                 </button>
             </div>
 
@@ -80,7 +80,7 @@ export default function AdminGoldKaratsPage() {
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Tìm kiếm theo tem (VD: 18K)..."
+                        placeholder="Search by label (e.g. 18K)..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -94,25 +94,24 @@ export default function AdminGoldKaratsPage() {
                         }`}
                     >
                         <Filter className="h-4 w-4" /> 
-                        {filterStatus === "ALL" ? "Bộ Lọc" : filterStatus === "ACTIVE" ? "Đang Hoạt Động" : "Đã Ẩn"}
+                        {filterStatus === "ALL" ? "Filters" : filterStatus === "ACTIVE" ? "Active" : "Inactive"}
                     </button>
 
                     {/* Filter Dropdown */}
                     {isFilterOpen && (
                         <div className="absolute right-0 top-full mt-2 w-48 z-10 rounded-xl border border-gray-100 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-[#1a1a1a]">
-                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Trạng Thái</p>
                             <div className="flex flex-col gap-1">
-                                {["ALL", "ACTIVE", "INACTIVE"].map((status) => (
+                                {(["ALL", "ACTIVE", "INACTIVE"] as const).map((status) => (
                                     <button
                                         key={status}
-                                        onClick={() => { setFilterStatus(status as any); setIsFilterOpen(false); }}
+                                        onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }}
                                         className={`flex items-center rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                                             filterStatus === status 
                                             ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" 
                                             : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                         }`}
                                     >
-                                        {status === "ALL" ? "Tất Cả" : status === "ACTIVE" ? "Đang Hoạt Động" : "Đã Ẩn"}
+                                        {status === "ALL" ? "All Karats" : status === "ACTIVE" ? "Active Only" : "Inactive Only"}
                                     </button>
                                 ))}
                             </div>
@@ -127,11 +126,11 @@ export default function AdminGoldKaratsPage() {
                     <table className="w-full whitespace-nowrap text-left text-sm">
                         <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                             <tr>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Mã Vàng (Label)</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Độ Tinh Khiết (%)</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Trạng Thái</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Sản Phẩm Gắn Kèm</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Thao Tác</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Karat Label</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Purity Content (%)</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Linked Products</th>
+                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
@@ -153,7 +152,7 @@ export default function AdminGoldKaratsPage() {
                                         <div className="w-full max-w-[200px]">
                                             <div className="mb-1 flex justify-between font-plus-jakarta text-xs font-semibold">
                                                 <span className="text-gray-900 dark:text-gray-200">{item.purityPct}%</span>
-                                                <span className="text-gray-400">Mức Purity</span>
+                                                <span className="text-gray-400">Purity Level</span>
                                             </div>
                                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                                                 <div 
@@ -180,7 +179,7 @@ export default function AdminGoldKaratsPage() {
 
                                     <td className="px-6 py-4 text-right">
                                         <div className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 font-plus-jakarta text-xs font-bold text-gray-700 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
-                                            {item.productCount} SP
+                                            {item.productCount} SKUs
                                         </div>
                                     </td>
 
@@ -207,11 +206,11 @@ export default function AdminGoldKaratsPage() {
                 {/* Generic Pagination Footer */}
                 <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-gray-800/50">
                     <span className="font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
-                        Hiển thị 1 - {filtered.length} của {filtered.length} kết quả
+                        Showing 1 - {filtered.length} of {filtered.length} results
                     </span>
                     <div className="flex items-center gap-2">
-                        <button disabled className="rounded-lg border border-gray-200 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 opacity-50 dark:border-gray-800">Trước</button>
-                        <button disabled className="rounded-lg border border-gray-200 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 opacity-50 dark:border-gray-800">Tiếp</button>
+                        <button disabled className="rounded-lg border border-gray-200 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 opacity-50 dark:border-gray-800 transition-colors hover:bg-gray-50">Prev</button>
+                        <button disabled className="rounded-lg border border-gray-200 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-gray-400 opacity-50 dark:border-gray-800 transition-colors hover:bg-gray-50">Next</button>
                     </div>
                 </div>
             </div>
@@ -230,9 +229,9 @@ export default function AdminGoldKaratsPage() {
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "Tạo Chuẩn Vàng Mới" : "Cập Nhật Chuẩn Vàng"}
+                                    {drawerMode === "CREATE" ? "Add New Gold Karat" : "Update Gold Karat"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Điền thông số chuẩn Karat cho hệ thống</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Configure gold purity specifications for the system</p>
                             </div>
                         </div>
 
@@ -240,34 +239,34 @@ export default function AdminGoldKaratsPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Mã Định Danh (Carat Label) <span className="text-rose-500">*</span>
+                                        Karat Label <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
                                         defaultValue={selectedItem?.caratLabel || ""}
-                                        placeholder="Ví dụ: 18K"
+                                        placeholder="Example: 18K"
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
-                                    <p className="mt-1 text-[10px] text-gray-400">Ký hiệu ngắn gọn để hiển thị trên tem mác</p>
+                                    <p className="mt-1 text-[10px] text-gray-400">Short notation for labels and tags (e.g., 24K, 18K)</p>
                                 </div>
 
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Độ Tinh Khiết / Hàm Lượng Vàng (%) <span className="text-rose-500">*</span>
+                                        Gold Content / Purity Percentage (%) <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="number" 
                                         step="0.01"
                                         defaultValue={selectedItem?.purityPct || ""}
-                                        placeholder="Ví dụ: 75.00"
+                                        placeholder="Example: 75.00"
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
 
                                 <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
                                     <div>
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Kích Hoạt (Active)</p>
-                                        <p className="text-xs text-gray-500">Cho phép áp dụng chuẩn này cho sản phẩm mới.</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Active Status</p>
+                                        <p className="text-xs text-gray-500">Enable this standard for use in product catalog.</p>
                                     </div>
                                     <label className="relative inline-flex cursor-pointer items-center">
                                         <input type="checkbox" defaultChecked={selectedItem ? selectedItem.isActive : true} className="peer sr-only" />
@@ -282,10 +281,10 @@ export default function AdminGoldKaratsPage() {
                                 <button 
                                     onClick={() => setIsDrawerOpen(false)}
                                     className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
-                                    Hủy
+                                    Cancel
                                 </button>
                                 <button className="flex-1 rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95">
-                                    {drawerMode === "CREATE" ? "Tạo Mới" : "Lưu Thay Đổi"}
+                                    {drawerMode === "CREATE" ? "Create" : "Save Changes"}
                                 </button>
                             </div>
                         </div>
@@ -305,19 +304,19 @@ export default function AdminGoldKaratsPage() {
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Xóa chuẩn {selectedItem.caratLabel}?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.caratLabel} Karat?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                Bạn có chắc chắn muốn xóa mã này? Hành động này sẽ gây lỗi cho <strong className="text-rose-500 dark:text-rose-400">{selectedItem.productCount} sản phẩm</strong> đang liên kết. KHÔNG THỂ HOÀN TÁC!
+                                Are you sure you want to delete this standard? This action will impact <strong className="text-rose-500 dark:text-rose-400">{selectedItem.productCount} linked products</strong>. THIS ACTION CANNOT BE UNDONE!
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">
                             <button 
                                 onClick={() => setIsDeleteModalOpen(false)}
                                 className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
-                                Trở về
+                                Go Back
                             </button>
                             <button className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20">
-                                Vẫn Xóa
+                                Confirm Delete
                             </button>
                         </div>
                     </div>

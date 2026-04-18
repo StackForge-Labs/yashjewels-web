@@ -11,14 +11,28 @@ export const rejectKycApi = (userId: string) =>
     apiClient.put<ApiResponse<string>>(`/admin/kyc/${userId}/reject`).then((r) => r.data);
 
 // Phase 4 - New Endpoints
+// Phase 4 - New Endpoints
+export interface AdminDashboardStats {
+    totalRevenue: number;
+    revenueTrend: number;
+    newUsers: number;
+    usersTrend: number;
+    totalOrders: number;
+    ordersTrend: number;
+    avgOrderValue: number;
+    aovTrend: number;
+    recentOrders: any[];
+    inventoryAlerts: any[];
+}
+
 export const getDashboardStatsApi = (range: string = "month") =>
-    apiClient.get<ApiResponse<any>>(`/admin/stats?range=${range}`).then((r) => r.data);
+    apiClient.get<ApiResponse<AdminDashboardStats>>(`/admin/stats?range=${range}`).then((r) => r.data);
 
 export const getDashboardChartsApi = (days: number = 30) =>
     apiClient.get<ApiResponse<any>>(`/admin/charts?days=${days}`).then((r) => r.data);
 
 export const getAdminCustomersApi = (page: number = 1, pageSize: number = 20) =>
-    apiClient.get<ApiResponse<any>>(`/admin/customers?page=${page}&pageSize=${pageSize}`).then((r) => r.data);
+    apiClient.get<ApiResponse<any[]>>(`/admin/customers?page=${page}&pageSize=${pageSize}`).then((r) => r.data);
 
 export const getCustomersApi = getAdminCustomersApi;
 

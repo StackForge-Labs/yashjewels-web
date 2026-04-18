@@ -21,9 +21,29 @@ const SalesByCategoryChart = dynamic(() => import("./_components/charts/SalesByC
 
 type TimeRange = "today" | "week" | "month" | "year";
 
+interface InventoryAlert {
+    productName: string;
+    styleCode: string;
+    stockQuantity: number;
+    status: string;
+}
+
+interface DashboardStats {
+    totalRevenue: number;
+    revenueTrend: number;
+    newUsers: number;
+    usersTrend: number;
+    totalOrders: number;
+    ordersTrend: number;
+    avgOrderValue: number;
+    aovTrend: number;
+    recentOrders: any[];
+    inventoryAlerts: InventoryAlert[];
+}
+
 export default function AdminDashboardPage() {
     const [range, setRange] = useState<TimeRange>("month");
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [goldRate, setGoldRate] = useState<GoldRateSnapshot | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -163,7 +183,7 @@ export default function AdminDashboardPage() {
                             <Link href="/admin/products" className="font-plus-jakarta text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-wider">Catalog</Link>
                         </div>
                         <div className="flex flex-col p-2">
-                            {s.inventoryAlerts.length > 0 ? s.inventoryAlerts.map((item: any, i: number) => (
+                            {s.inventoryAlerts.length > 0 ? s.inventoryAlerts.map((item: InventoryAlert, i: number) => (
                                 <div key={i} className="flex items-center justify-between rounded-xl p-3 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                     <div className="flex items-center gap-3">
                                         <div className={`p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 ${item.status === 'Out' ? 'opacity-50' : ''}`}><Package className="h-4 w-4 text-gray-500" /></div>

@@ -9,12 +9,51 @@ import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
 import { getCustomersApi, getCustomerDetailApi, updateUserStatusApi } from "@/services/admin.service";
 import toast from "react-hot-toast";
 
+interface CustomerAddress {
+    label: string;
+    isDefault: boolean;
+    addressLine1: string;
+    ward?: string;
+    district?: string;
+    province?: string;
+    city?: string;
+    recipientName: string;
+    recipientPhone: string;
+}
+
+interface CustomerOrder {
+    orderNumber: string;
+    createdAt: string;
+    totalAmount: number;
+    status: string;
+}
+
+interface Customer {
+    id: string;
+    fullName: string;
+    email: string;
+    isEmailVerified: boolean;
+    hasTwoFactorEnabled: boolean;
+    kycStatus: string;
+    createdAt: string;
+    lifetimeValue: number;
+    isActive: boolean;
+    lastLoginAt?: string;
+    dateOfBirth?: string;
+    orderCount?: number;
+    totalItemsPurchased?: number;
+    kycScore?: number;
+    lastOrderAt?: string;
+    recentOrders?: CustomerOrder[];
+    addresses?: CustomerAddress[];
+}
+
 export default function CustomersPage() {
-    const [customers, setCustomers] = useState<any[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
-    const [selected, setSelected] = useState<any | null>(null);
+    const [selected, setSelected] = useState<Customer | null>(null);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
 
@@ -184,7 +223,7 @@ export default function CustomersPage() {
                                 <p className="font-plus-jakarta text-xs text-gray-400">No recent orders.</p>
                             ) : (
                                 <div className="flex flex-col gap-2">
-                                    {selected.recentOrders.map((order: any) => (
+                                    {selected.recentOrders.map((order: CustomerOrder) => (
                                         <div key={order.orderNumber} className="flex items-center justify-between rounded-xl border border-gray-100 p-3 dark:border-gray-800 hover:bg-gray-50/50 transition-colors">
                                             <div>
                                                 <p className="font-plus-jakarta text-xs font-bold text-gray-900 dark:text-white">{order.orderNumber}</p>
@@ -206,7 +245,7 @@ export default function CustomersPage() {
                                 <p className="font-plus-jakarta text-xs text-gray-400">No addresses saved.</p>
                             ) : (
                                 <div className="flex flex-col gap-2">
-                                    {selected.addresses.map((addr: any, i: number) => (
+                                    {selected.addresses.map((addr: CustomerAddress, i: number) => (
                                         <div key={i} className="flex items-start gap-3 rounded-xl border border-gray-100 p-4 dark:border-gray-800">
                                             <MapPin className="h-4 w-4 shrink-0 text-gray-400 mt-0.5" />
                                             <div>

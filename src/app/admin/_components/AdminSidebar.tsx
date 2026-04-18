@@ -22,6 +22,7 @@ import {
     Wallet,
     TrendingUp,
     HandHeart,
+    Truck,
 } from "lucide-react";
 
 const navGroups = [
@@ -79,17 +80,30 @@ const navGroups = [
     {
         title: "System & B2B",
         items: [
-            { name: "Vendors", href: "/admin/vendors", icon: Store },
-            { name: "Audit & API", href: "/admin/system", icon: ShieldAlert },
+            { name: "Vendors Master", href: "/admin/vendors", icon: Store },
+            { name: "Shipper Leads", href: "/admin/shippers", icon: Truck },
+            { name: "Warranties & Claims", href: "/admin/warranties", icon: ShieldCheck },
             { name: "Settings", href: "/admin/settings", icon: Settings },
         ],
     },
 ];
 
+interface NavSubItem {
+    name: string;
+    href: string;
+}
+
+interface NavItem {
+    name: string;
+    href?: string;
+    icon: any; // Lucide icon components are complex types, any is often used here but we can be more specific if needed
+    subItems?: NavSubItem[];
+}
+
 // Helper Component for Sidebar Items (Handles Expansion)
-function SidebarItem({ item, pathname }: { item: any, pathname: string }) {
+function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
     const hasSubItems = item.subItems && item.subItems.length > 0;
-    const isSubActive = hasSubItems && item.subItems.some((s: any) => pathname === s.href || pathname.startsWith(`${s.href}/`));
+    const isSubActive = hasSubItems && item.subItems?.some((s: NavSubItem) => pathname === s.href || pathname.startsWith(`${s.href}/`));
     const [isOpen, setIsOpen] = useState(isSubActive || false);
 
     if (hasSubItems) {
@@ -109,7 +123,7 @@ function SidebarItem({ item, pathname }: { item: any, pathname: string }) {
                 </button>
                 {isOpen && (
                     <ul className="mt-1 flex flex-col gap-1 pl-11 pr-2">
-                        {item.subItems.map((sub: any) => {
+                        {item.subItems?.map((sub: NavSubItem) => {
                             const isChildActive = pathname === sub.href || pathname.startsWith(`${sub.href}/`);
                             return (
                                 <li key={sub.name}>
