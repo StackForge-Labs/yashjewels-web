@@ -49,7 +49,7 @@ const navGroups = [
         items: [
             { name: "Customers", href: "/admin/customers", icon: Users },
             { name: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
-            { name: "Warranties & Claims", href: "/admin/services", icon: HandHeart },
+            { name: "Warranties & Claims", href: "/admin/warranties", icon: HandHeart },
         ],
     },
     {
