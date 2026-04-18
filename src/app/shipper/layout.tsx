@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useShipperGuard } from "@/hooks/useAuthGuard";
 import { Package, QrCode, User, Bell, LogOut } from "lucide-react";
+import ThemeToggle from "@/app/_components/ThemeToggle";
 import { clearTokens } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 
@@ -60,6 +61,9 @@ function ShipperHeader() {
                 </div>
             </div>
             <div className="flex items-center gap-2">
+                <div className="scale-90">
+                    <ThemeToggle />
+                </div>
                 <button className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-gray-100 bg-white/50 text-gray-500 dark:border-gray-800 dark:bg-[#111]">
                     <Bell className="h-4 w-4" />
                     <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />

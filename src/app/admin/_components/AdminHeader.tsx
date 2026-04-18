@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, Search, Menu, UserCircle } from "lucide-react";
+import ThemeToggle from "@/app/_components/ThemeToggle";
 
 interface AdminHeaderProps {
     onToggleSidebar: () => void;
@@ -29,7 +30,8 @@ export default function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 lg:gap-6">
+                <ThemeToggle />
                 <button className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white/50 text-gray-500 shadow-sm transition-all hover:border-gray-300 hover:text-gray-900 dark:border-gray-800 dark:bg-[#111] dark:hover:border-gray-700 dark:hover:text-gray-100">
                     <Bell className="h-5 w-5" />
                     <span className="absolute right-3 top-3 flex h-2.5 w-2.5 rounded-full bg-blue-600 ring-4 ring-white dark:ring-[#0a0a0a]"></span>

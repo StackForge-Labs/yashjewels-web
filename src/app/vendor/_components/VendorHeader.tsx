@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, Menu, LogOut } from "lucide-react";
+import ThemeToggle from "@/app/_components/ThemeToggle";
 import { useRouter } from "next/navigation";
 import { clearTokens } from "@/lib/api-client";
 
@@ -35,6 +36,7 @@ export default function VendorHeader({ onToggleSidebar, storeName = "My Store" }
             </div>
 
             <div className="flex items-center gap-3">
+                <ThemeToggle />
                 <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-amber-100 bg-white/50 text-gray-500 shadow-sm transition-all hover:border-amber-300 hover:text-amber-700 dark:border-amber-900/30 dark:bg-[#111] dark:hover:text-amber-400">
                     <Bell className="h-4 w-4" />
                     <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-amber-600 ring-2 ring-white dark:ring-[#0a0a0a]" />

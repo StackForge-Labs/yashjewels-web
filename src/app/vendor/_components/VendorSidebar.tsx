@@ -9,6 +9,7 @@ import {
     ChevronRight,
     ArrowLeftRight,
     MessageSquare,
+    Users,
     Gem,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ const navGroups = [
     {
         title: "Chăm Sóc Khách Hàng",
         items: [
+            { name: "Khách Hàng (CRM)", href: "/vendor/customers", icon: Users },
             { name: "Hòm Thư CSKH", href: "/vendor/inquiries", icon: MessageSquare },
         ],
     },
