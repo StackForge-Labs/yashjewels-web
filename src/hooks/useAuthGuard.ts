@@ -66,6 +66,45 @@ export function useAdminGuard() {
         }
     }, [profile, isLoading, router]);
 
-    // isError: profile fetch failed (e.g. token expired) — let redirect happen via useAuthGuard
+    return { profile, isLoading, isError };
+}
+
+/**
+ * Redirect to home if user IS NOT vendor (or admin with elevated access).
+ * Use in vendor portal pages.
+ */
+export function useVendorGuard() {
+    const router = useRouter();
+    const { profile, isLoading, isError } = useAuthGuard();
+
+    useEffect(() => {
+        if (!isLoading && profile) {
+            const role = profile.role?.toLowerCase();
+            if (role !== "vendor" && role !== "admin") {
+                router.replace("/");
+            }
+        }
+    }, [profile, isLoading, router]);
+
+    return { profile, isLoading, isError };
+}
+
+/**
+ * Redirect to home if user IS NOT a shipper.
+ * Use in shipper portal pages.
+ */
+export function useShipperGuard() {
+    const router = useRouter();
+    const { profile, isLoading, isError } = useAuthGuard();
+
+    useEffect(() => {
+        if (!isLoading && profile) {
+            const role = profile.role?.toLowerCase();
+            if (role !== "shipper" && role !== "admin") {
+                router.replace("/");
+            }
+        }
+    }, [profile, isLoading, router]);
+
     return { profile, isLoading, isError };
 }

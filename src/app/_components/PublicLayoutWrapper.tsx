@@ -8,10 +8,10 @@ import { SignalRWatcher } from "./SignalRWatcher";
 
 export const PublicLayoutWrapper = ({ children }: { children: ReactNode }) => {
     const pathname = usePathname() || "";
-    // Hide public Header/Footer on admin routes
-    const isAdmin = pathname.startsWith("/admin");
+    // Hide public Header/Footer on admin, vendor, and shipper routes
+    const isPortalRoute = pathname.startsWith("/admin") || pathname.startsWith("/vendor") || pathname.startsWith("/shipper");
 
-    if (isAdmin) {
+    if (isPortalRoute) {
         return <>{children}</>;
     }
 
