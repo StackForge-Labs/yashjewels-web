@@ -199,7 +199,7 @@ const ForgotPasswordPage = () => {
                                     </div>
                                     <h1 className="font-serif text-2xl tracking-[0.2em] text-gray-900 uppercase dark:text-white">Recover Access</h1>
                                     <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        We'll help you reset your credentials and regain access to the Maison
+                                        We&apos;ll help you reset your credentials and regain access to the Maison
                                     </p>
                                 </div>
 
@@ -271,7 +271,7 @@ const ForgotPasswordPage = () => {
                                         </div>
                                         <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Enter OTP Code</h2>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            We've sent a 6-digit code to <span className="font-semibold text-gold">{maskEmail(email)}</span>
+                                            We&apos;ve sent a 6-digit code to <span className="font-semibold text-gold">{maskEmail(email)}</span>
                                         </p>
                                     </div>
 

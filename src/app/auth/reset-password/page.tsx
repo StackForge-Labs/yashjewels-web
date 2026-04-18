@@ -217,7 +217,7 @@ const ResetPasswordPage = () => {
                                 href="/auth/forgot-password"
                                 className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
                             >
-                                Didn't receive OTP? Request again
+                                Didn&apos;t receive OTP? Request again
                             </Link>
                         </div>
                     </div>

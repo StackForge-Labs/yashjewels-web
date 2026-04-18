@@ -163,7 +163,7 @@ const VerifyEmailPage = () => {
                             </div>
                             <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Enter OTP Code</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                We've sent a 6-digit code to <span className="font-semibold text-gold">{maskEmail(email)}</span>
+                                We&apos;ve sent a 6-digit code to <span className="font-semibold text-gold">{maskEmail(email)}</span>
                             </p>
                         </div>
 

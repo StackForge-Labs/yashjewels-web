@@ -140,7 +140,7 @@ export default function KycHandoffPage() {
                         </div>
 
                         <p className="font-bold text-[16px] text-gray-900 dark:text-white">
-                            This page will refresh automatically once you've successfully verified.
+                            This page will refresh automatically once you&apos;ve successfully verified.
                         </p>
                     </>
                 )}

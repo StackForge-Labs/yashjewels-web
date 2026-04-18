@@ -325,13 +325,13 @@ export default function MarketInsightsPage() {
                                         <GemIcon size={400} />
                                     </div>
                                     <div className="relative z-10 max-w-xl">
-                                        <span className="text-gold mb-6 block text-[10px] font-bold tracking-[0.4em] uppercase">Collector's Guidance</span>
+                                        <span className="text-gold mb-6 block text-[10px] font-bold tracking-[0.4em] uppercase">Collector&apos;s Guidance</span>
                                         <h3 className="mb-6 font-serif text-3xl md:text-4xl text-white uppercase sm:leading-tight">The Art of <br /> Investing in Diamonds</h3>
                                         <p className="mb-10 text-base font-light leading-relaxed text-gray-400">
-                                            A diamond is more than jewelry; it is a portable legacy. Our benchmarks are aggregated from GIA and IGI certified global portfolios to ensure you are informed on the market's pulse before your next selection.
+                                            A diamond is more than jewelry; it is a portable legacy. Our benchmarks are aggregated from GIA and IGI certified global portfolios to ensure you are informed on the market&apos;s pulse before your next selection.
                                         </p>
                                         <Link href="/diamond-guide" className="hover:bg-gold inline-flex items-center gap-3 rounded-xl bg-white px-8 py-4 text-[12px] font-bold tracking-[0.3em] text-black uppercase transition-all hover:text-white">
-                                            Read Our Buyer's Guide <ArrowRight size={18} />
+                                            Read Our Buyer&apos;s Guide <ArrowRight size={18} />
                                         </Link>
                                     </div>
                                 </div>
