@@ -15,8 +15,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 3. Optional: Redirect authenticated users away from /auth pages
-  if (pathname.startsWith('/auth') && pathname !== '/auth/logout') {
+  // 3. Optional: Redirect authenticated users away from /auth pages (except KYC/Logout)
+  if (pathname.startsWith('/auth') && pathname !== '/auth/logout' && !pathname.startsWith('/auth/kyc')) {
     if (accessToken) {
         // If they are admin/vendor, they should stay in /admin, else /
         if (userRole === 'admin' || userRole === 'vendor') {
