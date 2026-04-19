@@ -7,6 +7,7 @@ export interface OrderTimelineDto {
     note: string;
     actorType: string;
     changedAt: string;
+    evidenceUrl?: string;
 }
 
 export interface OrderDetailDto {
@@ -19,6 +20,7 @@ export interface OrderDetailDto {
     shippingPhone: string;
     shippingAddress: string;
     returnRequestId?: string;
+    remainingDueAt?: string;
     timeline: OrderTimelineDto[];
     items: any[];
 }
@@ -34,6 +36,10 @@ export const orderService = {
     },
     confirmDeposit: async (orderId: string) => {
         const res = await apiClient.post<ApiResponse<boolean>>(`/user-orders/${orderId}/confirm-deposit`);
+        return res.data;
+    },
+    completeOrder: async (orderId: string) => {
+        const res = await apiClient.put<ApiResponse<boolean>>(`/user-orders/${orderId}/complete`);
         return res.data;
     }
 };
