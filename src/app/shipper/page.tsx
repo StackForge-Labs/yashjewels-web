@@ -114,12 +114,12 @@ function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (orde
                     ) : null}
                 </div>
             </div>
-            
+
             {/* Warning if QR is not active */}
             {order.status === "SHIPPED" && !order.qrActive && (
                 <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:border-rose-900 dark:text-rose-400 flex justify-between items-center">
                     Mã QR khách hàng đã hết hạn (2h).
-                    <button 
+                    <button
                         onClick={() => {
                             toast.promise(shipperService.resendQrCode(order.orderId), {
                                 loading: "Gửi lại...",
@@ -156,13 +156,13 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber }: { isOpe
                     </p>
 
                     <div className="flex w-full gap-3">
-                        <button 
+                        <button
                             onClick={onClose}
                             className="flex-1 rounded-2xl border border-gray-200 py-4 text-xs font-bold uppercase tracking-widest text-gray-600 transition-all hover:bg-gray-50 dark:border-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-800"
                         >
                             Hủy
                         </button>
-                        <button 
+                        <button
                             onClick={async () => {
                                 setIsSubmitting(true);
                                 await onConfirm();
@@ -171,7 +171,7 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber }: { isOpe
                             disabled={isSubmitting}
                             className="flex-[1.5] rounded-2xl bg-indigo-600 py-4 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
                         >
-                            {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Xác Nhận Nhận"}
+                            {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Xác Nhận Đơn Hàng"}
                         </button>
                     </div>
                 </div>
@@ -199,7 +199,7 @@ export default function ShipperHomePage() {
                 toast.error(res.message || "Lỗi khi nhận");
             }
         } catch (error) {
-             toast.error("Lỗi ngoại lệ.");
+            toast.error("Lỗi ngoại lệ.");
         }
     };
 
@@ -227,11 +227,11 @@ export default function ShipperHomePage() {
     const totalCount = orders.length;
 
     const filtered = orders.filter((o) => {
-        const matchFilter = activeFilter === "ALL" || 
+        const matchFilter = activeFilter === "ALL" ||
             (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED") : o.status === activeFilter);
         const term = search.toLowerCase();
-        const matchSearch = 
-            (o.shippingName || o.customerName).toLowerCase().includes(term) || 
+        const matchSearch =
+            (o.shippingName || o.customerName).toLowerCase().includes(term) ||
             (o.shippingAddress || "").toLowerCase().includes(term) ||
             o.orderNumber.toLowerCase().includes(term);
         return matchFilter && matchSearch;
@@ -242,7 +242,7 @@ export default function ShipperHomePage() {
             {/* Hero Stats */}
             <div className="rounded-2xl bg-gradient-to-br from-teal-600 to-teal-800 p-5 text-white shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-20"><Truck className="w-24 h-24" /></div>
-                
+
                 <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest opacity-80 relative z-10">Ca Của Bạn</p>
                 <div className="mt-2 flex items-end gap-3 relative z-10">
                     <span className="font-plus-jakarta text-6xl font-black leading-none">{pendingCount}</span>
@@ -309,9 +309,9 @@ export default function ShipperHomePage() {
             </div>
 
             {/* Modal */}
-            <ConfirmAcceptModal 
-                isOpen={!!acceptModalOrder} 
-                onClose={() => setAcceptModalOrder(null)} 
+            <ConfirmAcceptModal
+                isOpen={!!acceptModalOrder}
+                onClose={() => setAcceptModalOrder(null)}
                 onConfirm={() => handleAccept(acceptModalOrder!.orderId)}
                 orderNumber={acceptModalOrder?.orderNumber || ""}
             />

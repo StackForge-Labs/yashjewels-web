@@ -234,6 +234,24 @@ export default function OrderTimelinePage() {
                                 <div className="space-y-3 text-sm">
                                     <div className="flex justify-between"><span>Value:</span><span className="font-bold">{order.totalAmount.toLocaleString()} VND</span></div>
                                     <div className="flex justify-between"><span>Deposit:</span><span className="font-bold text-emerald-600">{(order.depositAmount || 0).toLocaleString()} VND</span></div>
+
+                                    {order.status !== "DEPOSIT_PAID" && order.status !== "AWAITING_FULL_PAYMENT" && order.status !== "CANCELLED" && (
+                                        <div className="space-y-3 pt-3">
+                                            <div className="flex justify-between border-t border-gray-100 pt-3 dark:border-white/5">
+                                                <span className="text-gray-500">Balance Paid:</span>
+                                                <span className="font-bold text-emerald-600">{(order.totalAmount - order.depositAmount).toLocaleString()} VND</span>
+                                            </div>
+                                            {order.timeline?.find(t => t.status === "PREPARING" || t.status === "FULLY_PAID") && (
+                                                <p className="text-[10px] text-gray-400 text-right italic">
+                                                    Settled on {new Date(order.timeline.find(t => t.status === "PREPARING" || t.status === "FULLY_PAID")?.changedAt!).toLocaleDateString()} at {new Date(order.timeline.find(t => t.status === "PREPARING" || t.status === "FULLY_PAID")?.changedAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            )}
+                                            <div className="flex justify-between bg-gold/5 p-2 rounded-lg border border-gold/10">
+                                                <span className="font-serif text-teal-900 dark:text-gold">Total Paid:</span>
+                                                <span className="font-bold text-teal-600 dark:text-teal-400">{order.totalAmount.toLocaleString()} VND</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     
                                     {order.status === "AWAITING_FULL_PAYMENT" && (
                                         <div className="mt-6 border-t border-gray-100 pt-6 dark:border-white/5 text-center">

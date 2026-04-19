@@ -104,28 +104,42 @@ export default function ShipperScannerPage() {
 
             {/* Scanning Overlay (Always visible when scanning) */}
             {scanState === "scanning" && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
-                    {/* Dark Mask with Scanning Hole */}
-                    <div className="absolute inset-0 bg-black/40" style={{
-                        clipPath: 'polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, 50% 50%, calc(50% - 125px) calc(50% - 125px), calc(50% + 125px) calc(50% - 125px), calc(50% + 125px) calc(50% + 125px), calc(50% - 125px) calc(50% + 125px), calc(50% - 125px) calc(50% - 125px))'
-                    }} />
+                <div className="absolute inset-0 z-10 pointer-events-none">
+                    {/* Dark Mask Overlays (More robust than clip-path) */}
+                    <div className="absolute left-0 right-0 top-0 bg-black/60" style={{ height: 'calc(50% - 125px)' }} />
+                    <div className="absolute left-0 right-0 bottom-0 bg-black/60" style={{ height: 'calc(50% - 125px)' }} />
+                    <div className="absolute left-0 bg-black/60" style={{ top: 'calc(50% - 125px)', bottom: 'calc(50% - 125px)', width: 'calc(50% - 125px)' }} />
+                    <div className="absolute right-0 bg-black/60" style={{ top: 'calc(50% - 125px)', bottom: 'calc(50% - 125px)', width: 'calc(50% - 125px)' }} />
 
-                    {/* Frame */}
-                    <div className="relative h-[250px] w-[250px] border-2 border-white/20 rounded-3xl overflow-hidden pointer-events-none">
-                        {/* Corner markers */}
-                        <div className="absolute left-0 top-0 h-10 w-10 border-l-4 border-t-4 border-teal-400 rounded-tl-xl" />
-                        <div className="absolute right-0 top-0 h-10 w-10 border-r-4 border-t-4 border-teal-400 rounded-tr-xl" />
-                        <div className="absolute bottom-0 left-0 h-10 w-10 border-b-4 border-l-4 border-teal-400 rounded-bl-xl" />
-                        <div className="absolute bottom-0 right-0 h-10 w-10 border-b-4 border-r-4 border-teal-400 rounded-br-xl" />
+                    {/* Scanning Frame Layout */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        {/* The Hole/Frame */}
+                        <div className="relative h-[250px] w-[250px] overflow-hidden">
+                            {/* Visual Frame Border */}
+                            <div className="absolute inset-0 border border-white/20 rounded-3xl" />
+                            
+                            {/* Modern Corner markers */}
+                            <div className="absolute left-0 top-0 h-12 w-12 border-l-4 border-t-4 border-teal-400 rounded-tl-3xl" />
+                            <div className="absolute right-0 top-0 h-12 w-12 border-r-4 border-t-4 border-teal-400 rounded-tr-3xl" />
+                            <div className="absolute bottom-0 left-0 h-12 w-12 border-b-4 border-l-4 border-teal-400 rounded-bl-3xl" />
+                            <div className="absolute bottom-0 right-0 h-12 w-12 border-b-4 border-r-4 border-teal-400 rounded-br-3xl" />
 
-                        {/* Scan Line */}
-                        <div className="animate-scan absolute left-0 right-0 h-1 bg-teal-400/80 shadow-[0_0_15px_rgba(20,184,166,0.8)]" />
-                    </div>
+                            {/* Dynamic Scan Line */}
+                            <div className="absolute left-2 right-2 h-1 bg-gradient-to-r from-transparent via-teal-400 to-transparent shadow-[0_0_20px_rgba(45,212,191,0.8)] animate-scan" style={{ top: '0%' }} />
+                        </div>
 
-                    <div className="mt-12 rounded-full bg-black/60 px-8 py-4 backdrop-blur-xl border border-white/10">
-                        <p className="font-plus-jakarta text-sm font-bold text-white text-center tracking-widest uppercase">
-                            Đang quét mã QR
-                        </p>
+                        {/* Status Badge */}
+                        <div className="mt-16 flex flex-col items-center gap-3">
+                            <div className="rounded-full bg-black/60 px-8 py-3.5 backdrop-blur-xl border border-white/10 shadow-2xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-2 w-2 animate-pulse rounded-full bg-teal-400 shadow-[0_0_8px_#2dd4bf]" />
+                                    <p className="font-plus-jakarta text-[11px] font-bold text-white tracking-[0.2em] uppercase">
+                                        Đang tìm mã QR...
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-white/40 font-medium tracking-wide">Đặt mã QR vào giữa khung hình</p>
+                        </div>
                     </div>
                 </div>
             )}
