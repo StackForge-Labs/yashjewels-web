@@ -14,6 +14,11 @@ export const shipperService = {
         return res.data;
     },
     
+    acceptOrder: async (orderId: string) => {
+        const res = await apiClient.put<ApiResponse<boolean>>(`/shipper/orders/${orderId}/accept`);
+        return res.data;
+    },
+    
     confirmDeliveryWithQr: async (orderId: string, qrToken: string, recipientPhotoUrl: string) => {
         const res = await apiClient.put<ApiResponse<boolean>>(`/shipper/orders/${orderId}/deliver`, {
             qrToken,
