@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { QrCode, X, Flashlight, RotateCcw, CheckCircle2, AlertCircle, Mail, Loader2 } from "lucide-react";
+import { QrCode, X, Mail, Loader2, RotateCcw, CheckCircle2, AlertCircle } from "lucide-react";
 import { shipperService } from "@/services/shipper.service";
 import toast from "react-hot-toast";
+import { Html5Qrcode } from "html5-qrcode";
 
 type ScanState = "idle" | "scanning" | "success" | "error";
 
@@ -13,61 +14,68 @@ export default function ShipperScannerPage() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get("orderId") ?? "";
 
-    const videoRef = useRef<HTMLVideoElement>(null);
     const [scanState, setScanState] = useState<ScanState>("idle");
     const [scannedQrToken, setScannedQrToken] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const [hasCamera, setHasCamera] = useState(true);
     const [resendCount, setResendCount] = useState(3);
     const [isResending, setIsResending] = useState(false);
-    const streamRef = useRef<MediaStream | null>(null);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
 
-    // Start camera
-    const startCamera = async () => {
+    const startScanner = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-            });
-            streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                videoRef.current.play();
+            if (scannerRef.current && scannerRef.current.isScanning) {
+                await scannerRef.current.stop();
             }
+            const html5QrCode = new Html5Qrcode("reader");
+            scannerRef.current = html5QrCode;
             setScanState("scanning");
-        } catch {
+            setHasCamera(true);
+            await html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
+                (decodedText) => {
+                    handleScanSuccess(decodedText);
+                },
+                () => {}
+            );
+        } catch (err) {
+            console.error("Scanner Error:", err);
             setHasCamera(false);
+            setScanState("error");
+            setErrorMsg("Không thể mở camera. Vui lòng kiểm tra quyền truy cập.");
         }
-    };
-
-    const stopCamera = () => {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
     };
 
     useEffect(() => {
-        startCamera();
-        return () => stopCamera();
+        startScanner();
+        return () => {
+            if (scannerRef.current && scannerRef.current.isScanning) {
+                scannerRef.current.stop().catch(console.error);
+            }
+        };
     }, []);
 
-    // Mock QR Scan (real implementation would use jsQR or zxing to decode QR content)
-    const handleMockScan = () => {
-        if (!orderId) {
-            setErrorMsg("Không xác định được đơn hàng cần giao.");
-            setScanState("error");
-            return;
+    const handleScanSuccess = async (decodedText: string) => {
+        if (!orderId) return;
+
+        // Stop scanner immediately
+        if (scannerRef.current && scannerRef.current.isScanning) {
+            await scannerRef.current.stop();
         }
-        
-        // In reality, the scanner extracts the raw qrToken string from the QR code.
-        // For testing the API, we use a dummy token "QR_MOCK_TOKEN" and pass it to POD.
-        const mockQrToken = "QR_MOCK_TOKEN_" + Math.random().toString(36).substring(7);
-        
+
         setScanState("success");
-        setScannedQrToken(mockQrToken);
-        stopCamera();
-        
-        // Auto redirect to POD after 1.5s
+        setScannedQrToken(decodedText);
+
+        toast.success("Mã QR hợp lệ!");
+
+        // Auto redirect to POD
         setTimeout(() => {
-            router.push(`/shipper/pod?orderId=${orderId}&qrToken=${mockQrToken}`);
+            router.push(`/shipper/pod?orderId=${orderId}&qrToken=${decodedText}`);
         }, 1500);
     };
 
@@ -90,71 +98,65 @@ export default function ShipperScannerPage() {
     };
 
     return (
-        <div className="relative flex min-h-[calc(100vh-3.5rem-6rem)] flex-col bg-black">
-            {/* Camera View */}
-            {scanState === "scanning" && hasCamera && (
-                <div className="relative flex-1">
-                    <video
-                        ref={videoRef}
-                        className="h-full w-full object-cover"
-                        playsInline
-                        muted
-                        autoPlay
-                    />
+        <div className="relative flex h-screen w-full flex-col bg-black overflow-hidden">
+            {/* Camera View Container */}
+            <div id="reader" className="absolute inset-0 h-full w-full [&>video]:h-full [&>video]:w-full [&>video]:object-cover" />
 
-                    {/* Dark overlay with hole (pseudo via box-shadow) */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        {/* Scanning frame */}
-                        <div className="relative h-64 w-64">
-                            {/* Corner borders */}
-                            <div className="absolute left-0 top-0 h-8 w-8 border-l-4 border-t-4 border-teal-400 rounded-tl-lg" />
-                            <div className="absolute right-0 top-0 h-8 w-8 border-r-4 border-t-4 border-teal-400 rounded-tr-lg" />
-                            <div className="absolute bottom-0 left-0 h-8 w-8 border-b-4 border-l-4 border-teal-400 rounded-bl-lg" />
-                            <div className="absolute bottom-0 right-0 h-8 w-8 border-b-4 border-r-4 border-teal-400 rounded-br-lg" />
-                            {/* Scanning line animation */}
-                            <div className="animate-scan absolute left-0 right-0 h-0.5 bg-teal-400/80 shadow-[0_0_8px_2px_rgba(20,184,166,0.5)]" />
-                        </div>
+            {/* Scanning Overlay (Always visible when scanning) */}
+            {scanState === "scanning" && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
+                    {/* Dark Mask with Scanning Hole */}
+                    <div className="absolute inset-0 bg-black/40" style={{
+                        clipPath: 'polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, 50% 50%, calc(50% - 125px) calc(50% - 125px), calc(50% + 125px) calc(50% - 125px), calc(50% + 125px) calc(50% + 125px), calc(50% - 125px) calc(50% + 125px), calc(50% - 125px) calc(50% - 125px))'
+                    }} />
 
-                        <div className="mt-6 rounded-full bg-black/60 px-6 py-3 backdrop-blur-md">
-                            <p className="font-plus-jakarta text-sm font-bold text-white text-center tracking-wide">
-                                Hướng camera vào mã QR của khách
-                            </p>
-                        </div>
+                    {/* Frame */}
+                    <div className="relative h-[250px] w-[250px] border-2 border-white/20 rounded-3xl overflow-hidden pointer-events-none">
+                        {/* Corner markers */}
+                        <div className="absolute left-0 top-0 h-10 w-10 border-l-4 border-t-4 border-teal-400 rounded-tl-xl" />
+                        <div className="absolute right-0 top-0 h-10 w-10 border-r-4 border-t-4 border-teal-400 rounded-tr-xl" />
+                        <div className="absolute bottom-0 left-0 h-10 w-10 border-b-4 border-l-4 border-teal-400 rounded-bl-xl" />
+                        <div className="absolute bottom-0 right-0 h-10 w-10 border-b-4 border-r-4 border-teal-400 rounded-br-xl" />
+
+                        {/* Scan Line */}
+                        <div className="animate-scan absolute left-0 right-0 h-1 bg-teal-400/80 shadow-[0_0_15px_rgba(20,184,166,0.8)]" />
                     </div>
 
-                    {/* Top controls */}
-                    <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
-                        <button
-                            onClick={() => router.back()}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70"
-                        >
-                            <X className="h-5 w-5" />
-                        </button>
-                        <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest text-white/80">
-                            QR Scanner {orderId && `(${orderId.substring(0, 8)}...)`}
+                    <div className="mt-12 rounded-full bg-black/60 px-8 py-4 backdrop-blur-xl border border-white/10">
+                        <p className="font-plus-jakarta text-sm font-bold text-white text-center tracking-widest uppercase">
+                            Đang quét mã QR
                         </p>
-                        <div className="h-10 w-10" />
-                    </div>
-
-                    {/* Bottom mock button (dev only) */}
-                    <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-3">
-                        <button
-                            onClick={handleMockScan}
-                            className="w-full rounded-2xl bg-teal-600 py-4 font-plus-jakarta text-sm font-black uppercase tracking-widest text-white shadow-xl active:scale-95"
-                        >
-                            [DEV] Mô Phỏng Quét Thành Công
-                        </button>
-                        <button
-                            onClick={handleResendEmail}
-                            disabled={resendCount <= 0 || isResending || !orderId}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-black/50 py-3 font-plus-jakarta text-xs font-bold text-white/80 backdrop-blur-md disabled:opacity-40"
-                        >
-                            {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                            Gửi Lại Mã Cho Khách ({resendCount} lần còn lại)
-                        </button>
                     </div>
                 </div>
             )}
+
+            {/* Top Bar */}
+            <div className="absolute left-4 right-4 top-4 z-20 flex items-center justify-between">
+                <button
+                    onClick={() => router.back()}
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/40 text-white backdrop-blur-xl border border-white/10 transition hover:bg-black/60"
+                >
+                    <X className="h-6 w-6" />
+                </button>
+                <div className="rounded-full bg-teal-600/20 px-4 py-2 border border-teal-500/20 backdrop-blur-md">
+                    <p className="font-plus-jakarta text-[10px] font-black uppercase tracking-[0.2em] text-teal-400">
+                        Secure Scanner v2
+                    </p>
+                </div>
+                <div className="w-12 h-12" />
+            </div>
+
+            {/* Bottom Controls */}
+            <div className="absolute bottom-10 left-6 right-6 z-20 flex flex-col gap-4">
+                <button
+                    onClick={handleResendEmail}
+                    disabled={resendCount <= 0 || isResending || !orderId}
+                    className="flex w-full items-center justify-center gap-3 rounded-[2rem] bg-white/10 py-5 font-plus-jakarta text-xs font-bold text-white backdrop-blur-2xl border border-white/5 disabled:opacity-30 transition-all active:scale-95"
+                >
+                    {isResending ? <Loader2 className="h-4 w-4 animate-spin text-teal-400" /> : <Mail className="h-4 w-4 text-teal-400" />}
+                    Gửi Lại Mã Cho Khách ({resendCount})
+                </button>
+            </div>
 
             {/* No Camera Fallback */}
             {!hasCamera && (
@@ -169,7 +171,7 @@ export default function ShipperScannerPage() {
                         </p>
                     </div>
                     <button
-                        onClick={() => { setHasCamera(true); startCamera(); }}
+                        onClick={() => { startScanner(); }}
                         className="flex items-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 font-plus-jakarta text-sm font-bold text-white"
                     >
                         <RotateCcw className="h-4 w-4" /> Thử Lại
@@ -202,7 +204,7 @@ export default function ShipperScannerPage() {
                         <p className="mt-2 font-plus-jakarta text-sm text-gray-400">{errorMsg}</p>
                     </div>
                     <button
-                        onClick={() => { setScanState("idle"); startCamera(); }}
+                        onClick={() => { startScanner(); }}
                         className="flex items-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 font-plus-jakarta text-sm font-bold text-white"
                     >
                         <RotateCcw className="h-4 w-4" /> Quét Lại
