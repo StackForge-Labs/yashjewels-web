@@ -41,5 +41,9 @@ export const orderService = {
     completeOrder: async (orderId: string) => {
         const res = await apiClient.put<ApiResponse<boolean>>(`/user-orders/${orderId}/complete`);
         return res.data;
+    },
+    verifyDelivery: async (orderId: string, base64Image: string) => {
+        const res = await apiClient.post<ApiResponse<string>>(`/user-orders/${orderId}/verify-delivery`, { base64Image });
+        return res.data;
     }
 };

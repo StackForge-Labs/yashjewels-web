@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     Phone, MapPin, CheckCircle2, Package,
-    ChevronRight, Search, Loader2, RefreshCw
+    ChevronRight, Search, Loader2, RefreshCw, Truck
 } from "lucide-react";
 import { shipperService, ShipperOrderDto } from "@/services/shipper.service";
 import toast from "react-hot-toast";

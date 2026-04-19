@@ -169,6 +169,13 @@ function OrderCard({ order, onConfirm, onPrepare }: { order: any; onConfirm: (id
                     Xác Nhận Đơn
                 </button>
             )}
+            {["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(order.status) && (
+                <div className="flex w-full items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-blue-700 dark:border-blue-800/30 dark:bg-blue-500/10 dark:text-blue-300">
+                    {order.status === "CONFIRMED" ? "Đã Xác Nhận (Chờ hệ thống định tuyến)" :
+                     order.status === "AWAITING_FULL_PAYMENT" ? "Đang Chờ Khách Trả Nốt Gói" :
+                     "Đã Thanh Toán Đủ"}
+                </div>
+            )}
             {order.status === "PREPARING" && (
                 <button
                     onClick={() => onPrepare(order.orderId)}
@@ -261,7 +268,12 @@ export default function VendorOrdersPage() {
             ) : (
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 lg:grid-cols-2">
                     {columns.map((col) => {
-                        const colOrders = orders.filter((o) => o.status === col.status);
+                        const colOrders = orders.filter((o) => {
+                            if (col.status === "CONFIRMED") {
+                                return ["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(o.status);
+                            }
+                            return o.status === col.status;
+                        });
                         const ColIcon = col.icon;
                         return (
                             <div key={col.status} className={`flex flex-col gap-3 rounded-2xl border p-4 ${col.color}`}>
