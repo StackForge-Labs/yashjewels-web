@@ -11,7 +11,6 @@ export const rejectKycApi = (userId: string) =>
     apiClient.put<ApiResponse<string>>(`/admin/kyc/${userId}/reject`).then((r) => r.data);
 
 // Phase 4 - New Endpoints
-// Phase 4 - New Endpoints
 export interface AdminDashboardStats {
     totalRevenue: number;
     revenueTrend: number;
@@ -31,20 +30,98 @@ export const getDashboardStatsApi = (range: string = "month") =>
 export const getDashboardChartsApi = (days: number = 30) =>
     apiClient.get<ApiResponse<any>>(`/admin/charts?days=${days}`).then((r) => r.data);
 
-export const getAdminCustomersApi = (page: number = 1, pageSize: number = 20) =>
-    apiClient.get<ApiResponse<any[]>>(`/admin/customers?page=${page}&pageSize=${pageSize}`).then((r) => r.data);
+// ── Customer DTOs ──────────────────────────────────────────────
+export interface CreateCustomerDto {
+    email: string;
+    fullName: string;
+    phone?: string;
+    dateOfBirth?: string;
+}
+
+export interface UpdateCustomerDto {
+    userId: string;
+    fullName: string;
+    phone?: string;
+    dateOfBirth?: string;
+}
+
+export interface BanCustomerDto {
+    userId: string;
+    status: number;           // 2 = SUSPENDED, 3 = BANNED, 1 = ACTIVE
+    reason?: string;
+    suspendDurationHours?: number;  // total hours (FE converts days/hours → total hours)
+}
+
+export interface ImportResultDto {
+    totalRows: number;
+    imported: number;
+    skipped: number;
+    errors: string[];
+}
+
+// ── Customer APIs ──────────────────────────────────────────────
+export const getAdminCustomersApi = (
+    page: number = 1,
+    pageSize: number = 20,
+    search?: string,
+    status?: number,
+    kycStatus?: string
+) => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("pageSize", String(pageSize));
+    if (search) params.set("search", search);
+    if (status !== undefined) params.set("status", String(status));
+    if (kycStatus) params.set("kycStatus", kycStatus);
+    return apiClient.get<ApiResponse<any[]>>(`/admin/customers?${params.toString()}`).then((r) => r.data);
+};
 
 export const getCustomersApi = getAdminCustomersApi;
 
 export const getCustomerDetailApi = (id: string) =>
     apiClient.get<ApiResponse<any>>(`/admin/customers/${id}`).then((r) => r.data);
 
+export const createCustomerApi = (data: CreateCustomerDto) =>
+    apiClient.post<ApiResponse<string>>("/admin/customers", data).then((r) => r.data);
+
+export const updateCustomerApi = (id: string, data: Omit<UpdateCustomerDto, "userId">) =>
+    apiClient.put<ApiResponse<string>>(`/admin/customers/${id}`, { userId: id, ...data }).then((r) => r.data);
+
+/** Ban / Suspend / Activate a customer. status: 1=ACTIVE, 2=SUSPENDED, 3=BANNED */
+export const banCustomerApi = (id: string, data: Omit<BanCustomerDto, "userId">) =>
+    apiClient.put<ApiResponse<string>>(`/admin/customers/${id}/status`, { userId: id, ...data }).then((r) => r.data);
+
+/** Keep alias for legacy callers */
+export const updateUserStatusApi = (userId: string, status: number) =>
+    banCustomerApi(userId, { status });
+
+export const exportCustomersApi = async (search?: string, status?: number, kycStatus?: string) => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (status !== undefined) params.set("status", String(status));
+    if (kycStatus) params.set("kycStatus", kycStatus);
+    const res = await apiClient.get(`/admin/customers/export?${params.toString()}`, { responseType: "blob" });
+    return res.data as Blob;
+};
+
+export const importCustomersApi = (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiClient.post<ApiResponse<ImportResultDto>>("/admin/customers/import", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data);
+};
+
+export const deleteCustomerApi = (id: string) =>
+    apiClient.delete<ApiResponse<string>>(`/admin/customers/${id}`).then((r) => r.data);
+
+// ── Finance / Orders ───────────────────────────────────────────
 export const getFinanceOverviewApi = () =>
     apiClient.get<ApiResponse<any>>("/admin/finance-overview").then((r) => r.data);
 
 export const getFinanceOverview = getFinanceOverviewApi;
 
-export const getOrdersApi = () => 
+export const getOrdersApi = () =>
     apiClient.get<ApiResponse<any[]>>("/admin/orders/all").then((r) => r.data);
 
 export const confirmOrderApi = (orderId: string, approve: boolean, reason?: string) =>
@@ -56,9 +133,6 @@ export const confirmOrderDecisionApi = (orderId: string, approve: boolean, reaso
 export const recordOrderContactApi = (data: { orderId: string, method: number, result: number, notes?: string }) =>
     apiClient.post<ApiResponse<boolean>>("/admin/orders/contact-log", data).then((r) => r.data);
 
-export const updateUserStatusApi = (userId: string, status: number) =>
-    apiClient.put<ApiResponse<string>>(`/admin/customers/${userId}/status`, { userId, status }).then((r) => r.data);
-
 export const adminService = {
     getPendingKycApi,
     approveKycApi,
@@ -68,11 +142,17 @@ export const adminService = {
     getAdminCustomersApi,
     getCustomersApi,
     getCustomerDetailApi,
+    createCustomerApi,
+    updateCustomerApi,
+    banCustomerApi,
+    updateUserStatusApi,
+    exportCustomersApi,
+    importCustomersApi,
+    deleteCustomerApi,
     getFinanceOverviewApi,
     getFinanceOverview,
     getOrdersApi,
     confirmOrderApi,
     confirmOrderDecisionApi,
     recordOrderContactApi,
-    updateUserStatusApi
 };
