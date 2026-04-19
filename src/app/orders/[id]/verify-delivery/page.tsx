@@ -96,30 +96,24 @@ export default function VerifyDeliveryPage({ params }: { params: Promise<{ id: s
                                     </div>
                                     <h2 className="font-serif text-3xl text-gray-900 dark:text-white">Verification Complete</h2>
                                     <p className="mt-4 max-w-md text-gray-500 dark:text-gray-400">
-                                        Your identity has been verified. Present this single-use QR code to our secure courier upon arrival.
+                                        Identity verified. Your secure delivery QR code has been dispatched to your registered email address.
                                     </p>
 
-                                    <div className="mt-10 mb-10 p-8 bg-white rounded-3xl shadow-lg border border-gray-100">
-                                        <QRCodeSVG 
-                                            value={qrToken} 
-                                            size={200}
-                                            level="H"
-                                            includeMargin={true}
-                                        />
-                                        <p className="mt-6 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase italic">
-                                            Expiry: 2 Hours from issuance
+                                    <div className="mt-10 mb-10 p-10 bg-amber-500/5 rounded-3xl border border-amber-500/10 flex flex-col items-center">
+                                        <div className="bg-amber-500/20 p-4 rounded-full mb-6">
+                                            <QrCode size={48} className="text-amber-600" />
+                                        </div>
+                                        <p className="font-plus-jakarta text-xs font-bold tracking-[0.2em] text-amber-700 uppercase">
+                                            Check your Inbox
+                                        </p>
+                                        <p className="mt-2 text-[11px] text-amber-600/70 text-center max-w-[240px]">
+                                            Present the QR code from our official email to the courier upon arrival.
                                         </p>
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                                        <button 
-                                            onClick={() => window.print()} 
-                                            className="flex items-center justify-center gap-2 bg-zinc-900 dark:bg-zinc-800 text-white rounded-xl px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all hover:brightness-110"
-                                        >
-                                            <Download size={16} /> Save QR Code
-                                        </button>
                                         <Link 
-                                            href={`/orders/${orderId}`}
+                                            href={`/orders/${orderId}/timeline`}
                                             className="flex items-center justify-center gap-2 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white rounded-xl px-8 py-4 text-xs font-bold tracking-widest uppercase transition-all hover:bg-gray-50 dark:hover:bg-zinc-900"
                                         >
                                             <Eye size={16} /> Order Timeline
