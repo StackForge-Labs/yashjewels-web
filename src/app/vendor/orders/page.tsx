@@ -6,13 +6,13 @@ import { vendorService } from "@/services/vendor.service";
 import toast from "react-hot-toast";
 
 // ─── Types ───────────────────────────────────────────────
-type OrderStatus = "DEPOSIT_PAID" | "CONFIRMED" | "PREPARING" | "SHIPPED";
+type OrderStatus = "DEPOSIT_PAID" | "CONFIRMED" | "PREPARING" | "SHIP_PENDING";
 
 const columns: { status: OrderStatus; label: string; icon: typeof Clock; color: string; badgeColor: string }[] = [
     { status: "DEPOSIT_PAID", label: "Chờ Duyệt", icon: Clock, color: "border-amber-200 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10", badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" },
     { status: "CONFIRMED", label: "Đã Xác Nhận", icon: CheckCircle2, color: "border-blue-200 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-900/10", badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300" },
     { status: "PREPARING", label: "Đang Đóng Gói", icon: Package, color: "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800/30 dark:bg-indigo-900/10", badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300" },
-    { status: "SHIPPED", label: "Đã Giao Shipper", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
+    { status: "SHIP_PENDING", label: "Chờ Shipper Nhận", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
 ];
 
 function formatVnd(n: number) {
@@ -384,6 +384,9 @@ export default function VendorOrdersPage() {
                         const colOrders = orders.filter((o) => {
                             if (col.status === "CONFIRMED") {
                                 return ["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(o.status);
+                            }
+                            if (col.status === "SHIP_PENDING") {
+                                return ["SHIP_PENDING", "SHIPPED"].includes(o.status);
                             }
                             return o.status === col.status;
                         });

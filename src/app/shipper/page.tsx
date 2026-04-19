@@ -11,7 +11,8 @@ import toast from "react-hot-toast";
 
 // ─── Status Config ─────────────────────────────────────────────
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
-    SHIPPED: { label: "Chờ Giao", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
+    SHIP_PENDING: { label: "Sẵn Sàng Giao", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
+    SHIPPED: { label: "Đang Giao", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
     DELIVERED: { label: "Đã Giao", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
     COMPLETED: { label: "Hoàn Thành", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
     RETURN_REQUESTED: { label: "Có Cố Cáo", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300", dot: "bg-rose-500" },
@@ -22,7 +23,7 @@ function formatVnd(n: number) {
 }
 
 // ─── Trip Card ────────────────────────────────────────────────
-function TripCard({ order }: { order: ShipperOrderDto }) {
+function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (id: string) => void }) {
     const cfg = statusConfig[order.status] || { label: order.status, className: "bg-gray-50 text-gray-700", dot: "bg-gray-500" };
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.shippingAddress)}`;
 
@@ -90,6 +91,14 @@ function TripCard({ order }: { order: ShipperOrderDto }) {
                     >
                         <MapPin className="h-4 w-4" />
                     </a>
+                    {order.status === "SHIP_PENDING" && (
+                        <button
+                            onClick={() => onAccept(order.orderId)}
+                            className="flex h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-indigo-700 ml-1"
+                        >
+                            Nhận Đơn <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                    )}
                     {order.status === "SHIPPED" && (
                         <Link
                             href={`/shipper/scanner?orderId=${order.orderId}`}
@@ -132,8 +141,23 @@ function TripCard({ order }: { order: ShipperOrderDto }) {
 export default function ShipperHomePage() {
     const [orders, setOrders] = useState<ShipperOrderDto[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState<"ALL" | "SHIPPED" | "DELIVERED">("ALL");
+    const [activeFilter, setActiveFilter] = useState<"ALL" | "SHIP_PENDING" | "SHIPPED" | "DELIVERED">("ALL");
     const [search, setSearch] = useState("");
+
+    const handleAccept = async (orderId: string) => {
+        try {
+            const toastId = toast.loading("Đang nhận đơn...");
+            const res = await shipperService.acceptOrder(orderId);
+            if (res.success) {
+                toast.success("Nhận đơn thành công! Khách hàng đã được thông báo.", { id: toastId });
+                loadOrders();
+            } else {
+                toast.error(res.message || "Lỗi khi nhận", { id: toastId });
+            }
+        } catch (error) {
+             toast.error("Lỗi ngoại lệ.");
+        }
+    };
 
     const loadOrders = async () => {
         try {
@@ -154,7 +178,7 @@ export default function ShipperHomePage() {
         loadOrders();
     }, []);
 
-    const pendingCount = orders.filter((o) => o.status === "SHIPPED").length;
+    const pendingCount = orders.filter((o) => ["SHIP_PENDING", "SHIPPED"].includes(o.status)).length;
     const deliveredCount = orders.filter((o) => o.status === "DELIVERED" || o.status === "COMPLETED").length;
     const totalCount = orders.length;
 
@@ -213,7 +237,7 @@ export default function ShipperHomePage() {
 
             {/* Filter Chips */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {([["ALL", "Tất Cả"], ["SHIPPED", "Chờ Giao"], ["DELIVERED", "Đã Giao"]] as const).map(([val, label]) => (
+                {([["ALL", "Tất Cả"], ["SHIP_PENDING", "Chờ Nhận"], ["SHIPPED", "Đang Giao"], ["DELIVERED", "Đã Giao"]] as const).map(([val, label]) => (
                     <button
                         key={val}
                         onClick={() => setActiveFilter(val)}
@@ -236,7 +260,7 @@ export default function ShipperHomePage() {
                         Không có đơn hàng nào
                     </div>
                 ) : (
-                    filtered.map((order) => <TripCard key={order.orderId} order={order} />)
+                    filtered.map((order) => <TripCard key={order.orderId} order={order} onAccept={handleAccept} />)
                 )}
             </div>
         </div>
