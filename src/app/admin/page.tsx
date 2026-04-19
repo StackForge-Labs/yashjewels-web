@@ -106,8 +106,8 @@ export default function AdminDashboardPage() {
             {/* Core Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <StatCard title="Total Revenue" value={formatCurrency(s.totalRevenue)} icon={DollarSign} trend={{ value: s.revenueTrend, isPositive: s.revenueTrend > 0 }} />
-                <StatCard title="New Signups" value={s.newUsers} icon={Users} trend={{ value: s.usersTrend, isPositive: s.usersTrend > 0 }} />
-                <StatCard title="Orders Placed" value={s.totalOrders} icon={CreditCard} trend={{ value: s.ordersTrend, isPositive: s.ordersTrend > 0 }} />
+                <StatCard title="New Signups" value={s.newUsers.toLocaleString()} icon={Users} trend={{ value: s.usersTrend, isPositive: s.usersTrend > 0 }} />
+                <StatCard title="Orders Placed" value={s.totalOrders.toLocaleString()} icon={CreditCard} trend={{ value: s.ordersTrend, isPositive: s.ordersTrend > 0 }} />
                 <StatCard title="Avg. Order Value" value={formatCurrency(s.avgOrderValue)} icon={ArrowUpRight} trend={{ value: s.aovTrend, isPositive: s.aovTrend > 0 }} />
             </div>
 

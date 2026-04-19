@@ -13,8 +13,15 @@ export interface OrderTimelineDto {
 export interface OrderDetailDto {
     orderId: string;
     orderNumber: string;
+    customerName: string;
+    customerEmail?: string;
     status: string;
     totalAmount: number;
+    depositAmount: number;
+    depositPct: number;
+    remainingAmount: number;
+    insuranceFee: number;
+    isCod: boolean;
     createdAt: string;
     shippingName: string;
     shippingPhone: string;
