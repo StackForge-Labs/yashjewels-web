@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, CheckCircle2, Package, Truck, ChevronRight, Upload, AlertCircle, X, Loader2 } from "lucide-react";
+import { Clock, CheckCircle2, Package, Truck, ChevronRight, Upload, AlertCircle, X, Loader2, XCircle } from "lucide-react";
 import { vendorService } from "@/services/vendor.service";
 import toast from "react-hot-toast";
 
@@ -28,38 +28,115 @@ function getDaysLeft(deadline?: string): { text: string; urgent: boolean } {
     return { text: `Còn ${diff} ngày`, urgent: false };
 }
 
-// ─── Modal ───────────────────────────────────────────────
-function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: (photoUrl: string) => Promise<void> }) {
-    const [file, setFile] = useState<File | null>(null);
-    const [preview, setPreview] = useState<string | null>(null);
+// ─── Modals ───────────────────────────────────────────────
+
+function RejectModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: (reason: string) => Promise<void> }) {
+    const [reason, setReason] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason("");
+            setIsSubmitting(false);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Từ Chối Đơn Hàng</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Vui lòng nhập lý do từ chối. Hệ thống sẽ huỷ đơn và tự động hoàn trả thanh toán cho khách hàng (nếu có).
+                </p>
+
+                <textarea
+                    className="w-full rounded-xl border border-gray-300 bg-gray-50 p-4 text-sm focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-white mb-6 resize-none"
+                    rows={4}
+                    placeholder="Lý do từ chối..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                ></textarea>
+
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
+                        Hủy Bỏ
+                    </button>
+                    <button 
+                        onClick={async () => {
+                            if(!reason.trim()) {
+                                toast.error("Vui lòng nhập lý do.");
+                                return;
+                            }
+                            setIsSubmitting(true);
+                            await onConfirm(reason);
+                            setIsSubmitting(false);
+                        }}
+                        disabled={!reason.trim() || isSubmitting}
+                        className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm tracking-wide hover:bg-red-700 transition-colors disabled:opacity-50"
+                    >
+                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Xác Nhận Từ Chối"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: (photoUrls: string[]) => Promise<void> }) {
+    const [files, setFiles] = useState<File[]>([]);
+    const [previews, setPreviews] = useState<{url: string, type: string}[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
     // Reset when closed
     useEffect(() => {
         if (!isOpen) {
-            setFile(null);
-            setPreview(null);
+            setFiles([]);
+            setPreviews([]);
             setIsUploading(false);
         }
     }, [isOpen]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selected = e.target.files?.[0];
-        if (selected) {
-            setFile(selected);
-            setPreview(URL.createObjectURL(selected));
+        const selected = Array.from(e.target.files || []);
+        if (selected.length > 0) {
+            setFiles(prev => [...prev, ...selected]);
+            const newPreviews = selected.map(file => ({
+                url: URL.createObjectURL(file),
+                type: file.type.startsWith('video/') ? 'video' : 'image'
+            }));
+            setPreviews(prev => [...prev, ...newPreviews]);
         }
     };
 
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+        setPreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleUpload = async () => {
-        if (!file) return;
+        if (files.length === 0) return;
         setIsUploading(true);
         // Simulate upload to Cloudinary (progress bar effect)
         try {
             await new Promise((resolve) => setTimeout(resolve, 1500)); 
-            // In real app, you would upload to Cloudinary here and get secure_url
-            const fakeCloudinaryUrl = `https://res.cloudinary.com/demo/image/upload/v1/${file.name.replace(/[^a-zA-Z0-9]/g, "")}.jpg`;
-            await onConfirm(fakeCloudinaryUrl);
+            
+            // Generate distinct fake URLs based on file type
+            const uploadedUrls = files.map(file => {
+                if (file.type.startsWith('video/')) {
+                    return `https://res.cloudinary.com/demo/video/upload/v1/${file.name.replace(/[^a-zA-Z0-9]/g, "")}.mp4`;
+                }
+                return `https://res.cloudinary.com/demo/image/upload/v1/${file.name.replace(/[^a-zA-Z0-9]/g, "")}.jpg`;
+            });
+            
+            await onConfirm(uploadedUrls);
             onClose();
         } catch (err) {
             console.error(err);
@@ -72,7 +149,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+            <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Bằng Chứng Xuất Kho</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -81,39 +158,44 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                 </div>
                 
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    Mã QR sẽ được sinh ra và gửi cho khách hàng ngay sau khi bạn tải ảnh này báo hiệu rời kho thành công.
+                    Bắt buộc tải lên ảnh niêm phong sản phẩm và video đóng gói (nếu có). Có thể chọn nhiều tệp cùng lúc.
                 </p>
 
-                <div className="mb-6">
-                    {preview ? (
-                        <div className="relative rounded-xl overflow-hidden aspect-video border-2 border-indigo-100 dark:border-indigo-900/30">
-                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                            <button 
-                                onClick={() => { setFile(null); setPreview(null); }}
-                                className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-lg text-white backdrop-blur-sm transition-colors"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ) : (
+                <div className="mb-6 max-h-[300px] overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-4">
+                        {previews.map((preview, index) => (
+                            <div key={index} className="relative rounded-xl overflow-hidden aspect-video border-2 border-indigo-100 dark:border-indigo-900/30">
+                                {preview.type === 'video' ? (
+                                    <video src={preview.url} className="w-full h-full object-cover" controls/>
+                                ) : (
+                                    <img src={preview.url} alt="Preview" className="w-full h-full object-cover" />
+                                )}
+                                <button 
+                                    onClick={() => removeFile(index)}
+                                    className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-lg text-white backdrop-blur-sm transition-colors z-10"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                        
                         <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-xl cursor-pointer border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 transition-colors">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                                 <Upload className="w-8 h-8 mb-3 text-indigo-500" />
-                                <p className="mb-1 text-sm font-semibold text-gray-700 dark:text-gray-300">Nhấn để tải ảnh / Chụp ảnh</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Chụp rõ hộp hàng đã niêm phong seal và mã đơn hàng</p>
+                                <p className="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Thêm Tệp Đính Kèm</p>
                             </div>
-                            <input type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+                            <input type="file" multiple className="hidden" accept="image/*,video/*" capture="environment" onChange={handleFileChange} />
                         </label>
-                    )}
+                    </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 mt-4">
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
                         Hủy Bỏ
                     </button>
                     <button 
                         onClick={handleUpload}
-                        disabled={!file || isUploading}
+                        disabled={files.length === 0 || isUploading}
                         className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm tracking-wide hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Xác Nhận Xuất Kho"}
@@ -125,7 +207,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
 }
 
 // ─── Order Card ────────────────────────────────────────────────
-function OrderCard({ order, onConfirm, onPrepare }: { order: any; onConfirm: (id: string) => void; onPrepare: (id: string) => void }) {
+function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onConfirm: (id: string) => void; onPrepare: (id: string) => void; onReject: (id: string) => void }) {
     // Determine deadline from remainingDueAt if exists (awaiting full payment Phase 3)
     let deadlineStr = "";
     if (order.status === "AWAITING_FULL_PAYMENT" && order.remainingDueAt) {
@@ -161,13 +243,22 @@ function OrderCard({ order, onConfirm, onPrepare }: { order: any; onConfirm: (id
             </div>
 
             {order.status === "DEPOSIT_PAID" && (
-                <button
-                    onClick={() => onConfirm(order.orderId)}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-amber-700 active:scale-95"
-                >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Xác Nhận Đơn
-                </button>
+                <div className="flex w-full gap-2 mt-1">
+                    <button
+                        onClick={() => onReject(order.orderId)}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 px-2 py-2 font-plus-jakarta text-xs font-bold transition-all hover:bg-red-100 active:scale-95 dark:bg-red-500/10 dark:border-red-900/50 dark:text-red-400"
+                    >
+                        <XCircle className="h-3.5 w-3.5" />
+                        Từ Chối
+                    </button>
+                    <button
+                        onClick={() => onConfirm(order.orderId)}
+                        className="flex-[2] flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-amber-700 active:scale-95"
+                    >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Xác Nhận
+                    </button>
+                </div>
             )}
             {["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(order.status) && (
                 <div className="flex w-full items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-blue-700 dark:border-blue-800/30 dark:bg-blue-500/10 dark:text-blue-300">
@@ -194,6 +285,7 @@ export default function VendorOrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
 
     const loadOrders = async () => {
         try {
@@ -233,10 +325,31 @@ export default function VendorOrdersPage() {
         setSelectedOrderId(id);
     };
 
-    const handleDispatchConfirmed = async (photoUrl: string) => {
+    const handleRejectClick = (id: string) => {
+        setRejectOrderId(id);
+    };
+
+    const handleRejectSubmit = async (reason: string) => {
+        if (!rejectOrderId) return;
+        try {
+            const toastId = toast.loading("Đang từ chối đơn...");
+            const res = await vendorService.makeDecision(rejectOrderId, false, reason);
+            if (res.success) {
+                toast.success("Đã từ chối đơn hàng!", { id: toastId });
+                setRejectOrderId(null);
+                loadOrders(); // Refresh
+            } else {
+                toast.error(res.message || "Lỗi", { id: toastId });
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Lỗi ngoại lệ");
+        }
+    };
+
+    const handleDispatchConfirmed = async (photoUrls: string[]) => {
         if (!selectedOrderId) return;
         try {
-            const res = await vendorService.dispatchOrder(selectedOrderId, photoUrl);
+            const res = await vendorService.dispatchOrder(selectedOrderId, photoUrls);
             if (res.success) {
                 toast.success("Xuất kho thành công! Đã gửi QR cho khách.");
                 loadOrders();
@@ -303,6 +416,7 @@ export default function VendorOrdersPage() {
                                                 order={order}
                                                 onConfirm={handleConfirm}
                                                 onPrepare={handlePrepareClick}
+                                                onReject={handleRejectClick}
                                             />
                                         ))
                                     )}
@@ -334,6 +448,12 @@ export default function VendorOrdersPage() {
                 isOpen={!!selectedOrderId}
                 onClose={() => setSelectedOrderId(null)}
                 onConfirm={handleDispatchConfirmed}
+            />
+
+            <RejectModal
+                isOpen={!!rejectOrderId}
+                onClose={() => setRejectOrderId(null)}
+                onConfirm={handleRejectSubmit}
             />
         </div>
     );

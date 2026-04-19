@@ -16,9 +16,9 @@ export const vendorService = {
         return res.data;
     },
     
-    dispatchOrder: async (orderId: string, photoUrl: string) => {
+    dispatchOrder: async (orderId: string, photoUrls: string[]) => {
         const res = await apiClient.put<ApiResponse<boolean>>(`/vendor/orders/${orderId}/dispatch`, {
-            dispatchPhotoUrl: photoUrl
+            evidenceUrls: photoUrls
         });
         return res.data;
     }
