@@ -110,6 +110,7 @@ export default function OrderTimelinePage() {
     const isWithinReturnWindow = daysSinceDelivery <= 7;
     const isReturnable = order.status === "DELIVERED" && isWithinReturnWindow;
     const isReviewable = order.status === "COMPLETED";
+    const isAlreadyReviewed = !!(order as any).review;
     const hasReturnRequest = !!order.returnRequestId;
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,8 +130,9 @@ export default function OrderTimelinePage() {
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 50 * 1024 * 1024) {
-                toast.error("Video size must be less than 50MB");
+            // Allow videos up to 5GB
+            if (file.size > 5 * 1024 * 1024 * 1024) {
+                toast.error("Video size must be less than 5GB");
                 return;
             }
             setUnboxingVideo(file);
@@ -277,15 +279,41 @@ export default function OrderTimelinePage() {
                                 <h3 className="mb-8 font-serif text-xl border-b border-gray-100 pb-4 dark:border-white/5 uppercase tracking-widest">Tracking Logistics</h3>
                                 <div className="space-y-10 pl-8 relative">
                                     <div className="absolute top-2 bottom-2 left-[15px] w-[2px] bg-gray-100 dark:bg-white/10" />
-                                    {order.timeline?.sort((a,b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).map((item, idx) => (
+                                    {order.timeline?.sort((a,b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).map((item, idx) => {
+                                        // Parse evidenceUrl: could be JSON array ["url1","url2"] or legacy single URL
+                                        let evidenceList: string[] = [];
+                                        if ((item as any).evidenceUrl) {
+                                            try {
+                                                const parsed = JSON.parse((item as any).evidenceUrl);
+                                                evidenceList = Array.isArray(parsed) ? parsed : [(item as any).evidenceUrl];
+                                            } catch {
+                                                evidenceList = [(item as any).evidenceUrl];
+                                            }
+                                        }
+
+                                        return (
                                         <div key={item.id} className="relative ml-2">
                                             <div className={`absolute -left-[35px] top-1 h-[22px] w-[22px] rounded-full border-4 border-white dark:border-[#0C0A09] ${idx === 0 ? "bg-gold" : "bg-gray-200"}`} />
                                             <h4 className={`text-sm font-bold uppercase ${idx === 0 ? 'text-gold' : ''}`}>{item.status.replace(/_/g, " ")}</h4>
                                             <ActorBadge type={item.actorType} />
                                             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{item.note}</p>
                                             <p className="mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest">{format(new Date(item.changedAt), "dd MMM yyyy, HH:mm")}</p>
+                                            
+                                            {/* Shipment Evidence Gallery */}
+                                            {evidenceList.length > 0 && (
+                                                <div className="mt-4 grid grid-cols-2 gap-3">
+                                                    {evidenceList.map((url, i) => (
+                                                        url.match(/\.(mp4|mov|webm|avi)/i) ? (
+                                                            <video key={i} src={url} controls className="w-full rounded-xl border border-gray-100 dark:border-white/10 aspect-video object-cover" />
+                                                        ) : (
+                                                            <img key={i} src={url} alt={`Dispatch Evidence ${i + 1}`} className="w-full rounded-xl border border-gray-100 dark:border-white/10 aspect-video object-cover" />
+                                                        )
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
