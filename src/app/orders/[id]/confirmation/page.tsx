@@ -36,8 +36,8 @@ export default function OrderConfirmationPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <Link href="/profile" className="bg-gold w-full rounded-xl py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 shadow-lg shadow-gold/20">
-                View My Orders
+              <Link href={`/orders/${id}/timeline`} className="bg-gold w-full rounded-xl py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 shadow-lg shadow-gold/20">
+                View Order Timeline
               </Link>
               <Link href="/collections" className="w-full rounded-xl border border-gray-200 py-4 text-xs font-bold tracking-[0.2em] text-gray-500 uppercase transition-all hover:bg-gray-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5">
                 Continue Shopping

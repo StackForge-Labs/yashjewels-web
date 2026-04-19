@@ -5,7 +5,8 @@ import { PageHero } from "../_components/PageHero";
 import {
     MapPin, CreditCard, Shield, ChevronRight, Check,
     Truck, ShieldCheck, ArrowRight, Package, Gift,
-    AlertTriangle, Lock, X
+    AlertTriangle, Lock, X,
+    Phone
 } from "lucide-react";
 import Link from "next/link";
 import { useSelector } from "react-redux";
@@ -14,6 +15,9 @@ import { useCart } from "@/hooks/useCart";
 import axiosInstance from "@/lib/api-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useUpdateProfile } from "@/hooks/useUser";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/userSlice";
 import AddressSection from "./_components/AddressSection";
 import { UserAddressDto } from "@/types/user.types";
 import { BiometricCapture } from "../auth/kyc/_components/BiometricCapture";
@@ -22,8 +26,10 @@ const STEPS = ["Address", "Insurance", "Payment", "Review"];
 
 export default function CheckoutPage() {
     const router = useRouter();
+    const dispatch = useDispatch();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
     const { cart, fetchCart } = useCart();
+    const updateProfile = useUpdateProfile();
 
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
@@ -42,6 +48,11 @@ export default function CheckoutPage() {
     const [idempotencyKey] = useState(() => crypto.randomUUID());
     const [isFaceScanning, setIsFaceScanning] = useState(false);
     const [isBiometricVerified, setIsBiometricVerified] = useState(false);
+
+    // Phone missing check states
+    const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+    const [missingPhone, setMissingPhone] = useState("");
+    const [isSavingPhone, setIsSavingPhone] = useState(false);
 
     useEffect(() => {
         fetchCart();
@@ -167,6 +178,11 @@ export default function CheckoutPage() {
     const handleNextStep = () => {
         if (step === 0 && !selectedAddress) {
             toast.error("Please select a shipping address to continue.");
+            return;
+        }
+
+        if (step === 0 && (!user?.phone || user.phone.trim() === "")) {
+            setIsPhoneModalOpen(true);
             return;
         }
 
@@ -316,29 +332,29 @@ export default function CheckoutPage() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-4">
                                         {[
-                                            { 
-                                                id: "none", 
-                                                title: "Standard", 
-                                                desc: "Standard delivery risk", 
-                                                price: "Free", 
+                                            {
+                                                id: "none",
+                                                title: "Standard",
+                                                desc: "Standard delivery risk",
+                                                price: "Free",
                                                 icon: Package,
                                                 features: ["Standard Transit Care", "Return within 2 days", "No loss protection"],
                                                 isPopular: false
                                             },
-                                            { 
-                                                id: "shipping", 
-                                                title: "Transit Shield", 
-                                                desc: "Covers damage or loss during transit", 
-                                                price: `+${formatCurrency(getInsuranceFee("shipping"))}`, 
+                                            {
+                                                id: "shipping",
+                                                title: "Transit Shield",
+                                                desc: "Covers damage or loss during transit",
+                                                price: `+${formatCurrency(getInsuranceFee("shipping"))}`,
                                                 icon: Truck,
                                                 features: ["Full Loss Recovery", "Return within 7 days", "Transit Damage Cover"],
                                                 isPopular: false
                                             },
-                                            { 
-                                                id: "full", 
-                                                title: "Ultra Care", 
-                                                desc: "Shipping + 30-day extended protection", 
-                                                price: `+${formatCurrency(getInsuranceFee("full"))}`, 
+                                            {
+                                                id: "full",
+                                                title: "Ultra Care",
+                                                desc: "Shipping + 30-day extended protection",
+                                                price: `+${formatCurrency(getInsuranceFee("full"))}`,
                                                 icon: ShieldCheck,
                                                 features: ["Full Loss Recovery", "Return within 30 days", "Maintenance Support"],
                                                 isPopular: true
@@ -365,7 +381,7 @@ export default function CheckoutPage() {
                                                         {insurance === opt.id && <div className="h-2 w-2 rounded-full bg-gold" />}
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="w-full mt-2">
                                                     <p className="text-base font-bold text-gray-900 dark:text-white capitalize">{opt.title}</p>
                                                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 h-10">{opt.desc}</p>
@@ -662,6 +678,67 @@ export default function CheckoutPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Missing Phone Modal Overlay */}
+            {isPhoneModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+                    <div className="relative w-full max-w-md rounded-3xl border border-gray-100 bg-white p-8 shadow-2xl dark:border-white/10 dark:bg-[#111]">
+                        <button
+                            onClick={() => setIsPhoneModalOpen(false)}
+                            className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold/10 text-gold mx-auto shadow-inner">
+                            <Phone size={32} />
+                        </div>
+                        <h2 className="mb-2 text-center font-serif text-2xl text-gray-900 dark:text-white">Phone Required</h2>
+                        <p className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Please provide your phone number so our vendor and delivery team can contact you about your order.
+                        </p>
+
+                        <input
+                            type="tel"
+                            placeholder="e.g. 0901234567"
+                            className="mb-6 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-gold focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            value={missingPhone}
+                            onChange={(e) => setMissingPhone(e.target.value)}
+                        />
+
+                        <button
+                            onClick={async () => {
+                                if (!missingPhone || missingPhone.trim().length < 9) {
+                                    toast.error("Please enter a valid phone number.");
+                                    return;
+                                }
+                                setIsSavingPhone(true);
+                                try {
+                                    await updateProfile.mutateAsync({
+                                        fullName: user?.fullName || "",
+                                        phone: missingPhone,
+                                        dateOfBirth: user?.dateOfBirth || undefined
+                                    });
+                                    if (user) {
+                                        dispatch(setUser({ ...user, phone: missingPhone }));
+                                    }
+                                    toast.success("Phone number saved successfully.");
+                                    setIsPhoneModalOpen(false);
+                                    setStep(1);
+                                } catch (error) {
+                                    toast.error("Failed to save phone number. Please try again.");
+                                } finally {
+                                    setIsSavingPhone(false);
+                                }
+                            }}
+                            disabled={isSavingPhone}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 shadow-lg shadow-gold/20 disabled:opacity-50"
+                        >
+                            {isSavingPhone ? "Saving..." : "Save and Continue"}
+                        </button>
                     </div>
                 </div>
             )}
