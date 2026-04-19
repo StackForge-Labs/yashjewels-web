@@ -23,7 +23,7 @@ function formatVnd(n: number) {
 }
 
 // ─── Trip Card ────────────────────────────────────────────────
-function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (id: string) => void }) {
+function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (order: ShipperOrderDto) => void }) {
     const cfg = statusConfig[order.status] || { label: order.status, className: "bg-gray-50 text-gray-700", dot: "bg-gray-500" };
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.shippingAddress)}`;
 
@@ -93,7 +93,7 @@ function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (id: 
                     </a>
                     {order.status === "SHIP_PENDING" && (
                         <button
-                            onClick={() => onAccept(order.orderId)}
+                            onClick={() => onAccept(order)}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-indigo-700 ml-1"
                         >
                             Nhận Đơn <ChevronRight className="h-3.5 w-3.5" />
@@ -137,22 +137,66 @@ function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (id: 
     );
 }
 
+// ─── Modals ──────────────────────────────────────────────────
+function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber }: { isOpen: boolean; onClose: () => void; onConfirm: () => Promise<void>; orderNumber: string }) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative w-full max-w-sm rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-zinc-900 border border-gray-100 dark:border-white/5 animate-in fade-in zoom-in duration-300">
+                <div className="flex flex-col items-center text-center">
+                    <div className="mb-6 rounded-full bg-indigo-500/10 p-4 text-indigo-600 dark:bg-indigo-500/20">
+                        <Truck size={32} />
+                    </div>
+                    <h3 className="font-serif text-2xl text-gray-900 dark:text-white mb-2">Nhận Đơn Hàng?</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                        Bạn có chắc chắn muốn nhận nhiệm vụ giao đơn hàng <span className="font-bold text-indigo-600">#{orderNumber}</span> không?
+                    </p>
+
+                    <div className="flex w-full gap-3">
+                        <button 
+                            onClick={onClose}
+                            className="flex-1 rounded-2xl border border-gray-200 py-4 text-xs font-bold uppercase tracking-widest text-gray-600 transition-all hover:bg-gray-50 dark:border-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-800"
+                        >
+                            Hủy
+                        </button>
+                        <button 
+                            onClick={async () => {
+                                setIsSubmitting(true);
+                                await onConfirm();
+                                setIsSubmitting(false);
+                            }}
+                            disabled={isSubmitting}
+                            className="flex-[1.5] rounded-2xl bg-indigo-600 py-4 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                        >
+                            {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Xác Nhận Nhận"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Page ──────────────────────────────────────────────────
 export default function ShipperHomePage() {
     const [orders, setOrders] = useState<ShipperOrderDto[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<"ALL" | "SHIP_PENDING" | "SHIPPED" | "DELIVERED">("ALL");
     const [search, setSearch] = useState("");
+    const [acceptModalOrder, setAcceptModalOrder] = useState<ShipperOrderDto | null>(null);
 
     const handleAccept = async (orderId: string) => {
         try {
-            const toastId = toast.loading("Đang nhận đơn...");
             const res = await shipperService.acceptOrder(orderId);
             if (res.success) {
-                toast.success("Nhận đơn thành công! Khách hàng đã được thông báo.", { id: toastId });
+                toast.success("Nhận đơn thành công!");
+                setAcceptModalOrder(null);
                 loadOrders();
             } else {
-                toast.error(res.message || "Lỗi khi nhận", { id: toastId });
+                toast.error(res.message || "Lỗi khi nhận");
             }
         } catch (error) {
              toast.error("Lỗi ngoại lệ.");
@@ -260,9 +304,17 @@ export default function ShipperHomePage() {
                         Không có đơn hàng nào
                     </div>
                 ) : (
-                    filtered.map((order) => <TripCard key={order.orderId} order={order} onAccept={handleAccept} />)
+                    filtered.map((order) => <TripCard key={order.orderId} order={order} onAccept={(o) => setAcceptModalOrder(o)} />)
                 )}
             </div>
+
+            {/* Modal */}
+            <ConfirmAcceptModal 
+                isOpen={!!acceptModalOrder} 
+                onClose={() => setAcceptModalOrder(null)} 
+                onConfirm={() => handleAccept(acceptModalOrder!.orderId)}
+                orderNumber={acceptModalOrder?.orderNumber || ""}
+            />
         </div>
     );
 }
