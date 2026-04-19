@@ -1,42 +1,35 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Camera, CheckCircle2, Package, MapPin, User, ChevronLeft, RotateCcw, Upload } from "lucide-react";
+import { Camera, CheckCircle2, Package, MapPin, User, ChevronLeft, RotateCcw, Upload, Loader2, AlertCircle } from "lucide-react";
+import { shipperService, ShipperOrderDto } from "@/services/shipper.service";
+import toast from "react-hot-toast";
 
-type PodState = "review" | "capture" | "confirm" | "done";
-
-// Mock order data — real impl would fetch from API
-const mockOrderData = {
-    orderId: "YJ-20250419-001",
-    customer: "Nguyễn Văn An",
-    address: "45 Nguyễn Huệ, P. Bến Nghé, Q.1, TP.HCM",
-    product: "Nhẫn Kim Cương D-VVS1 18K",
-    amount: 45000000,
-};
+type PodState = "loading" | "error" | "review" | "capture" | "confirm" | "done";
 
 function formatVnd(n: number) {
     return new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 }
 
 // ─── Swipe Slider ─────────────────────────────────────────
-function SwipeConfirmSlider({ onConfirm }: { onConfirm: () => void }) {
+function SwipeConfirmSlider({ onConfirm, isSubmitting }: { onConfirm: () => void; isSubmitting: boolean }) {
     const [position, setPosition] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const sliderRef = useRef<HTMLDivElement>(null);
     const confirmed = position > 250;
 
-    const handleMouseDown = () => setIsDragging(true);
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging) return;
+        if (!isDragging || isSubmitting) return;
         const rect = sliderRef.current?.getBoundingClientRect();
         if (!rect) return;
         const newPos = Math.min(Math.max(0, e.clientX - rect.left - 28), rect.width - 56);
         setPosition(newPos);
     };
+
     const handleMouseUp = () => {
         setIsDragging(false);
-        if (confirmed) {
+        if (confirmed && !isSubmitting) {
             onConfirm();
         } else {
             setPosition(0);
@@ -44,14 +37,16 @@ function SwipeConfirmSlider({ onConfirm }: { onConfirm: () => void }) {
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
+        if (isSubmitting) return;
         const rect = sliderRef.current?.getBoundingClientRect();
         if (!rect) return;
         const touch = e.touches[0];
         const newPos = Math.min(Math.max(0, touch.clientX - rect.left - 28), rect.width - 56);
         setPosition(newPos);
     };
+
     const handleTouchEnd = () => {
-        if (confirmed) {
+        if (confirmed && !isSubmitting) {
             onConfirm();
         } else {
             setPosition(0);
@@ -68,25 +63,19 @@ function SwipeConfirmSlider({ onConfirm }: { onConfirm: () => void }) {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Track fill */}
-            <div
-                className="absolute left-1 h-12 rounded-xl bg-teal-600/10 transition-none"
-                style={{ width: position + 56 }}
-            />
-            {/* Label */}
+            <div className="absolute left-1 h-12 rounded-xl bg-teal-600/10 transition-none" style={{ width: position + 56 }} />
             <div className="absolute inset-0 flex items-center justify-center">
                 <span className="font-plus-jakarta text-sm font-bold tracking-wide text-teal-700/60 dark:text-teal-400/50">
-                    {confirmed ? "Thả để xác nhận →" : "← Vuốt để Xác Nhận Giao Hàng"}
+                    {isSubmitting ? "Đang xử lý..." : confirmed ? "Thả để xác nhận →" : "← Vuốt để Xác Nhận Giao Hàng"}
                 </span>
             </div>
-            {/* Handle */}
             <div
-                className="relative z-10 flex h-12 w-12 cursor-grab items-center justify-center rounded-xl bg-teal-600 shadow-lg transition-none active:cursor-grabbing"
+                className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-600 shadow-lg ${isSubmitting ? "cursor-not-allowed opacity-80" : "cursor-grab active:cursor-grabbing"} transition-none`}
                 style={{ transform: `translateX(${position}px)` }}
-                onMouseDown={handleMouseDown}
-                onTouchStart={() => setIsDragging(true)}
+                onMouseDown={() => !isSubmitting && setIsDragging(true)}
+                onTouchStart={() => !isSubmitting && setIsDragging(true)}
             >
-                <ChevronLeft className="h-5 w-5 rotate-180 text-white" />
+                {isSubmitting ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <ChevronLeft className="h-5 w-5 rotate-180 text-white" />}
             </div>
         </div>
     );
@@ -96,11 +85,42 @@ function SwipeConfirmSlider({ onConfirm }: { onConfirm: () => void }) {
 export default function ShipperPodPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const orderId = searchParams.get("orderId") ?? mockOrderData.orderId;
+    const orderId = searchParams.get("orderId");
+    const qrToken = searchParams.get("qrToken");
 
-    const [podState, setPodState] = useState<PodState>("review");
+    const [podState, setPodState] = useState<PodState>("loading");
+    const [orderInfo, setOrderInfo] = useState<ShipperOrderDto | null>(null);
     const [photo, setPhoto] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!orderId || !qrToken) {
+            setPodState("error");
+            return;
+        }
+
+        const fetchOrderDetails = async () => {
+            try {
+                const res = await shipperService.getAssignedDeliveries();
+                if (res.success && res.data) {
+                    const matched = res.data.find(o => o.orderId === orderId);
+                    if (matched) {
+                        setOrderInfo(matched);
+                        setPodState("review");
+                    } else {
+                        setPodState("error");
+                    }
+                } else {
+                    setPodState("error");
+                }
+            } catch (error) {
+                console.error(error);
+                setPodState("error");
+            }
+        };
+        fetchOrderDetails();
+    }, [orderId, qrToken]);
 
     const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -110,10 +130,53 @@ export default function ShipperPodPage() {
         setPodState("confirm");
     };
 
-    const handleConfirmDelivery = () => {
-        // TODO: call API to update order status to DELIVERED with POD photo
-        setPodState("done");
+    const handleConfirmDelivery = async () => {
+        if (!orderId || !qrToken || !photo) return;
+        setIsSubmitting(true);
+        try {
+            // Mock upload delays and photo URL generation
+            await new Promise(r => setTimeout(r, 1000));
+            const dummyCloudinaryUrl = `https://res.cloudinary.com/demo/image/upload/v1/pod_${orderId.substring(0,8)}.jpg`;
+
+            const res = await shipperService.confirmDeliveryWithQr(orderId, qrToken, dummyCloudinaryUrl);
+            if (res.success) {
+                toast.success("Xác nhận thành công!");
+                setPodState("done");
+            } else {
+                toast.error(res.message || "Xác thực QR thất bại hoặc hết hạn.");
+                // Reset slider but stay on confirm page to try again
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Lỗi API");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
+    if (podState === "loading") {
+        return (
+            <div className="flex min-h-[calc(100vh-3.5rem-6rem)] items-center justify-center bg-gray-50 dark:bg-[#0a0a0a]">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+            </div>
+        );
+    }
+
+    if (podState === "error" || !orderInfo) {
+        return (
+            <div className="flex min-h-[calc(100vh-3.5rem-6rem)] flex-col items-center justify-center gap-4 bg-gray-50 p-8 text-center dark:bg-[#0a0a0a]">
+                <AlertCircle className="h-12 w-12 text-rose-500" />
+                <div>
+                    <h2 className="font-plus-jakarta text-xl font-bold text-gray-900 dark:text-white">Dữ Liệu Không Hợp Lệ</h2>
+                    <p className="text-sm text-gray-500 mt-1">Không tìm thấy mã đơn hàng hoặc phiên đã hết hạn.</p>
+                </div>
+                <button onClick={() => router.push("/shipper")} className="mt-4 rounded-xl bg-teal-600 px-6 py-3 font-bold text-white hover:bg-teal-700">
+                    Về Trang Chủ
+                </button>
+            </div>
+        );
+    }
+
+    const displayProduct = orderInfo.items && orderInfo.items.length > 0 ? orderInfo.items[0].productName : "Sản phẩm trang sức";
 
     if (podState === "done") {
         return (
@@ -123,18 +186,18 @@ export default function ShipperPodPage() {
                 </div>
                 <div>
                     <h2 className="font-plus-jakarta text-2xl font-black text-gray-900 dark:text-white">ĐÃ GIAO THÀNH CÔNG!</h2>
-                    <p className="mt-2 font-plus-jakarta text-sm text-gray-500">Đơn hàng {orderId} đã được xác nhận giao đến tay khách hàng</p>
+                    <p className="mt-2 font-plus-jakarta text-sm text-gray-500">Đơn hàng {orderInfo.orderNumber} đã được xác nhận</p>
                 </div>
                 <div className="flex flex-col gap-3 w-full">
                     <button
                         onClick={() => router.push("/shipper")}
-                        className="w-full rounded-2xl bg-teal-600 py-4 font-plus-jakarta text-sm font-black uppercase tracking-widest text-white"
+                        className="w-full rounded-2xl bg-teal-600 py-4 font-plus-jakarta text-sm font-black uppercase tracking-widest text-white hover:bg-teal-700 active:scale-95"
                     >
                         Về Danh Sách Đơn
                     </button>
                     <button
                         onClick={() => router.push("/shipper/scanner")}
-                        className="w-full rounded-2xl border border-gray-200 py-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:border-gray-700"
+                        className="w-full rounded-2xl border border-gray-200 py-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:border-gray-700 dark:text-gray-300 active:scale-95 hover:bg-gray-50 dark:hover:bg-[#111]"
                     >
                         Giao Đơn Tiếp Theo
                     </button>
@@ -148,27 +211,34 @@ export default function ShipperPodPage() {
             {/* Order Info Banner */}
             <div className="bg-white px-4 py-5 shadow-sm dark:bg-[#111]">
                 <div className="flex items-center gap-2 mb-4">
-                    <button onClick={() => router.back()} className="text-gray-400">
+                    <button onClick={() => !isSubmitting && router.back()} className="text-gray-400 disabled:opacity-50" disabled={isSubmitting}>
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <h1 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white">Xác Nhận Giao Hàng</h1>
                 </div>
 
                 <div className="rounded-xl bg-teal-50 p-4 dark:bg-teal-900/10">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Package className="h-4 w-4 text-teal-600" />
-                        <span className="font-mono text-xs font-bold text-teal-600">{orderId}</span>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-teal-600" />
+                            <span className="font-mono text-xs font-bold text-teal-600">{orderInfo.orderNumber}</span>
+                        </div>
+                        {orderInfo.isCod && (
+                            <span className="rounded-xl bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 flex items-center justify-center">
+                                Thu Hộ: {formatVnd(orderInfo.remainingAmount || 0)}
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-start gap-2 mb-2">
                         <User className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
                         <div>
-                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{mockOrderData.customer}</p>
-                            <p className="font-plus-jakarta text-xs text-gray-500">{mockOrderData.product}</p>
+                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{orderInfo.shippingName}</p>
+                            <p className="font-plus-jakarta text-xs text-gray-500">{displayProduct}</p>
                         </div>
                     </div>
                     <div className="flex items-start gap-2">
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                        <p className="font-plus-jakarta text-xs text-gray-600 dark:text-gray-300">{mockOrderData.address}</p>
+                        <p className="font-plus-jakarta text-xs text-gray-600 dark:text-gray-300">{orderInfo.shippingAddress}</p>
                     </div>
                 </div>
             </div>
@@ -179,8 +249,8 @@ export default function ShipperPodPage() {
                 <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800/30 dark:bg-emerald-900/10">
                     <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
                     <div>
-                        <p className="font-plus-jakarta text-sm font-bold text-emerald-800 dark:text-emerald-400">Danh Tính Đã Xác Thực</p>
-                        <p className="font-plus-jakarta text-xs text-emerald-600/80">QR FaceMatch thành công — {mockOrderData.customer}</p>
+                        <p className="font-plus-jakarta text-sm font-bold text-emerald-800 dark:text-emerald-400">QR Khách Hàng Hợp Lệ</p>
+                        <p className="font-plus-jakarta text-xs text-emerald-600/80">Khớp mã bảo mật OTP token — {orderInfo.shippingName}</p>
                     </div>
                 </div>
 
@@ -196,12 +266,14 @@ export default function ShipperPodPage() {
                     {photo ? (
                         <div className="relative">
                             <img src={photo} alt="POD photo" className="w-full rounded-xl object-cover h-48" />
-                            <button
-                                onClick={() => { setPhoto(null); setPodState("review"); }}
-                                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white"
-                            >
-                                <RotateCcw className="h-4 w-4" />
-                            </button>
+                            {!isSubmitting && (
+                                <button
+                                    onClick={() => { setPhoto(null); setPodState("review"); }}
+                                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                    <RotateCcw className="h-4 w-4" />
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div>
@@ -215,11 +287,11 @@ export default function ShipperPodPage() {
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-teal-200 bg-teal-50/50 py-8 transition-all active:scale-95 dark:border-teal-800/30 dark:bg-teal-900/5"
+                                className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-teal-200 bg-teal-50/50 py-8 transition-all active:scale-95 hover:bg-teal-100/50 dark:border-teal-800/30 dark:bg-teal-900/5"
                             >
                                 <Camera className="h-8 w-8 text-teal-400" />
-                                <span className="font-plus-jakarta text-sm font-bold text-teal-700 dark:text-teal-400">Nhấn để Chụp Ảnh</span>
-                                <span className="font-plus-jakarta text-xs text-teal-500/70">Chụp ảnh sản phẩm đã mở hộp cùng khách</span>
+                                <span className="font-plus-jakarta text-sm font-bold text-teal-700 dark:text-teal-400">Nhấn để Chụp Ảnh Hàng</span>
+                                <span className="font-plus-jakarta text-xs text-teal-500/70">Mở seal, khách cầm hàng trên tay</span>
                             </button>
                         </div>
                     )}
@@ -232,20 +304,9 @@ export default function ShipperPodPage() {
                             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 font-plus-jakarta text-xs font-black text-white">3</div>
                             <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Xác Nhận Giao Hàng</p>
                         </div>
-                        <SwipeConfirmSlider onConfirm={handleConfirmDelivery} />
+                        <SwipeConfirmSlider onConfirm={handleConfirmDelivery} isSubmitting={isSubmitting} />
                     </div>
                 )}
-
-                {/* Upload another proof option */}
-                <div className="rounded-2xl border border-dashed border-gray-200 p-4 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                        <Upload className="h-5 w-5 text-gray-300" />
-                        <div>
-                            <p className="font-plus-jakarta text-sm font-bold text-gray-400">Video Unboxing (Tuỳ Chọn)</p>
-                            <p className="font-plus-jakarta text-xs text-gray-300">Khách có thể upload video xem hàng sau khi nhận</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

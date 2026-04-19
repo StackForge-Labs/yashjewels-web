@@ -17,13 +17,14 @@ interface ReturnRequest {
     status: ReturnStatus;
     submittedAt: string;
     amount: number;
+    evidenceUrls?: string[];
 }
 
 const mockReturns: ReturnRequest[] = [
-    { id: "RET-001", orderId: "YJ-003", customer: "Sophia Nguyen", product: "Tahitian Pearl Earrings", reason: "Product does not match description, color varies significantly from listing.", status: "PENDING_REVIEW", submittedAt: "2025-04-18", amount: 8200000, submittedGirdleId: "NGP-BNTT-003", originalGirdleId: "NGP-BNTT-003" },
+    { id: "RET-001", orderId: "YJ-003", customer: "Sophia Nguyen", product: "Tahitian Pearl Earrings", reason: "Product does not match description, color varies significantly from listing.", status: "PENDING_REVIEW", submittedAt: "2025-04-18", amount: 8200000, submittedGirdleId: "NGP-BNTT-003", originalGirdleId: "NGP-BNTT-003", evidenceUrls: ["https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"] },
     { id: "RET-002", orderId: "YJ-001", customer: "Alexander Tran", product: "D-VVS1 Diamond Solitaire", reason: "Incorrect sizing, exchange requested from Size 15 to 16.", status: "PENDING_REVIEW", submittedAt: "2025-04-17", amount: 45000000, submittedGirdleId: "GIA-2456789012", originalGirdleId: "GIA-2456789012" },
     { id: "RET-003", orderId: "YJ-000", customer: "Isabella Hoang", product: "18K Royal Ruby Bracelet", reason: "Gemstone fractured after 48 hours of use.", status: "APPROVED", submittedAt: "2025-04-15", amount: 23000000 },
-    { id: "RET-004", orderId: "YJ-000", customer: "Marcus Crawford", product: "18K Full Diamond Bangle", reason: "Requesting exchange for different product category.", status: "REJECTED", submittedAt: "2025-04-14", amount: 89000000 },
+    { id: "RET-004", orderId: "YJ-000", customer: "Marcus Crawford", product: "18K Full Diamond Bangle", reason: "Requesting exchange for different product category.", status: "REJECTED", submittedAt: "2025-04-14", amount: 89000000, evidenceUrls: ["https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"] },
 ];
 
 const statusCfg: Record<ReturnStatus, { label: string; className: string }> = {
@@ -59,6 +60,23 @@ function ReviewModal({ req, onClose, onDecide }: { req: ReturnRequest; onClose: 
                         <p className="font-plus-jakarta text-xs font-bold uppercase tracking-wider text-gray-400">Return Rationale</p>
                         <p className="mt-2 font-plus-jakarta text-sm text-gray-700 dark:text-gray-300">{req.reason}</p>
                     </div>
+
+                    {req.evidenceUrls && req.evidenceUrls.length > 0 && (
+                        <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800 bg-gray-50 dark:bg-black/50">
+                            <p className="font-plus-jakarta text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Unboxing Video / Media Evidence</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {req.evidenceUrls.map((url, idx) => (
+                                    <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black">
+                                        {url.endsWith('.mp4') || url.endsWith('.webm') ? (
+                                            <video src={url} controls className="w-full h-full object-contain" />
+                                        ) : (
+                                            <img src={url} alt="Evidence" className="w-full h-full object-cover" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {hasGirdle && (
                         <div className={`rounded-xl border p-5 ${match ? "border-emerald-200 bg-emerald-50 dark:border-emerald-800/30 dark:bg-emerald-900/10" : "border-rose-200 bg-rose-50 dark:border-rose-800/30 dark:bg-rose-900/10"}`}>

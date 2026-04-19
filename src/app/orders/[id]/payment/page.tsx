@@ -10,8 +10,9 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import axiosInstance from "@/lib/api-client";
+import { orderService, OrderDetailDto } from "@/services/order.service";
 import { PageHero } from "@/app/_components/PageHero";
-import { ShieldCheck, Lock, ArrowRight } from "lucide-react";
+import { ShieldCheck, Lock, ArrowRight, TimerReset, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api-client";
 
@@ -79,6 +80,8 @@ export default function OrderPaymentPage() {
   const [paymentType, setPaymentType] = useState("DEPOSIT");
   const [error, setError] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
+  const [orderDetail, setOrderDetail] = useState<OrderDetailDto | null>(null);
+  const [timeLeft, setTimeLeft] = useState<{h: number, m: number, s: number} | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -87,8 +90,13 @@ export default function OrderPaymentPage() {
   useEffect(() => {
     if (!isHydrated || !id) return;
 
-    const fetchIntent = async () => {
+    const fetchIntentAndOrder = async () => {
       try {
+        const orderRes = await orderService.getOrderById(id);
+        if (orderRes.success && orderRes.data) {
+          setOrderDetail(orderRes.data);
+        }
+
         const { data } = await axiosInstance.post("/payments/intent", { orderId: id });
         if (data.success && data.data) {
           setClientSecret(data.data.clientSecret);
@@ -102,8 +110,32 @@ export default function OrderPaymentPage() {
       }
     };
 
-    fetchIntent();
+    fetchIntentAndOrder();
   }, [id, isHydrated]);
+
+  useEffect(() => {
+    if (paymentType === "BALANCE" && orderDetail?.remainingDueAt) {
+      const targetTime = new Date(orderDetail.remainingDueAt).getTime();
+      
+      const updateTimer = () => {
+        const now = new Date().getTime();
+        const diff = targetTime - now;
+        if (diff <= 0) {
+            setTimeLeft({ h: 0, m: 0, s: 0 });
+            return;
+        }
+        
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        setTimeLeft({ h, m, s });
+      };
+      
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [orderDetail, paymentType]);
 
   if (!isHydrated) return null;
 
@@ -139,6 +171,33 @@ export default function OrderPaymentPage() {
                 ? "Your jewelry is ready for delivery. Please complete the final payment to secure your acquisition."
                 : "Please complete your deposit payment to confirm the order. The remaining balance will be requested after vendor processing."}
             </p>
+
+            {isBalance && timeLeft && (
+                <div className="mb-8 w-full p-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-900/10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <TimerReset className="text-amber-600 size-4" />
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-500">Payment Deadline</h4>
+                    </div>
+                    <p className="text-[10px] text-amber-700/80 mb-3 leading-relaxed">
+                        To maintain your order priority, please fulfill the remaining balance before the 72-hour SLA expires. Orders past deadline may be subject to cancellation.
+                    </p>
+                    <div className="flex justify-between items-center bg-white dark:bg-black/50 p-3 rounded-lg border border-amber-100 dark:border-white/5">
+                        <div className="text-center w-full">
+                            <span className="font-mono text-2xl font-black text-amber-600">{String(timeLeft.h).padStart(2, '0')}</span>
+                            <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 mr-4">HRS</span>
+                            <span className="font-mono text-2xl font-black text-amber-600">{String(timeLeft.m).padStart(2, '0')}</span>
+                            <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 mr-4">MIN</span>
+                            <span className="font-mono text-2xl font-black text-amber-600">{String(timeLeft.s).padStart(2, '0')}</span>
+                            <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">SEC</span>
+                        </div>
+                    </div>
+                    {timeLeft.h === 0 && timeLeft.m === 0 && timeLeft.s === 0 && (
+                        <p className="text-rose-500 text-xs font-bold mt-2 text-center flex items-center justify-center gap-1">
+                            <AlertCircle size={12} /> Deadline Expired
+                        </p>
+                    )}
+                </div>
+            )}
 
             {clientSecret ? (
               <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>

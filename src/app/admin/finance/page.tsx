@@ -58,7 +58,7 @@ export default function FinancePage() {
             <PageHeader title="Financial Hub" description="Monitor payments, gateway transactions, and revenue flows."
                 actions={
                     <button className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md">
-                        <Download className="h-4 w-4" /> Export Report
+                        <Download className="h-4 w-4" /> Export Master Ledger
                     </button>
                 }
             />
@@ -117,6 +117,62 @@ export default function FinancePage() {
                             </tbody>
                         </table>
                     )}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+                {/* Insurance Report Panel */}
+                <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 p-6">
+                    <h2 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white mb-1">Insurance Underwriting Report</h2>
+                    <p className="font-plus-jakarta text-xs text-gray-500 mb-6">Generate and export transit and full-coverage insurance ledgers for internal audit.</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label className="font-plus-jakarta text-[10px] uppercase font-bold text-gray-400 mb-1 block">Start Date</label>
+                            <input type="date" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-sm dark:border-gray-700 dark:bg-gray-900" />
+                        </div>
+                        <div>
+                            <label className="font-plus-jakarta text-[10px] uppercase font-bold text-gray-400 mb-1 block">End Date</label>
+                            <input type="date" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-sm dark:border-gray-700 dark:bg-gray-900" />
+                        </div>
+                    </div>
+                    
+                    <button onClick={() => toast.success("Insurance Report CSV downloaded.")} className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-gray-800 dark:bg-white dark:text-black">
+                        <Download className="h-4 w-4" /> Export Insurance CSV
+                    </button>
+                </div>
+
+                {/* Cancellation Configuration Panel */}
+                <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 p-6">
+                    <h2 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white mb-1">Cancellation Penalty Configuration</h2>
+                    <p className="font-plus-jakarta text-xs text-gray-500 mb-6">Manage automated penalty fees triggered upon customer cancellation post-deposit.</p>
+                    
+                    <div className="space-y-4 mb-6">
+                        <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
+                            <div>
+                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Tier 1 (&lt; 20M VND)</p>
+                                <p className="font-plus-jakarta text-[10px] text-gray-400">Standard orders</p>
+                            </div>
+                            <div className="relative w-24">
+                                <input type="number" defaultValue={5} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-right font-mono text-sm font-bold dark:border-gray-700 dark:bg-black" />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 font-plus-jakarta text-xs text-gray-400">%</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
+                            <div>
+                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Tier 2 (&ge; 20M VND)</p>
+                                <p className="font-plus-jakarta text-[10px] text-gray-400">High-value acquisitions</p>
+                            </div>
+                            <div className="relative w-24">
+                                <input type="number" defaultValue={10} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-right font-mono text-sm font-bold dark:border-gray-700 dark:bg-black" />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 font-plus-jakarta text-xs text-gray-400">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onClick={() => toast.success("Cancellation policies updated globally.")} className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-3 font-plus-jakarta text-sm font-bold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                        Save Policy Configuration
+                    </button>
                 </div>
             </div>
 

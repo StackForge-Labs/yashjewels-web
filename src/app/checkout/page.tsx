@@ -307,36 +307,84 @@ export default function CheckoutPage() {
 
                             {/* Step 2: Insurance */}
                             {step === 1 && (
-                                <div className="space-y-4 rounded-2xl border border-gray-100 p-6 md:p-8 dark:border-white/5">
+                                <div className="space-y-6 rounded-2xl border border-gray-100 p-6 md:p-8 dark:border-white/5">
                                     <div className="flex items-center gap-3">
                                         <Shield size={20} className="text-gold" />
                                         <h2 className="font-serif text-xl text-gray-900 dark:text-white">Order Protection</h2>
                                     </div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Choose a protection plan for your precious items during transit and after delivery.</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-lg">Choose a protection plan for your precious items during transit and after delivery. Protect your luxury acquisition from the moment it leaves our Maison.</p>
 
-                                    {[
-                                        { id: "none", title: "No Insurance", desc: "Standard delivery without additional coverage", price: "Free", icon: Package },
-                                        { id: "shipping", title: "Shipping Insurance", desc: "Covers damage or loss during transit (0.5%)", price: `+${formatCurrency(getInsuranceFee("shipping"))}`, icon: Truck },
-                                        { id: "full", title: "Full Coverage", desc: "Shipping + 30-day product protection (1.5%)", price: `+${formatCurrency(getInsuranceFee("full"))}`, icon: ShieldCheck },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => setInsurance(opt.id)}
-                                            className={`flex w-full items-start gap-4 rounded-xl border-2 p-5 text-left transition-all ${insurance === opt.id
-                                                ? "border-gold bg-gold/5 shadow-lg shadow-gold/10"
-                                                : "border-gray-100 hover:border-gray-200 dark:border-white/5 dark:hover:border-white/10"
-                                                }`}
-                                        >
-                                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${insurance === opt.id ? "bg-gold text-white" : "bg-gray-100 text-gray-400 dark:bg-white/5"}`}>
-                                                <opt.icon size={18} />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{opt.title}</p>
-                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{opt.desc}</p>
-                                            </div>
-                                            <span className={`text-sm font-bold ${insurance === opt.id ? "text-gold" : "text-gray-400"}`}>{opt.price}</span>
-                                        </button>
-                                    ))}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-4">
+                                        {[
+                                            { 
+                                                id: "none", 
+                                                title: "Standard", 
+                                                desc: "Standard delivery risk", 
+                                                price: "Free", 
+                                                icon: Package,
+                                                features: ["Standard Transit Care", "Return within 2 days", "No loss protection"],
+                                                isPopular: false
+                                            },
+                                            { 
+                                                id: "shipping", 
+                                                title: "Transit Shield", 
+                                                desc: "Covers damage or loss during transit", 
+                                                price: `+${formatCurrency(getInsuranceFee("shipping"))}`, 
+                                                icon: Truck,
+                                                features: ["Full Loss Recovery", "Return within 7 days", "Transit Damage Cover"],
+                                                isPopular: false
+                                            },
+                                            { 
+                                                id: "full", 
+                                                title: "Ultra Care", 
+                                                desc: "Shipping + 30-day extended protection", 
+                                                price: `+${formatCurrency(getInsuranceFee("full"))}`, 
+                                                icon: ShieldCheck,
+                                                features: ["Full Loss Recovery", "Return within 30 days", "Maintenance Support"],
+                                                isPopular: true
+                                            },
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.id}
+                                                onClick={() => setInsurance(opt.id)}
+                                                className={`relative flex flex-col items-start gap-4 rounded-2xl border-2 p-5 lg:p-6 text-left transition-all ${insurance === opt.id
+                                                    ? "border-gold bg-gold/5 shadow-xl shadow-gold/10 scale-[1.02]"
+                                                    : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50 dark:border-white/5 dark:bg-[#111] dark:hover:border-white/10 dark:hover:bg-white/5"
+                                                    }`}
+                                            >
+                                                {opt.isPopular && (
+                                                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white shadow-lg">
+                                                        Most Popular
+                                                    </span>
+                                                )}
+                                                <div className={`flex w-full items-center justify-between`}>
+                                                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${insurance === opt.id ? "bg-gold text-white" : "bg-gray-50 text-gray-400 dark:bg-white/5"}`}>
+                                                        <opt.icon size={22} />
+                                                    </div>
+                                                    <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all ${insurance === opt.id ? "border-gold" : "border-gray-300 dark:border-gray-600"}`}>
+                                                        {insurance === opt.id && <div className="h-2 w-2 rounded-full bg-gold" />}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="w-full mt-2">
+                                                    <p className="text-base font-bold text-gray-900 dark:text-white capitalize">{opt.title}</p>
+                                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 h-10">{opt.desc}</p>
+                                                    <p className={`mt-3 text-lg font-black tracking-tight ${insurance === opt.id ? "text-gold" : "text-gray-900 dark:text-white"}`}>
+                                                        {opt.price}
+                                                    </p>
+                                                </div>
+
+                                                <div className="mt-4 w-full space-y-2 border-t border-gray-100/50 pt-4 dark:border-white/5">
+                                                    {opt.features.map((feature, i) => (
+                                                        <p key={i} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            <Check size={12} className={insurance === opt.id ? "text-gold" : "text-gray-300 dark:text-gray-600"} />
+                                                            {feature}
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 

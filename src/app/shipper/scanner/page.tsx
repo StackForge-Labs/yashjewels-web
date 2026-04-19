@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { QrCode, X, Flashlight, RotateCcw, CheckCircle2, AlertCircle, Mail } from "lucide-react";
+import { QrCode, X, Flashlight, RotateCcw, CheckCircle2, AlertCircle, Mail, Loader2 } from "lucide-react";
+import { shipperService } from "@/services/shipper.service";
+import toast from "react-hot-toast";
 
 type ScanState = "idle" | "scanning" | "success" | "error";
 
@@ -13,10 +15,11 @@ export default function ShipperScannerPage() {
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const [scanState, setScanState] = useState<ScanState>("idle");
-    const [scannedOrderId, setScannedOrderId] = useState("");
+    const [scannedQrToken, setScannedQrToken] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const [hasCamera, setHasCamera] = useState(true);
     const [resendCount, setResendCount] = useState(3);
+    const [isResending, setIsResending] = useState(false);
     const streamRef = useRef<MediaStream | null>(null);
 
     // Start camera
@@ -46,22 +49,44 @@ export default function ShipperScannerPage() {
         return () => stopCamera();
     }, []);
 
-    // Mock QR Scan (real implementation would use jsQR or zxing)
+    // Mock QR Scan (real implementation would use jsQR or zxing to decode QR content)
     const handleMockScan = () => {
-        const mockOrderId = orderId || "YJ-20250419-001";
+        if (!orderId) {
+            setErrorMsg("Không xác định được đơn hàng cần giao.");
+            setScanState("error");
+            return;
+        }
+        
+        // In reality, the scanner extracts the raw qrToken string from the QR code.
+        // For testing the API, we use a dummy token "QR_MOCK_TOKEN" and pass it to POD.
+        const mockQrToken = "QR_MOCK_TOKEN_" + Math.random().toString(36).substring(7);
+        
         setScanState("success");
-        setScannedOrderId(mockOrderId);
+        setScannedQrToken(mockQrToken);
         stopCamera();
+        
         // Auto redirect to POD after 1.5s
         setTimeout(() => {
-            router.push(`/shipper/pod?orderId=${mockOrderId}`);
+            router.push(`/shipper/pod?orderId=${orderId}&qrToken=${mockQrToken}`);
         }, 1500);
     };
 
-    const handleResendEmail = () => {
-        if (resendCount <= 0) return;
-        setResendCount((c) => c - 1);
-        // TODO: call API to resend QR email
+    const handleResendEmail = async () => {
+        if (resendCount <= 0 || !orderId) return;
+        setIsResending(true);
+        try {
+            const res = await shipperService.resendQrCode(orderId);
+            if (res.success) {
+                toast.success("Đã gửi mã QR mới cho khách hàng.");
+                setResendCount((c) => c - 1);
+            } else {
+                toast.error(res.message || "Gửi thất bại.");
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Lỗi kỹ thuật.");
+        } finally {
+            setIsResending(false);
+        }
     };
 
     return (
@@ -101,12 +126,12 @@ export default function ShipperScannerPage() {
                     <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
                         <button
                             onClick={() => router.back()}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md"
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70"
                         >
                             <X className="h-5 w-5" />
                         </button>
                         <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest text-white/80">
-                            QR Scanner
+                            QR Scanner {orderId && `(${orderId.substring(0, 8)}...)`}
                         </p>
                         <div className="h-10 w-10" />
                     </div>
@@ -121,11 +146,11 @@ export default function ShipperScannerPage() {
                         </button>
                         <button
                             onClick={handleResendEmail}
-                            disabled={resendCount <= 0}
+                            disabled={resendCount <= 0 || isResending || !orderId}
                             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-black/50 py-3 font-plus-jakarta text-xs font-bold text-white/80 backdrop-blur-md disabled:opacity-40"
                         >
-                            <Mail className="h-4 w-4" />
-                            Gửi Lại Email QR ({resendCount} lần còn lại)
+                            {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                            Gửi Lại Mã Cho Khách ({resendCount} lần còn lại)
                         </button>
                     </div>
                 </div>
@@ -159,11 +184,10 @@ export default function ShipperScannerPage() {
                         <CheckCircle2 className="h-12 w-12 text-teal-400" />
                     </div>
                     <div>
-                        <h2 className="font-plus-jakarta text-2xl font-black text-white">Xác Thực Thành Công!</h2>
-                        <p className="mt-2 font-plus-jakarta text-sm text-gray-400">Danh tính khách đã được xác nhận</p>
-                        <p className="mt-1 font-mono text-xs text-teal-400">{scannedOrderId}</p>
+                        <h2 className="font-plus-jakarta text-2xl font-black text-white">Quét Bằng Chứng Thành Công!</h2>
+                        <p className="mt-2 font-plus-jakarta text-sm text-gray-400">Chữ ký điện tử toàn vẹn</p>
                     </div>
-                    <p className="font-plus-jakarta text-xs text-gray-500">Đang chuyển sang màn hình giao hàng...</p>
+                    <p className="font-plus-jakarta text-xs text-teal-500 font-bold">Đang chuyển sang bước chụp ảnh POD...</p>
                 </div>
             )}
 
