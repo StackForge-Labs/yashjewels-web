@@ -8,6 +8,7 @@ import QueryProvider from "@/wrapper/QueryProvider";
 import { ProfileWatcher } from "./_components/ProfileWatcher";
 import { InventoryWatcher } from "./_components/InventoryWatcher";
 import { CookieConsent } from "./_components/CookieConsent";
+import { GlobalOrderWatcher } from "@/components/GlobalOrderWatcher";
 import { Toaster } from "sonner";
 
 const cormorant = Cormorant_Garamond({
@@ -51,6 +52,7 @@ export default function RootLayout({
                     <QueryProvider>
                         <ProfileWatcher />
                         <InventoryWatcher />
+                        <GlobalOrderWatcher />
                         <PublicLayoutWrapper>{children}</PublicLayoutWrapper>
                         <CookieConsent />
                         <Toaster position="top-right" richColors closeButton />
