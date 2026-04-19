@@ -59,9 +59,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
     // Use override if available, otherwise fallback to props
     const effectiveQuantity = realtimeData?.quantity !== undefined ? realtimeData.quantity : quantity;
     const effectiveStatus = realtimeData?.status !== undefined ? realtimeData.status : status;
+    // isLocked = đang bị người khác giữ chỗ trong checkout (khác với qty=1 nhưng sẵn sàng bán)
+    const effectiveIsLocked = realtimeData?.isLocked === true;
 
     const isOutOfStock = effectiveQuantity === 0 || effectiveStatus === "SOLD_OUT";
-    const isReserved = effectiveQuantity === 1; // Reserved if only 1 left
+    const isReserved = effectiveIsLocked; // Chỉ hiện 'Giữ chỗ' khi có lock thực sự, không dựa vào quantity
 
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -104,7 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                         </div>
                     )}
 
-                    {isReserved && (
+                    {isReserved && !isOutOfStock && (
                         <div className="flex items-center gap-1 rounded-[4px] bg-rose-600 px-3 py-1.5 text-white shadow-md backdrop-blur-md animate-pulse">
                             <span className="text-[10px] font-bold tracking-widest uppercase">Giữ chỗ</span>
                         </div>

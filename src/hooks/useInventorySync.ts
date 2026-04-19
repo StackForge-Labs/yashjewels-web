@@ -42,29 +42,31 @@ export const useInventorySync = () => {
                 .then(() => {
                     console.log("Connected to InventoryHub");
 
-                    // Listeners
+                    // ItemLocked: Sản phẩm đang bị một người khác giữ chỗ trong Checkout
                     connection.on("ItemLocked", (productId: string) => {
-                        dispatch(updateProductStatus({ productId, quantity: 1 }));
-                        
-                        // Nếu item đang ở trong giỏ hàng, re-fetch giỏ hàng để cập nhật stock realtime
+                        dispatch(updateProductStatus({ productId, isLocked: true }));
+
+                        // Nếu item đang ở trong giỏ hàng của chính mình, re-fetch để cập nhật UI
                         if (authRef.current && cartItemsRef.current.some(item => item.productId.toLowerCase() === productId.toLowerCase())) {
                             dispatch(fetchCart());
                         }
                     });
 
+                    // InventoryDepleted: Sản phẩm đã hết hàng hẳn (đã được bán thành công)
                     connection.on("InventoryDepleted", (productId: string) => {
-                        dispatch(updateProductStatus({ productId, quantity: 0, status: "SOLD_OUT" }));
+                        dispatch(updateProductStatus({ productId, quantity: 0, status: "SOLD_OUT", isLocked: false }));
 
-                        // Nếu item đang ở trong giỏ hàng, re-fetch giỏ hàng để cập nhật nhãn Hết hàng
+                        // Nếu item đang ở trong giỏ hàng, re-fetch để cập nhật nhãn Hết hàng
                         if (authRef.current && cartItemsRef.current.some(item => item.productId.toLowerCase() === productId.toLowerCase())) {
                             dispatch(fetchCart());
                         }
                     });
 
+                    // InventoryRestocked: Sản phẩm vừa được nhập kho (không phải Giữ chỗ!)
                     connection.on("InventoryRestocked", (productId: string) => {
-                        dispatch(updateProductStatus({ productId, quantity: 1, status: "ACTIVE" }));
+                        dispatch(updateProductStatus({ productId, quantity: 1, status: "ACTIVE", isLocked: false }));
 
-                        // Nếu item đang ở trong giỏ hàng, re-fetch giỏ hàng để cập nhật UI
+                        // Nếu item đang ở trong giỏ hàng, re-fetch để cập nhật UI
                         if (authRef.current && cartItemsRef.current.some(item => item.productId.toLowerCase() === productId.toLowerCase())) {
                             dispatch(fetchCart());
                         }
