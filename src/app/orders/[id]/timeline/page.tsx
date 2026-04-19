@@ -90,9 +90,10 @@ export default function OrderTimelinePage() {
 
     const orderSteps = useMemo(() => {
         return [
-            { label: "Order Placed", icon: <Package size={20} />, statuses: ["CHECKOUT_INITIATED", "PAYMENT_PENDING", "PAYMENT_FAILED", "DEPOSIT_PENDING", "DEPOSIT_PAID", "CONFIRMED", "AWAITING_FULL_PAYMENT", "PREPARING", "SHIPPED", "DELIVERED", "COMPLETED"] },
-            { label: "Deposit Secured", icon: <Wallet size={20} />, statuses: ["DEPOSIT_PAID", "CONFIRMED", "AWAITING_FULL_PAYMENT", "PREPARING", "SHIPPED", "DELIVERED", "COMPLETED"] },
-            { label: "Preparing", icon: <Store size={20} />, statuses: ["PREPARING", "SHIPPED", "DELIVERED", "COMPLETED"] },
+            { label: "Order Placed", icon: <Package size={20} />, statuses: ["CHECKOUT_INITIATED", "PAYMENT_PENDING", "PAYMENT_FAILED", "DEPOSIT_PENDING", "DEPOSIT_PAID", "CONFIRMED", "AWAITING_FULL_PAYMENT", "PREPARING", "SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
+            { label: "Deposit Secured", icon: <Wallet size={20} />, statuses: ["DEPOSIT_PAID", "CONFIRMED", "AWAITING_FULL_PAYMENT", "PREPARING", "SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
+            { label: "Preparing", icon: <Store size={20} />, statuses: ["PREPARING", "SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
+            { label: "Packaged", icon: <Package size={20} />, statuses: ["SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
             { label: "In Transit", icon: <Truck size={20} />, statuses: ["SHIPPED", "DELIVERED", "COMPLETED"] },
             { label: "Completed", icon: <CheckCircle2 size={20} />, statuses: ["DELIVERED", "COMPLETED"] }
         ];
@@ -232,6 +233,17 @@ export default function OrderTimelinePage() {
                                 <h3 className="mb-6 font-serif text-xl flex items-center gap-3"><Receipt className="text-gold" size={20} /> Summary</h3>
                                 <div className="space-y-3 text-sm">
                                     <div className="flex justify-between"><span>Value:</span><span className="font-bold">{order.totalAmount.toLocaleString()} VND</span></div>
+                                    <div className="flex justify-between"><span>Deposit:</span><span className="font-bold text-emerald-600">{(order.depositAmount || 0).toLocaleString()} VND</span></div>
+                                    
+                                    {order.status === "AWAITING_FULL_PAYMENT" && (
+                                        <div className="mt-6 border-t border-gray-100 pt-6 dark:border-white/5 text-center">
+                                            <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest font-bold">Remaining Balance</p>
+                                            <p className="text-xl font-bold text-gold mb-4">{(order.remainingAmount || 0).toLocaleString()} VND</p>
+                                            <Link href={`/orders/${orderId}/payment`} className="inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gold px-4 py-3 text-xs font-bold text-white uppercase hover:bg-gold/90 transition-all shadow-lg shadow-gold/20">
+                                                Pay Remaining Balance <ChevronRight size={14} />
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -279,15 +291,15 @@ export default function OrderTimelinePage() {
                                 <h3 className="mb-8 font-serif text-xl border-b border-gray-100 pb-4 dark:border-white/5 uppercase tracking-widest">Tracking Logistics</h3>
                                 <div className="space-y-10 pl-8 relative">
                                     <div className="absolute top-2 bottom-2 left-[15px] w-[2px] bg-gray-100 dark:bg-white/10" />
-                                    {order.timeline?.sort((a,b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).map((item, idx) => {
+                                    {[...(order.timeline || [])].sort((a,b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).map((item, idx) => {
                                         // Parse evidenceUrl: could be JSON array ["url1","url2"] or legacy single URL
                                         let evidenceList: string[] = [];
-                                        if ((item as any).evidenceUrl) {
+                                        if (item.evidenceUrl) {
                                             try {
-                                                const parsed = JSON.parse((item as any).evidenceUrl);
-                                                evidenceList = Array.isArray(parsed) ? parsed : [(item as any).evidenceUrl];
+                                                const parsed = JSON.parse(item.evidenceUrl);
+                                                evidenceList = Array.isArray(parsed) ? parsed : [item.evidenceUrl];
                                             } catch {
-                                                evidenceList = [(item as any).evidenceUrl];
+                                                evidenceList = [item.evidenceUrl];
                                             }
                                         }
 
