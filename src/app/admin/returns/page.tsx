@@ -150,11 +150,15 @@ function ReviewModal({
                     <div className="flex gap-3 border-t border-gray-100 px-8 py-5 dark:border-gray-800">
                         <button 
                             onClick={() => { 
+                                if (!note.trim()) {
+                                    toast.error("Please provide a rejection reason in the audit note.");
+                                    return;
+                                }
                                 if (isOnlineAudit) onDecide(req.id, false, note); 
                                 else onFinalDecide(req.id, false, false, note);
                                 onClose(); 
                             }} 
-                            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-rose-50 py-2.5 font-plus-jakarta text-sm font-bold text-rose-700 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400"
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gray-100 py-2.5 font-plus-jakarta text-sm font-bold text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
                         >
                             <XCircle className="h-4 w-4" /> {isOnlineAudit ? "Reject Online" : "Reject Physical"}
                         </button>

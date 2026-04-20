@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Camera, CheckCircle2, Package, MapPin, User, ChevronLeft, RotateCcw, Upload, Loader2, AlertCircle } from "lucide-react";
 import { shipperService, ShipperOrderDto } from "@/services/shipper.service";
@@ -82,7 +82,7 @@ function SwipeConfirmSlider({ onConfirm, isSubmitting }: { onConfirm: () => void
 }
 
 // ─── Page ──────────────────────────────────────────────────
-export default function ShipperPodPage() {
+function ShipperPodContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get("orderId");
@@ -91,6 +91,7 @@ export default function ShipperPodPage() {
     const [podState, setPodState] = useState<PodState>("loading");
     const [orderInfo, setOrderInfo] = useState<ShipperOrderDto | null>(null);
     const [photo, setPhoto] = useState<string | null>(null);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,29 +126,45 @@ export default function ShipperPodPage() {
     const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setPhotoFile(file);
         const url = URL.createObjectURL(file);
         setPhoto(url);
         setPodState("confirm");
     };
 
     const handleConfirmDelivery = async () => {
-        if (!orderId || !qrToken || !photo) return;
+        if (!orderId || !qrToken || !photoFile) return;
         setIsSubmitting(true);
-        try {
-            // Mock upload delays and photo URL generation
-            await new Promise(r => setTimeout(r, 1000));
-            const dummyCloudinaryUrl = `https://res.cloudinary.com/demo/image/upload/v1/pod_${orderId.substring(0,8)}.jpg`;
+        const loadingToast = toast.loading("Uploading POD evidence and finalizing order...");
 
-            const res = await shipperService.confirmDeliveryWithQr(orderId, qrToken, dummyCloudinaryUrl);
+        try {
+            // Real Cloudinary Upload
+            const CLOUD_NAME = "dilzxumho";
+            const UPLOAD_PRESET = "yash_unsigned";
+
+            const formData = new FormData();
+            formData.append("file", photoFile);
+            formData.append("upload_preset", UPLOAD_PRESET);
+
+            const uploadResponse = await fetch(
+                `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+                { method: "POST", body: formData }
+            );
+
+            if (!uploadResponse.ok) throw new Error("Failed to upload photo to vault.");
+
+            const uploadData = await uploadResponse.json();
+            const recipientPhotoUrl = uploadData.secure_url;
+
+            const res = await shipperService.confirmDeliveryWithQr(orderId, qrToken, recipientPhotoUrl);
             if (res.success) {
-                toast.success("Xác nhận thành công!");
+                toast.success("Delivery confirmed successfully!", { id: loadingToast });
                 setPodState("done");
             } else {
-                toast.error(res.message || "Xác thực QR thất bại hoặc hết hạn.");
-                // Reset slider but stay on confirm page to try again
+                toast.error(res.message || "QR validation failed or session expired.", { id: loadingToast });
             }
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Lỗi API");
+            toast.error(error?.message || "Internal system error during POD upload.", { id: loadingToast });
         } finally {
             setIsSubmitting(false);
         }
@@ -268,7 +285,7 @@ export default function ShipperPodPage() {
                             <img src={photo} alt="POD photo" className="w-full rounded-xl object-cover h-48" />
                             {!isSubmitting && (
                                 <button
-                                    onClick={() => { setPhoto(null); setPodState("review"); }}
+                                    onClick={() => { setPhoto(null); setPhotoFile(null); setPodState("review"); }}
                                     className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                                 >
                                     <RotateCcw className="h-4 w-4" />
@@ -309,5 +326,17 @@ export default function ShipperPodPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ShipperPodPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[400px] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+            </div>
+        }>
+            <ShipperPodContent />
+        </Suspense>
     );
 }

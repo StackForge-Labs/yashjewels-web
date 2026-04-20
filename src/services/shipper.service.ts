@@ -32,8 +32,10 @@ export const shipperService = {
         return res.data;
     },
 
-    pickupReturn: async (orderId: string) => {
-        const res = await apiClient.put<ApiResponse<boolean>>(`/shipper/orders/${orderId}/return/pickup`);
+    pickupReturn: async (orderId: string, qrToken: string) => {
+        const res = await apiClient.put<ApiResponse<boolean>>(`/shipper/orders/${orderId}/return/pickup`, {
+            qrToken
+        });
         return res.data;
     },
 

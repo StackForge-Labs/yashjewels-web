@@ -12,7 +12,7 @@ const columns: { status: OrderStatus; label: string; icon: typeof Clock; color: 
     { status: "DEPOSIT_PAID", label: "Chờ Duyệt", icon: Clock, color: "border-amber-200 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10", badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" },
     { status: "CONFIRMED", label: "Đã Xác Nhận", icon: CheckCircle2, color: "border-blue-200 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-900/10", badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300" },
     { status: "PREPARING", label: "Đang Đóng Gói", icon: Package, color: "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800/30 dark:bg-indigo-900/10", badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300" },
-    { status: "SHIP_PENDING", label: "Chờ Shipper Nhận", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
+    { status: "SHIP_PENDING", label: "Chờ Shipper Nhận Và Giao Đơn", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
 ];
 
 function formatVnd(n: number) {
@@ -52,7 +52,7 @@ function RejectModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose:
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                
+
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Vui lòng nhập lý do từ chối. Hệ thống sẽ huỷ đơn và tự động hoàn trả thanh toán cho khách hàng (nếu có).
                 </p>
@@ -69,9 +69,9 @@ function RejectModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose:
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
                         Hủy Bỏ
                     </button>
-                    <button 
+                    <button
                         onClick={async () => {
-                            if(!reason.trim()) {
+                            if (!reason.trim()) {
                                 toast.error("Vui lòng nhập lý do.");
                                 return;
                             }
@@ -92,7 +92,7 @@ function RejectModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose:
 
 function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: (photoUrls: string[]) => Promise<void> }) {
     const [files, setFiles] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<{url: string, type: string}[]>([]);
+    const [previews, setPreviews] = useState<{ url: string, type: string }[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
     // Reset when closed
@@ -128,13 +128,11 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
         const UPLOAD_PRESET = "yash_unsigned";
 
         try {
-            const uploadedUrls: string[] = [];
-            
-            for (const file of files) {
+            const uploadPromises = files.map(async (file) => {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", UPLOAD_PRESET);
-                
+
                 const resourceType = file.type.startsWith("video/") ? "video" : "image";
                 const response = await fetch(
                     `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
@@ -149,9 +147,11 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                 }
 
                 const data = await response.json();
-                uploadedUrls.push(data.secure_url);
-            }
-            
+                return data.secure_url as string;
+            });
+
+            const uploadedUrls = await Promise.all(uploadPromises);
+
             await onConfirm(uploadedUrls);
             onClose();
         } catch (err: any) {
@@ -173,7 +173,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                
+
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                     Bắt buộc tải lên ảnh niêm phong sản phẩm và video đóng gói (nếu có). Có thể chọn nhiều tệp cùng lúc.
                 </p>
@@ -183,11 +183,11 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                         {previews.map((preview, index) => (
                             <div key={index} className="relative rounded-xl overflow-hidden aspect-video border-2 border-indigo-100 dark:border-indigo-900/30">
                                 {preview.type === 'video' ? (
-                                    <video src={preview.url} className="w-full h-full object-cover" controls/>
+                                    <video src={preview.url} className="w-full h-full object-cover" controls />
                                 ) : (
                                     <img src={preview.url} alt="Preview" className="w-full h-full object-cover" />
                                 )}
-                                <button 
+                                <button
                                     onClick={() => removeFile(index)}
                                     className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-lg text-white backdrop-blur-sm transition-colors z-10"
                                 >
@@ -195,7 +195,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                                 </button>
                             </div>
                         ))}
-                        
+
                         <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-xl cursor-pointer border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 transition-colors">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                                 <Upload className="w-8 h-8 mb-3 text-indigo-500" />
@@ -210,7 +210,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
                         Hủy Bỏ
                     </button>
-                    <button 
+                    <button
                         onClick={handleUpload}
                         disabled={files.length === 0 || isUploading}
                         className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm tracking-wide hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -231,7 +231,7 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
         deadlineStr = order.remainingDueAt;
     }
     const days = getDaysLeft(deadlineStr);
-    
+
     // Map backend status to Kanban column mapping if needed, else directly use
     const displayProduct = order.items && order.items.length > 0 ? order.items[0].productName + (order.items.length > 1 ? ` (+${order.items.length - 1} sp)` : "") : "Không có SP";
 
@@ -280,8 +280,8 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
             {["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(order.status) && (
                 <div className="flex w-full items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-blue-700 dark:border-blue-800/30 dark:bg-blue-500/10 dark:text-blue-300">
                     {order.status === "CONFIRMED" ? "Đã Xác Nhận (Chờ hệ thống định tuyến)" :
-                     order.status === "AWAITING_FULL_PAYMENT" ? "Đang Chờ Khách Trả Nốt Gói" :
-                     "Đã Thanh Toán Đủ"}
+                        order.status === "AWAITING_FULL_PAYMENT" ? "Đang Chờ Khách Trả Nốt Gói" :
+                            "Đã Thanh Toán Đủ"}
                 </div>
             )}
             {order.status === "PREPARING" && (
@@ -464,7 +464,7 @@ export default function VendorOrdersPage() {
             </div>
 
             {/* Photo Upload Modal */}
-            <DispatchPhotoModal 
+            <DispatchPhotoModal
                 isOpen={!!selectedOrderId}
                 onClose={() => setSelectedOrderId(null)}
                 onConfirm={handleDispatchConfirmed}

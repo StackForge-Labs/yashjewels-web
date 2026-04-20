@@ -121,12 +121,12 @@ function TripCard({
                         </Link>
                     )}
                     {order.status === "RETURN_AUTHORIZED" && (
-                        <button
-                            onClick={() => onPickupReturn(order)}
+                        <Link
+                            href={`/shipper/scanner?orderId=${order.orderId}&mode=return`}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-amber-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-amber-700 ml-1"
                         >
                             Xác nhận Lấy hàng <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
+                        </Link>
                     )}
                     {order.status === "RETURN_IN_TRANSIT" && (
                         <button

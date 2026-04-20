@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode, X, Mail, Loader2, RotateCcw, CheckCircle2, AlertCircle } from "lucide-react";
 import { shipperService } from "@/services/shipper.service";
@@ -9,10 +9,11 @@ import { Html5Qrcode } from "html5-qrcode";
 
 type ScanState = "idle" | "scanning" | "success" | "error";
 
-export default function ShipperScannerPage() {
+function ShipperScannerContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get("orderId") ?? "";
+    const mode = searchParams.get("mode") ?? "delivery"; // "delivery" or "return"
 
     const [scanState, setScanState] = useState<ScanState>("idle");
     const [scannedQrToken, setScannedQrToken] = useState("");
@@ -41,7 +42,7 @@ export default function ShipperScannerPage() {
                 (decodedText) => {
                     handleScanSuccess(decodedText);
                 },
-                () => {}
+                () => { }
             );
         } catch (err) {
             console.error("Scanner Error:", err);
@@ -68,15 +69,36 @@ export default function ShipperScannerPage() {
             await scannerRef.current.stop();
         }
 
-        setScanState("success");
         setScannedQrToken(decodedText);
 
-        toast.success("Mã QR hợp lệ!");
+        if (mode === "return") {
+            try {
+                const res = await shipperService.pickupReturn(orderId, decodedText);
+                if (res.success) {
+                    setScanState("success");
+                    toast.success("Xác nhận lấy hàng trả thành công!");
+                    setTimeout(() => {
+                        router.push("/shipper");
+                    }, 2000);
+                } else {
+                    setScanState("error");
+                    setErrorMsg(res.message || "Mã QR không hợp lệ cho việc lấy hàng trả.");
+                }
+            } catch (err: any) {
+                setScanState("error");
+                setErrorMsg(err?.response?.data?.message || "Lỗi kết nối hệ thống.");
+            }
+        } else {
+            setScanState("success");
+            setScannedQrToken(decodedText);
 
-        // Auto redirect to POD
-        setTimeout(() => {
-            router.push(`/shipper/pod?orderId=${orderId}&qrToken=${decodedText}`);
-        }, 1500);
+            toast.success("Mã QR hợp lệ!");
+
+            // Auto redirect to POD
+            setTimeout(() => {
+                router.push(`/shipper/pod?orderId=${orderId}&qrToken=${decodedText}`);
+            }, 1500);
+        }
     };
 
     const handleResendEmail = async () => {
@@ -117,7 +139,7 @@ export default function ShipperScannerPage() {
                         <div className="relative h-[250px] w-[250px] overflow-hidden">
                             {/* Visual Frame Border */}
                             <div className="absolute inset-0 border border-white/20 rounded-3xl" />
-                            
+
                             {/* Modern Corner markers */}
                             <div className="absolute left-0 top-0 h-12 w-12 border-l-4 border-t-4 border-teal-400 rounded-tl-3xl" />
                             <div className="absolute right-0 top-0 h-12 w-12 border-r-4 border-t-4 border-teal-400 rounded-tr-3xl" />
@@ -200,10 +222,14 @@ export default function ShipperScannerPage() {
                         <CheckCircle2 className="h-12 w-12 text-teal-400" />
                     </div>
                     <div>
-                        <h2 className="font-plus-jakarta text-2xl font-black text-white">Quét Bằng Chứng Thành Công!</h2>
+                        <h2 className="font-plus-jakarta text-2xl font-black text-white">
+                            {mode === "return" ? "Xác Nhận Lấy Hàng Thành Công!" : "Quét Bằng Chứng Thành Công!"}
+                        </h2>
                         <p className="mt-2 font-plus-jakarta text-sm text-gray-400">Chữ ký điện tử toàn vẹn</p>
                     </div>
-                    <p className="font-plus-jakarta text-xs text-teal-500 font-bold">Đang chuyển sang bước chụp ảnh POD...</p>
+                    <p className="font-plus-jakarta text-xs text-teal-500 font-bold">
+                        {mode === "return" ? "Đang quay lại danh sách nhiệm vụ..." : "Đang chuyển sang bước chụp ảnh POD..."}
+                    </p>
                 </div>
             )}
 
@@ -247,5 +273,17 @@ export default function ShipperScannerPage() {
                 }
             `}</style>
         </div>
+    );
+}
+
+export default function ShipperScannerPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen w-full items-center justify-center bg-black">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+            </div>
+        }>
+            <ShipperScannerContent />
+        </Suspense>
     );
 }

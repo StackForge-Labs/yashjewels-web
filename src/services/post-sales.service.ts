@@ -11,7 +11,7 @@ export interface SubmitReviewRequest {
 export interface SubmitReturnRequest {
     orderId: string;
     reason: string;
-    unboxingVideo: File;
+    evidenceUrl: string;
 }
 
 export const postSalesService = {
@@ -39,12 +39,11 @@ export const postSalesService = {
             } as ApiResponse<string>;
         }
     },
-
     submitReturnRequest: async (payload: SubmitReturnRequest) => {
         try {
             const formData = new FormData();
             formData.append("reason", payload.reason);
-            formData.append("unboxingVideo", payload.unboxingVideo);
+            formData.append("evidenceUrl", payload.evidenceUrl);
 
             const { data } = await apiClient.post<ApiResponse<string>>(
                 `/post-sales/order/${payload.orderId}/return`,
