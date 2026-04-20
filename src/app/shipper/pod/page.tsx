@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Camera, CheckCircle2, Package, MapPin, User, ChevronLeft, RotateCcw, Upload, Loader2, AlertCircle } from "lucide-react";
 import { shipperService, ShipperOrderDto } from "@/services/shipper.service";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/lib/api-client";
 
 type PodState = "loading" | "error" | "review" | "capture" | "confirm" | "done";
 
@@ -13,7 +14,7 @@ function formatVnd(n: number) {
 }
 
 // ─── Swipe Slider ─────────────────────────────────────────
-function SwipeConfirmSlider({ onConfirm, isSubmitting, mode }: { onConfirm: () => void; isSubmitting: boolean; mode: string }) {
+function SwipeConfirmSlider({ onConfirm, isSubmitting, isReturn }: { onConfirm: () => void; isSubmitting: boolean; isReturn: boolean }) {
     const [position, setPosition] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -66,7 +67,7 @@ function SwipeConfirmSlider({ onConfirm, isSubmitting, mode }: { onConfirm: () =
             <div className="absolute left-1 h-12 rounded-xl bg-teal-600/10 transition-none" style={{ width: position + 56 }} />
             <div className="absolute inset-0 flex items-center justify-center">
                 <span className="font-plus-jakarta text-sm font-bold tracking-wide text-teal-700/60 dark:text-teal-400/50">
-                    {isSubmitting ? "Đang xử lý..." : confirmed ? "Thả để xác nhận →" : `← Vuốt để Xác Nhận ${mode === "return" ? "Thu Hồi" : "Giao Hàng"}`}
+                    {isSubmitting ? "Đang xử lý..." : confirmed ? "Thả để xác nhận →" : `← Vuốt để Xác Nhận ${isReturn ? "Thu Hồi" : "Giao Hàng"}`}
                 </span>
             </div>
             <div
@@ -133,11 +134,17 @@ function ShipperPodContent() {
         setPodState("confirm");
     };
 
+    const isReturn = mode === "return" || (orderInfo?.status?.startsWith("RETURN_") ?? false);
+
     const handleConfirmAction = async () => {
         if (!orderId || !qrToken || !photoFile) return;
         setIsSubmitting(true);
-        const actionText = mode === "return" ? "pickup" : "delivery";
-        const loadingToast = toast.loading(`Uploading POD evidence and finalizing ${actionText}...`);
+        
+        const loadingToast = toast.loading(
+            isReturn 
+                ? "Đang tải bằng chứng thu hồi và hoàn tất..." 
+                : "Đang tải bằng chứng giao hàng và hoàn tất..."
+        );
 
         try {
             const CLOUD_NAME = "dilzxumho";
@@ -152,26 +159,30 @@ function ShipperPodContent() {
                 { method: "POST", body: formData }
             );
 
-            if (!uploadResponse.ok) throw new Error("Failed to upload photo to vault.");
+            if (!uploadResponse.ok) throw new Error("Không thể tải ảnh lên hệ thống lưu trữ.");
 
             const uploadData = await uploadResponse.json();
             const photoUrl = uploadData.secure_url;
 
             let res;
-            if (mode === "return") {
+            if (isReturn) {
                 res = await shipperService.pickupReturn(orderId, qrToken, photoUrl);
             } else {
                 res = await shipperService.confirmDeliveryWithQr(orderId, qrToken, photoUrl);
             }
 
             if (res.success) {
-                toast.success(`${mode === "return" ? "Pickup" : "Delivery"} confirmed successfully!`, { id: loadingToast });
+                toast.success(
+                    isReturn ? "Xác nhận thu hồi thành công!" : "Xác nhận giao hàng thành công!", 
+                    { id: loadingToast }
+                );
                 setPodState("done");
             } else {
-                toast.error(res.message || "QR validation failed or session expired.", { id: loadingToast });
+                toast.error(res.message || "Xác thực thất bại.", { id: loadingToast });
             }
         } catch (error: any) {
-            toast.error(error?.message || "Internal system error during POD upload.", { id: loadingToast });
+            const msg = getErrorMessage(error);
+            toast.error(msg || "Lỗi hệ thống khi tải POD.", { id: loadingToast });
         } finally {
             setIsSubmitting(false);
         }
@@ -210,10 +221,10 @@ function ShipperPodContent() {
                 </div>
                 <div>
                     <h2 className="font-plus-jakarta text-2xl font-black text-gray-900 dark:text-white">
-                        {mode === "return" ? "ĐÃ THU HỒI THÀNH CÔNG!" : "ĐÃ GIAO THÀNH CÔNG!"}
+                        {isReturn ? "ĐÃ THU HỒI THÀNH CÔNG!" : "ĐÃ GIAO THÀNH CÔNG!"}
                     </h2>
                     <p className="mt-2 font-plus-jakarta text-sm text-gray-500">
-                        Đơn hàng {orderInfo.orderNumber} đã được xác nhận {mode === "return" ? "lấy lại" : "bàn giao"}
+                        Đơn hàng {orderInfo.orderNumber} đã được xác nhận {isReturn ? "lấy lại" : "bàn giao"}
                     </p>
                 </div>
                 <div className="flex flex-col gap-3 w-full">
@@ -243,7 +254,7 @@ function ShipperPodContent() {
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <h1 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white">
-                        {mode === "return" ? "Xác Nhận Thu Hồi (Lấy Hàng)" : "Xác Nhận Giao Hàng"}
+                        {isReturn ? "Xác Nhận Thu Hồi (Lấy Hàng)" : "Xác Nhận Giao Hàng"}
                     </h1>
                 </div>
 
@@ -291,7 +302,7 @@ function ShipperPodContent() {
                             {photo ? <CheckCircle2 className="h-4 w-4" /> : "2"}
                         </div>
                         <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
-                            {mode === "return" ? "Chụp Ảnh Hàng Thu Hồi" : "Chụp Ảnh Đồng Kiểm"}
+                            {isReturn ? "Chụp Ảnh Hàng Thu Hồi" : "Chụp Ảnh Đồng Kiểm"}
                         </p>
                     </div>
 
@@ -323,10 +334,10 @@ function ShipperPodContent() {
                             >
                                 <Camera className="h-8 w-8 text-teal-400" />
                                 <span className="font-plus-jakarta text-sm font-bold text-teal-700 dark:text-teal-400">
-                                    {mode === "return" ? "Nhấn để Chụp Ảnh Thu Hồi" : "Nhấn để Chụp Ảnh Hàng"}
+                                    {isReturn ? "Nhấn để Chụp Ảnh Thu Hồi" : "Nhấn để Chụp Ảnh Hàng"}
                                 </span>
                                 <span className="font-plus-jakarta text-xs text-teal-500/70">
-                                    {mode === "return" ? "Đóng gói kỹ, kiểm tra niêm phong" : "Mở seal, khách cầm hàng trên tay"}
+                                    {isReturn ? "Đóng gói kỹ, kiểm tra niêm phong" : "Mở seal, khách cầm hàng trên tay"}
                                 </span>
                             </button>
                         </div>
@@ -339,10 +350,10 @@ function ShipperPodContent() {
                         <div className="flex items-center gap-2 mb-4">
                             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 font-plus-jakarta text-xs font-black text-white">3</div>
                             <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
-                                {mode === "return" ? "Xác Nhận Thu Hồi" : "Xác Nhận Giao Hàng"}
+                                {isReturn ? "Xác Nhận Thu Hồi" : "Xác Nhận Giao Hàng"}
                             </p>
                         </div>
-                        <SwipeConfirmSlider onConfirm={handleConfirmAction} isSubmitting={isSubmitting} mode={mode} />
+                        <SwipeConfirmSlider onConfirm={handleConfirmAction} isSubmitting={isSubmitting} isReturn={isReturn} />
                     </div>
                 )}
             </div>
