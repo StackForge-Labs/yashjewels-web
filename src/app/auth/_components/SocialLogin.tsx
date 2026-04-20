@@ -7,18 +7,29 @@ import { useGoogleLogin as useAuthGoogle, useFacebookLogin } from "@/hooks/useAu
 import { Loader2 } from "lucide-react";
 import React from "react";
 
-export const SocialLogin = () => {
+interface SocialLoginProps {
+    onError?: (message: string) => void;
+}
+
+export const SocialLogin = ({ onError }: SocialLoginProps) => {
     const google = useAuthGoogle();
     const facebook = useFacebookLogin();
+
+    const extractError = (err: any) => {
+        const res = err?.response?.data;
+        return res?.errors?.[0] ?? res?.message ?? err?.message ?? "Social login failed.";
+    };
 
     // 100% Custom Google UI logic
     const handleGoogleLogin = useSocialGoogle({
         onSuccess: (tokenResponse) => {
             if (tokenResponse.access_token) {
-                google.mutate(tokenResponse.access_token);
+                google.mutate(tokenResponse.access_token, {
+                    onError: (err) => onError?.(extractError(err)),
+                });
             }
         },
-        onError: () => console.error("Google Login Failed"),
+        onError: () => onError?.("Google Login Failed"),
     });
 
     const handleFacebookLogin = async () => {
@@ -57,13 +68,16 @@ export const SocialLogin = () => {
             FB.login(
                 (response: any) => {
                     if (response.authResponse?.accessToken) {
-                        facebook.mutate(response.authResponse.accessToken);
+                        facebook.mutate(response.authResponse.accessToken, {
+                            onError: (err) => onError?.(extractError(err)),
+                        });
                     }
                 },
                 { scope: "email,public_profile" },
             );
         } catch (err) {
             console.error("Facebook login error:", err);
+            onError?.("Facebook login error");
         }
     };
 
