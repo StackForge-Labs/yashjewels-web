@@ -79,6 +79,7 @@ export default function OrderTimelinePage() {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     const [isCompleting, setIsCompleting] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
 
     const { data: orderResponse, isLoading, error, refetch } = useQuery({
         queryKey: ["order", orderId],
@@ -178,11 +179,37 @@ export default function OrderTimelinePage() {
         setIsCompleting(true);
         try {
             const res = await orderService.completeOrder(orderId);
-            if (res.success) { toast.success("Order complete!"); refetch(); }
-            else toast.error(res.message || "Failed.");
-        } catch (err) { toast.error("Network error."); }
-        finally { setIsCompleting(false); }
+            if (res.success) { 
+                toast.success("Order complete!"); 
+                refetch(); 
+            } else {
+                toast.error(res.message || "Failed.");
+            }
+        } catch (err) { 
+            toast.error("Network error."); 
+        } finally { 
+            setIsCompleting(false); 
+        }
     };
+
+    const handleClaimRefund = async () => {
+        setIsClaiming(true);
+        try {
+            const res = await postSalesService.claimRefund(orderId);
+            if (res.success) {
+                toast.success("Refund processed successfully via Stripe!");
+                refetch();
+            } else {
+                toast.error(res.message || "Failed to process refund.");
+            }
+        } catch (error) {
+            toast.error("An error occurred while claiming refund.");
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+
+    const isClaimable = order?.status === "RETURN_APPROVED";
 
     return (
         <main className="min-h-screen bg-[#FAFAF9] pb-32 dark:bg-[#050505]">
@@ -197,6 +224,33 @@ export default function OrderTimelinePage() {
                     <button onClick={() => router.back()} className="mb-8 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase transition-all hover:text-gray-950 dark:hover:text-white">
                         <ArrowLeft size={14} /> Back to Maison
                     </button>
+
+                    {isClaimable && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-8 shadow-lg shadow-emerald-500/10 dark:border-emerald-900/30 dark:bg-emerald-950/20"
+                        >
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg">
+                                        <Wallet size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-serif text-xl text-emerald-900 dark:text-emerald-400">Return Approved!</h3>
+                                        <p className="text-sm text-emerald-700/80">Your physical return has been verified. You can now claim your refund.</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={handleClaimRefund}
+                                    disabled={isClaiming}
+                                    className="flex w-full md:w-auto items-center justify-center gap-3 rounded-2xl bg-emerald-600 px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-500/30 transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
+                                >
+                                    {isClaiming ? "Processing..." : "Claim Refund Now"} <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
 
                     <div className="mb-8 rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
                         {isCancelled ? (
@@ -232,7 +286,6 @@ export default function OrderTimelinePage() {
                             <div className="rounded-3xl border border-gray-100 bg-white/60 p-6 shadow-sm dark:border-white/5 dark:bg-[#0C0A09]/60">
                                 <h3 className="mb-6 font-serif text-xl flex items-center gap-3"><Receipt className="text-gold" size={20} /> Summary</h3>
                                 <div className="space-y-3 text-sm">
-                                    <div className="flex justify-between"><span>Value:</span><span className="font-bold">{order.totalAmount.toLocaleString()} VND</span></div>
                                     <div className="flex justify-between"><span>Deposit:</span><span className="font-bold text-emerald-600">{(order.depositAmount || 0).toLocaleString()} VND</span></div>
 
                                     {order.status !== "DEPOSIT_PAID" && order.status !== "AWAITING_FULL_PAYMENT" && order.status !== "CANCELLED" && (
