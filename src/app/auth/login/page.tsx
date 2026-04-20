@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SocialLogin } from "../_components/SocialLogin";
 import { AuthAlert } from "../_components/AuthAlert";
 import { useLogin } from "@/hooks/useAuth";
@@ -21,11 +21,13 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const LoginPage = () => {
+const LoginContent = () => {
     useRedirectIfAuthenticated();
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     
+    const searchParams = useSearchParams();
+    const returnUrl = searchParams.get("returnUrl");
     const login = useLogin();
 
     const {
@@ -59,7 +61,17 @@ const LoginPage = () => {
         try {
             const res = await login.mutateAsync(data);
             
-            // Check if 2FA is required (Even if Success is false)
+            // On success, redirect to returnUrl or default
+            if (res.success && !res.requiresTwoFactor) {
+                if (returnUrl) {
+                    router.push(returnUrl);
+                } else {
+                    router.push("/");
+                }
+                return;
+            }
+
+            // Check if 2FA is required
             if (res.requiresTwoFactor) {
                 router.push(`/auth/verify-2fa?email=${encodeURIComponent(data.email)}`);
                 return;
@@ -226,6 +238,18 @@ const LoginPage = () => {
                 </div>
             </div>
         </section>
+    );
+};
+
+const LoginPage = () => {
+    return (
+        <React.Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#050505]">
+                <Loader2 className="h-8 w-8 animate-spin text-gold" />
+            </div>
+        }>
+            <LoginContent />
+        </React.Suspense>
     );
 };
 

@@ -29,7 +29,19 @@ export interface OrderDetailDto {
     returnRequestId?: string;
     remainingDueAt?: string;
     timeline: OrderTimelineDto[];
-    items: any[];
+    items: OrderItemDto[];
+    invoiceUrl?: string;
+    insuranceUrl?: string;
+}
+
+export interface OrderItemDto {
+    orderItemId: string;
+    productId: string;
+    productName: string;
+    styleCode: string;
+    unitPrice: number;
+    quantity: number;
+    certificationUrl?: string;
 }
 
 export const orderService = {

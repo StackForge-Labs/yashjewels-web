@@ -24,7 +24,9 @@ export function useAuthGuard() {
     useEffect(() => {
         const token = getAccessToken();
         if (!token) {
-            router.replace("/auth/login");
+            const currentPath = window.location.pathname;
+            const returnUrlParam = currentPath !== "/" ? `?returnUrl=${encodeURIComponent(currentPath)}` : "";
+            router.replace(`/auth/login${returnUrlParam}`);
             return;
         }
 

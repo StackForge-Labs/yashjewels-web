@@ -29,7 +29,10 @@ import {
     Camera,
     Star,
     Upload,
-    Video
+    Video,
+    FileText,
+    FileCheck2,
+    ExternalLink
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format, differenceInDays } from "date-fns";
@@ -147,16 +150,52 @@ export default function OrderTimelinePage() {
         if (!unboxingVideo) return toast.error("Unboxing video is required.");
 
         setIsSubmittingReturn(true);
-        const res = await postSalesService.submitReturnRequest({ orderId, reason: returnReason, unboxingVideo });
+        const loadingToast = toast.loading("Transmitting unboxing evidence to our high-security vault...");
 
-        if (res.success) {
-            toast.success("Return request submitted with evidence.");
-            setIsReturnModalOpen(false);
-            setUnboxingVideo(null);
-            setReturnReason("");
-            refetch();
-        } else toast.error(res.message);
-        setIsSubmittingReturn(false);
+        try {
+            // Frontend upload to Cloudinary (Bypass backend for large files)
+            const CLOUD_NAME = "dilzxumho";
+            const UPLOAD_PRESET = "yash_unsigned";
+            
+            const formData = new FormData();
+            formData.append("file", unboxingVideo);
+            formData.append("upload_preset", UPLOAD_PRESET);
+
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
+            if (!response.ok) throw new Error("Failed to upload evidence to Cloudinary.");
+            
+            const uploadData = await response.json();
+            const evidenceUrl = uploadData.secure_url;
+
+            // Submit URL to our API
+            const res = await postSalesService.submitReturnRequest({ 
+                orderId, 
+                reason: returnReason, 
+                evidenceUrl 
+            });
+
+            if (res.success) {
+                toast.success("Return request submitted with evidence.", { id: loadingToast });
+                setIsReturnModalOpen(false);
+                setUnboxingVideo(null);
+                setReturnReason("");
+                refetch();
+            } else {
+                toast.error(res.message, { id: loadingToast });
+            }
+        } catch (err: any) {
+            console.error("Return submission error:", err);
+            toast.error(err.message || "An error occurred during transmission.", { id: loadingToast });
+        } finally {
+            setIsSubmittingReturn(false);
+        }
     };
 
     const handleSubmitReview = async () => {
@@ -313,6 +352,74 @@ export default function OrderTimelinePage() {
                                             <Link href={`/orders/${orderId}/payment`} className="inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gold px-4 py-3 text-xs font-bold text-white uppercase hover:bg-gold/90 transition-all shadow-lg shadow-gold/20">
                                                 Pay Remaining Balance <ChevronRight size={14} />
                                             </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* ── DIGITAL DOCUMENT VAULT ────────────────────── */}
+                            <div className="rounded-3xl border border-gray-100 bg-white/60 p-6 shadow-sm dark:border-white/5 dark:bg-[#0C0A09]/60 relative overflow-hidden group">
+                                <div className="absolute -right-4 -top-4 text-gold/10 transition-transform group-hover:scale-110 group-hover:rotate-12 duration-700">
+                                    <ShieldCheck size={120} />
+                                </div>
+                                
+                                <h3 className="mb-6 font-serif text-xl flex items-center gap-3 relative z-10">
+                                    <ShieldCheck className="text-gold" size={20} /> 
+                                    The Jewel Vault
+                                </h3>
+                                
+                                <div className="space-y-3 relative z-10">
+                                    {/* Base Documents */}
+                                    {order.invoiceUrl && (
+                                        <a href={order.invoiceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-gray-50/50 hover:bg-gold/5 border border-transparent hover:border-gold/20 transition-all group/item">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                                    <FileText size={16} />
+                                                </div>
+                                                <span className="text-xs font-bold tracking-wide text-gray-700 dark:text-gray-300">Official Invoice</span>
+                                            </div>
+                                            <ExternalLink size={14} className="text-gray-400 group-hover/item:text-gold" />
+                                        </a>
+                                    )}
+
+                                    {order.insuranceUrl && (
+                                        <a href={order.insuranceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-gray-50/50 hover:bg-gold/5 border border-transparent hover:border-gold/20 transition-all group/item">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                                    <ShieldCheck size={16} />
+                                                </div>
+                                                <span className="text-xs font-bold tracking-wide text-gray-700 dark:text-gray-300">Insurance Policy</span>
+                                            </div>
+                                            <ExternalLink size={14} className="text-gray-400 group-hover/item:text-gold" />
+                                        </a>
+                                    )}
+
+                                    {/* Certification Documents (Only when COMPLETED) */}
+                                    {order.status === "COMPLETED" ? (
+                                        <div className="pt-4 border-t border-gray-100 dark:border-white/5 space-y-3">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gold mb-2">Certifications</p>
+                                            {order.items.map((item, idx) => (
+                                                item.certificationUrl && (
+                                                    <a key={idx} href={item.certificationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-gold/5 hover:bg-gold/10 border border-gold/10 transition-all group/item">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 rounded-lg bg-gold text-white shadow-sm shadow-gold/20">
+                                                                <FileCheck2 size={16} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-bold text-gray-950 dark:text-white uppercase truncate max-w-[120px]">{item.productName}</span>
+                                                                <span className="text-[8px] font-medium text-gray-500 uppercase tracking-tighter">Certificate of Authenticity</span>
+                                                            </div>
+                                                        </div>
+                                                        <ExternalLink size={14} className="text-gold" />
+                                                    </a>
+                                                )
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 mt-4">
+                                            <p className="text-[9px] font-bold text-amber-700/80 dark:text-amber-500/80 uppercase leading-relaxed text-center tracking-widest italic">
+                                                Certifications will be unlocked upon completion.
+                                            </p>
                                         </div>
                                     )}
                                 </div>
