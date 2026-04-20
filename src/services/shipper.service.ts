@@ -5,6 +5,7 @@ import { OrderDetailDto } from "./order.service";
 export interface ShipperOrderDto extends OrderDetailDto {
     insuranceType: string;
     qrActive: boolean;
+    qrUsed: boolean;
     qrExpiresAt?: string;
 }
 

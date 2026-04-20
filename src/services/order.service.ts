@@ -27,6 +27,7 @@ export interface OrderDetailDto {
     shippingPhone: string;
     shippingAddress: string;
     returnRequestId?: string;
+    isReviewed: boolean;
     remainingDueAt?: string;
     timeline: OrderTimelineDto[];
     items: OrderItemDto[];
@@ -63,6 +64,10 @@ export const orderService = {
     },
     verifyDelivery: async (orderId: string, base64Image: string) => {
         const res = await apiClient.post<ApiResponse<string>>(`/user-orders/${orderId}/verify-delivery`, { base64Image });
+        return res.data;
+    },
+    verifyReturn: async (orderId: string, base64Image: string) => {
+        const res = await apiClient.post<ApiResponse<string>>(`/user-orders/${orderId}/verify-return`, { base64Image });
         return res.data;
     }
 };
