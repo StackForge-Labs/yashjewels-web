@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 
 // ─── Types ─────────────────────────────────────────────────────
 // ─── Types ─────────────────────────────────────────────────────
-type ReturnStatus = "SUBMITTED" | "AUTHORIZED" | "IN_TRANSIT" | "RECEIVED_AT_STORE" | "APPROVED" | "REJECTED" | "REFUNDING" | "COMPLETED";
+type ReturnStatus = "RETURN_REQUESTED" | "RETURN_AUTHORIZED" | "RETURN_IN_TRANSIT" | "RETURN_RECEIVED" | "RETURN_APPROVED" | "RETURN_REJECTED" | "REFUNDING" | "COMPLETED";
 
 interface ReturnRequest {
     id: string;
@@ -23,12 +23,12 @@ interface ReturnRequest {
 }
 
 const statusCfg: Record<ReturnStatus, { label: string; className: string }> = {
-    SUBMITTED: { label: "Pending Audit", className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" },
-    AUTHORIZED: { label: "Authorized (Wait Shipper)", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400" },
-    IN_TRANSIT: { label: "In Transit", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400" },
-    RECEIVED_AT_STORE: { label: "Received (Audit Req)", className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400" },
-    APPROVED: { label: "Approved (Wait Claim)", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" },
-    REJECTED: { label: "Rejected", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400" },
+    RETURN_REQUESTED: { label: "Pending Audit", className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" },
+    RETURN_AUTHORIZED: { label: "Authorized (Wait Shipper)", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400" },
+    RETURN_IN_TRANSIT: { label: "In Transit", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400" },
+    RETURN_RECEIVED: { label: "Received (Audit Req)", className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400" },
+    RETURN_APPROVED: { label: "Approved (Wait Claim)", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" },
+    RETURN_REJECTED: { label: "Rejected", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400" },
     REFUNDING: { label: "Refunding", className: "bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400" },
     COMPLETED: { label: "Completed", className: "bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400" },
 };
@@ -53,8 +53,8 @@ function ReviewModal({
     const [deductInsurance, setDeductInsurance] = useState(true);
     
     // Check if it's the first stage (Online video audit) or second stage (Physical item audit)
-    const isOnlineAudit = req.status === "SUBMITTED";
-    const isPhysicalAudit = req.status === "RECEIVED_AT_STORE";
+    const isOnlineAudit = req.status === "RETURN_REQUESTED";
+    const isPhysicalAudit = req.status === "RETURN_RECEIVED";
 
     const evidenceList = req.evidenceUrls ? [req.evidenceUrls] : [];
 
@@ -231,7 +231,7 @@ export default function AdminReturnsPage() {
         r.orderNumber.toLowerCase().includes(search.toLowerCase())
     );
 
-    const pendingCount = (returns || []).filter((r) => r.status === "SUBMITTED" || r.status === "RECEIVED_AT_STORE").length;
+    const pendingCount = (returns || []).filter((r) => r.status === "RETURN_REQUESTED" || r.status === "RETURN_RECEIVED").length;
 
     if (loading) return (
         <div className="flex h-[400px] items-center justify-center">
@@ -281,7 +281,7 @@ export default function AdminReturnsPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
                             {filtered.map((r) => {
-                                const cfg = statusCfg[r.status] || statusCfg["SUBMITTED"];
+                                const cfg = statusCfg[r.status] || statusCfg["RETURN_REQUESTED"];
                                 return (
                                     <tr key={r.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                                         <td className="px-6 py-4"><div className="flex items-center gap-2"><ArrowLeftRight className="h-3.5 w-3.5 text-gray-400" /><span className="font-plus-jakarta text-xs font-bold text-gray-700 dark:text-gray-300">{r.orderNumber}</span></div></td>

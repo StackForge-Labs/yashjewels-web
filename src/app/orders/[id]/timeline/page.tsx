@@ -544,6 +544,12 @@ export default function OrderTimelinePage() {
                 </div>
             }>
                 <div className="space-y-6">
+                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3 dark:bg-amber-950/20 dark:border-amber-900/30">
+                        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
+                        <p className="text-xs text-amber-800 leading-relaxed dark:text-amber-400">
+                            <strong>Note:</strong> If the reason for return is not due to a store error (e.g., incorrect item sent, product defect...), an insurance and handling fee equivalent to <strong>2% of the order total</strong> will be deducted from your refund.
+                        </p>
+                    </div>
                     <FormField label="Reason" required><textarea className={`${textareaCls} h-24`} value={returnReason} onChange={(e) => setReturnReason(e.target.value)} /></FormField>
                     <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50">
                         {unboxingVideo ? <div className="text-center"><Video size={32} className="text-emerald-500 mx-auto" /><p className="text-xs mt-1">{unboxingVideo.name}</p></div> : <div className="text-center"><Upload size={32} className="text-gray-400 mx-auto" /><p className="text-[10px] font-bold uppercase text-gray-400">Upload Unboxing Video (Max 50MB)</p></div>}

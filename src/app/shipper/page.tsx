@@ -26,13 +26,13 @@ function formatVnd(n: number) {
 }
 
 // ─── Trip Card ────────────────────────────────────────────────
-function TripCard({ 
-    order, 
+function TripCard({
+    order,
     onAccept,
-    onPickupReturn,
+    // onPickupReturn,
     onDeliverReturn
-}: { 
-    order: ShipperOrderDto; 
+}: {
+    order: ShipperOrderDto;
     onAccept: (order: ShipperOrderDto) => void;
     onDeliverReturn: (order: ShipperOrderDto) => void;
 }) {
@@ -173,7 +173,7 @@ function TripCard({
 }
 
 // ─── Modals ──────────────────────────────────────────────────
-function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber }: { isOpen: boolean; onClose: () => void; onConfirm: () => Promise<void>; orderNumber: string }) {
+function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber, status }: { isOpen: boolean; onClose: () => void; onConfirm: () => Promise<void>; orderNumber: string; status: string }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     if (!isOpen) return null;
 
@@ -186,7 +186,7 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber }: { isOpe
                         <Truck size={32} />
                     </div>
                     <h3 className="font-serif text-2xl text-gray-900 dark:text-white mb-2">
-                        {orderNumber.startsWith("RET-") || orderNumber.includes("RETURN") ? "Nhận Thu Hồi?" : "Nhận Đơn Hàng?"}
+                        {(orderNumber.startsWith("RET-") || orderNumber.includes("RETURN") || status.startsWith("RETURN_")) ? "Nhận Thu Hồi?" : "Nhận Đơn Hàng?"}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
                         Bạn có chắc chắn muốn nhận nhiệm vụ <span className="font-bold text-indigo-600">#{orderNumber}</span> không?
@@ -208,7 +208,13 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber }: { isOpe
                             disabled={isSubmitting}
                             className="flex-[1.5] rounded-2xl bg-indigo-600 py-4 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
                         >
-                            {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Xác Nhận Nhận Việc"}
+                            {isSubmitting ? (
+                                <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                            ) : (orderNumber.startsWith("RET-") || orderNumber.includes("RETURN") || status.startsWith("RETURN_")) ? (
+                                "Xác nhận lấy hàng"
+                            ) : (
+                                "Xác nhận giao đơn"
+                            )}
                         </button>
                     </div>
                 </div>
@@ -279,9 +285,9 @@ export default function ShipperHomePage() {
 
     const filtered = orders.filter((o) => {
         const matchFilter = activeFilter === "ALL" ||
-            (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED") : 
-             activeFilter === "RETURN_JOBS" ? (o.status === "RETURN_AUTHORIZED" || o.status === "RETURN_IN_TRANSIT") :
-             o.status === activeFilter);
+            (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED") :
+                activeFilter === "RETURN_JOBS" ? (o.status === "RETURN_AUTHORIZED" || o.status === "RETURN_IN_TRANSIT") :
+                    o.status === activeFilter);
         const term = search.toLowerCase();
         const matchSearch =
             (o.shippingName || o.customerName).toLowerCase().includes(term) ||
@@ -334,7 +340,7 @@ export default function ShipperHomePage() {
 
             {/* Filter Chips */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {([["ALL", "Tất Cả"], ["SHIP_PENDING", "Chờ Nhận"], ["SHIPPED", "Đang Giao"], ["RETURN_JOBS", "Thu Hồi"], ["DELIVERED", "Lịch Sử"]] as const).map(([val, label]) => (
+                {([["ALL", "Tất Cả"], ["SHIP_PENDING", "Chờ Nhận"], ["SHIPPED", "Đang Giao"], ["RETURN_JOBS", "Thu Hồi"], ["DELIVERED", "Đã Giao"]] as const).map(([val, label]) => (
                     <button
                         key={val}
                         onClick={() => setActiveFilter(val)}
@@ -358,10 +364,10 @@ export default function ShipperHomePage() {
                     </div>
                 ) : (
                     filtered.map((order) => (
-                        <TripCard 
-                            key={order.orderId} 
-                            order={order} 
-                            onAccept={(o) => setAcceptModalOrder(o)} 
+                        <TripCard
+                            key={order.orderId}
+                            order={order}
+                            onAccept={(o) => setAcceptModalOrder(o)}
                             onDeliverReturn={(o) => handleDeliverReturn(o.orderId)}
                         />
                     ))
@@ -374,6 +380,7 @@ export default function ShipperHomePage() {
                 onClose={() => setAcceptModalOrder(null)}
                 onConfirm={() => handleAccept(acceptModalOrder!.orderId)}
                 orderNumber={acceptModalOrder?.orderNumber || ""}
+                status={acceptModalOrder?.status || ""}
             />
         </div>
     );

@@ -64,41 +64,23 @@ function ShipperScannerContent() {
     const handleScanSuccess = async (decodedText: string) => {
         if (!orderId) return;
 
-        // Stop scanner immediately
+        // Stop scanner immediately to prevent double execution
         if (scannerRef.current && scannerRef.current.isScanning) {
-            await scannerRef.current.stop();
+            try {
+                await scannerRef.current.stop();
+            } catch (e) {
+                console.error("Stop failed", e);
+            }
         }
 
         setScannedQrToken(decodedText);
+        setScanState("success");
+        toast.success("Mã QR hợp lệ!");
 
-        if (mode === "return") {
-            try {
-                const res = await shipperService.pickupReturn(orderId, decodedText);
-                if (res.success) {
-                    setScanState("success");
-                    toast.success("Xác nhận lấy hàng trả thành công!");
-                    setTimeout(() => {
-                        router.push("/shipper");
-                    }, 2000);
-                } else {
-                    setScanState("error");
-                    setErrorMsg(res.message || "Mã QR không hợp lệ cho việc lấy hàng trả.");
-                }
-            } catch (err: any) {
-                setScanState("error");
-                setErrorMsg(err?.response?.data?.message || "Lỗi kết nối hệ thống.");
-            }
-        } else {
-            setScanState("success");
-            setScannedQrToken(decodedText);
-
-            toast.success("Mã QR hợp lệ!");
-
-            // Auto redirect to POD
-            setTimeout(() => {
-                router.push(`/shipper/pod?orderId=${orderId}&qrToken=${decodedText}`);
-            }, 1500);
-        }
+        // Auto redirect to POD
+        setTimeout(() => {
+            router.push(`/shipper/pod?orderId=${orderId}&qrToken=${decodedText}&mode=${mode}`);
+        }, 1500);
     };
 
     const handleResendEmail = async () => {
@@ -127,7 +109,7 @@ function ShipperScannerContent() {
             {/* Scanning Overlay (Always visible when scanning) */}
             {scanState === "scanning" && (
                 <div className="absolute inset-0 z-10 pointer-events-none">
-                    {/* Dark Mask Overlays (More robust than clip-path) */}
+                    {/* Dark Mask Overlays */}
                     <div className="absolute left-0 right-0 top-0 bg-black/60" style={{ height: 'calc(50% - 125px)' }} />
                     <div className="absolute left-0 right-0 bottom-0 bg-black/60" style={{ height: 'calc(50% - 125px)' }} />
                     <div className="absolute left-0 bg-black/60" style={{ top: 'calc(50% - 125px)', bottom: 'calc(50% - 125px)', width: 'calc(50% - 125px)' }} />
@@ -135,22 +117,15 @@ function ShipperScannerContent() {
 
                     {/* Scanning Frame Layout */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        {/* The Hole/Frame */}
                         <div className="relative h-[250px] w-[250px] overflow-hidden">
-                            {/* Visual Frame Border */}
                             <div className="absolute inset-0 border border-white/20 rounded-3xl" />
-
-                            {/* Modern Corner markers */}
                             <div className="absolute left-0 top-0 h-12 w-12 border-l-4 border-t-4 border-teal-400 rounded-tl-3xl" />
                             <div className="absolute right-0 top-0 h-12 w-12 border-r-4 border-t-4 border-teal-400 rounded-tr-3xl" />
                             <div className="absolute bottom-0 left-0 h-12 w-12 border-b-4 border-l-4 border-teal-400 rounded-bl-3xl" />
                             <div className="absolute bottom-0 right-0 h-12 w-12 border-b-4 border-r-4 border-teal-400 rounded-br-3xl" />
-
-                            {/* Dynamic Scan Line */}
                             <div className="absolute left-2 right-2 h-1 bg-gradient-to-r from-transparent via-teal-400 to-transparent shadow-[0_0_20px_rgba(45,212,191,0.8)] animate-scan" style={{ top: '0%' }} />
                         </div>
 
-                        {/* Status Badge */}
                         <div className="mt-16 flex flex-col items-center gap-3">
                             <div className="rounded-full bg-black/60 px-8 py-3.5 backdrop-blur-xl border border-white/10 shadow-2xl">
                                 <div className="flex items-center gap-3">
@@ -194,9 +169,9 @@ function ShipperScannerContent() {
                 </button>
             </div>
 
-            {/* No Camera Fallback */}
+            {/* Status Overlays */}
             {!hasCamera && (
-                <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black/90 p-8 text-center">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-800">
                         <QrCode className="h-10 w-10 text-gray-400" />
                     </div>
@@ -207,7 +182,7 @@ function ShipperScannerContent() {
                         </p>
                     </div>
                     <button
-                        onClick={() => { startScanner(); }}
+                        onClick={startScanner}
                         className="flex items-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 font-plus-jakarta text-sm font-bold text-white"
                     >
                         <RotateCcw className="h-4 w-4" /> Thử Lại
@@ -215,50 +190,40 @@ function ShipperScannerContent() {
                 </div>
             )}
 
-            {/* Success State */}
             {scanState === "success" && (
-                <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black/90 p-8 text-center">
                     <div className="flex h-24 w-24 items-center justify-center rounded-full bg-teal-500/20 animate-pulse">
                         <CheckCircle2 className="h-12 w-12 text-teal-400" />
                     </div>
                     <div>
                         <h2 className="font-plus-jakarta text-2xl font-black text-white">
-                            {mode === "return" ? "Xác Nhận Lấy Hàng Thành Công!" : "Quét Bằng Chứng Thành Công!"}
+                            {mode === "return" ? "Mã QR Hợp Lệ!" : "Quét Bằng Chứng Thành Công!"}
                         </h2>
-                        <p className="mt-2 font-plus-jakarta text-sm text-gray-400">Chữ ký điện tử toàn vẹn</p>
+                        <p className="mt-2 font-plus-jakarta text-sm text-gray-400">
+                            {mode === "return" ? "Đã xác thực yêu cầu thu hồi hàng" : "Chữ ký điện tử toàn vẹn"}
+                        </p>
                     </div>
-                    <p className="font-plus-jakarta text-xs text-teal-500 font-bold">
-                        {mode === "return" ? "Đang quay lại danh sách nhiệm vụ..." : "Đang chuyển sang bước chụp ảnh POD..."}
+                    <p className="font-plus-jakarta text-xs font-bold text-teal-500">
+                        Đang chuyển sang bước chụp ảnh POD...
                     </p>
                 </div>
             )}
 
-            {/* Error State */}
             {scanState === "error" && (
-                <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black/90 p-8 text-center">
                     <div className="flex h-24 w-24 items-center justify-center rounded-full bg-rose-500/20">
                         <AlertCircle className="h-12 w-12 text-rose-400" />
                     </div>
                     <div>
-                        <h2 className="font-plus-jakarta text-2xl font-black text-white">Mã QR Không Hợp Lệ</h2>
+                        <h2 className="font-plus-jakarta text-2xl font-black text-white">Lỗi Quét Mã</h2>
                         <p className="mt-2 font-plus-jakarta text-sm text-gray-400">{errorMsg}</p>
                     </div>
                     <button
-                        onClick={() => { startScanner(); }}
+                        onClick={startScanner}
                         className="flex items-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 font-plus-jakarta text-sm font-bold text-white"
                     >
                         <RotateCcw className="h-4 w-4" /> Quét Lại
                     </button>
-                </div>
-            )}
-
-            {/* Idle State */}
-            {scanState === "idle" && hasCamera && (
-                <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-teal-600/20">
-                        <QrCode className="h-10 w-10 text-teal-400" />
-                    </div>
-                    <p className="font-plus-jakarta text-lg font-bold text-white">Khởi Động Camera...</p>
                 </div>
             )}
 

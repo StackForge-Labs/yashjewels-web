@@ -13,7 +13,7 @@ function formatVnd(n: number) {
 }
 
 // ─── Swipe Slider ─────────────────────────────────────────
-function SwipeConfirmSlider({ onConfirm, isSubmitting }: { onConfirm: () => void; isSubmitting: boolean }) {
+function SwipeConfirmSlider({ onConfirm, isSubmitting, mode }: { onConfirm: () => void; isSubmitting: boolean; mode: string }) {
     const [position, setPosition] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -66,7 +66,7 @@ function SwipeConfirmSlider({ onConfirm, isSubmitting }: { onConfirm: () => void
             <div className="absolute left-1 h-12 rounded-xl bg-teal-600/10 transition-none" style={{ width: position + 56 }} />
             <div className="absolute inset-0 flex items-center justify-center">
                 <span className="font-plus-jakarta text-sm font-bold tracking-wide text-teal-700/60 dark:text-teal-400/50">
-                    {isSubmitting ? "Đang xử lý..." : confirmed ? "Thả để xác nhận →" : "← Vuốt để Xác Nhận Giao Hàng"}
+                    {isSubmitting ? "Đang xử lý..." : confirmed ? "Thả để xác nhận →" : `← Vuốt để Xác Nhận ${mode === "return" ? "Thu Hồi" : "Giao Hàng"}`}
                 </span>
             </div>
             <div
@@ -87,6 +87,7 @@ function ShipperPodContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get("orderId");
     const qrToken = searchParams.get("qrToken");
+    const mode = searchParams.get("mode") ?? "delivery";
 
     const [podState, setPodState] = useState<PodState>("loading");
     const [orderInfo, setOrderInfo] = useState<ShipperOrderDto | null>(null);
@@ -132,13 +133,13 @@ function ShipperPodContent() {
         setPodState("confirm");
     };
 
-    const handleConfirmDelivery = async () => {
+    const handleConfirmAction = async () => {
         if (!orderId || !qrToken || !photoFile) return;
         setIsSubmitting(true);
-        const loadingToast = toast.loading("Uploading POD evidence and finalizing order...");
+        const actionText = mode === "return" ? "pickup" : "delivery";
+        const loadingToast = toast.loading(`Uploading POD evidence and finalizing ${actionText}...`);
 
         try {
-            // Real Cloudinary Upload
             const CLOUD_NAME = "dilzxumho";
             const UPLOAD_PRESET = "yash_unsigned";
 
@@ -154,11 +155,17 @@ function ShipperPodContent() {
             if (!uploadResponse.ok) throw new Error("Failed to upload photo to vault.");
 
             const uploadData = await uploadResponse.json();
-            const recipientPhotoUrl = uploadData.secure_url;
+            const photoUrl = uploadData.secure_url;
 
-            const res = await shipperService.confirmDeliveryWithQr(orderId, qrToken, recipientPhotoUrl);
+            let res;
+            if (mode === "return") {
+                res = await shipperService.pickupReturn(orderId, qrToken, photoUrl);
+            } else {
+                res = await shipperService.confirmDeliveryWithQr(orderId, qrToken, photoUrl);
+            }
+
             if (res.success) {
-                toast.success("Delivery confirmed successfully!", { id: loadingToast });
+                toast.success(`${mode === "return" ? "Pickup" : "Delivery"} confirmed successfully!`, { id: loadingToast });
                 setPodState("done");
             } else {
                 toast.error(res.message || "QR validation failed or session expired.", { id: loadingToast });
@@ -202,8 +209,12 @@ function ShipperPodContent() {
                     <CheckCircle2 className="h-14 w-14 text-teal-600" />
                 </div>
                 <div>
-                    <h2 className="font-plus-jakarta text-2xl font-black text-gray-900 dark:text-white">ĐÃ GIAO THÀNH CÔNG!</h2>
-                    <p className="mt-2 font-plus-jakarta text-sm text-gray-500">Đơn hàng {orderInfo.orderNumber} đã được xác nhận</p>
+                    <h2 className="font-plus-jakarta text-2xl font-black text-gray-900 dark:text-white">
+                        {mode === "return" ? "ĐÃ THU HỒI THÀNH CÔNG!" : "ĐÃ GIAO THÀNH CÔNG!"}
+                    </h2>
+                    <p className="mt-2 font-plus-jakarta text-sm text-gray-500">
+                        Đơn hàng {orderInfo.orderNumber} đã được xác nhận {mode === "return" ? "lấy lại" : "bàn giao"}
+                    </p>
                 </div>
                 <div className="flex flex-col gap-3 w-full">
                     <button
@@ -231,7 +242,9 @@ function ShipperPodContent() {
                     <button onClick={() => !isSubmitting && router.back()} className="text-gray-400 disabled:opacity-50" disabled={isSubmitting}>
                         <ChevronLeft className="h-5 w-5" />
                     </button>
-                    <h1 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white">Xác Nhận Giao Hàng</h1>
+                    <h1 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white">
+                        {mode === "return" ? "Xác Nhận Thu Hồi (Lấy Hàng)" : "Xác Nhận Giao Hàng"}
+                    </h1>
                 </div>
 
                 <div className="rounded-xl bg-teal-50 p-4 dark:bg-teal-900/10">
@@ -277,7 +290,9 @@ function ShipperPodContent() {
                         <div className={`flex h-7 w-7 items-center justify-center rounded-full font-plus-jakarta text-xs font-black ${photo ? "bg-emerald-600 text-white" : "bg-teal-600 text-white"}`}>
                             {photo ? <CheckCircle2 className="h-4 w-4" /> : "2"}
                         </div>
-                        <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Chụp Ảnh Đồng Kiểm</p>
+                        <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
+                            {mode === "return" ? "Chụp Ảnh Hàng Thu Hồi" : "Chụp Ảnh Đồng Kiểm"}
+                        </p>
                     </div>
 
                     {photo ? (
@@ -307,8 +322,12 @@ function ShipperPodContent() {
                                 className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-teal-200 bg-teal-50/50 py-8 transition-all active:scale-95 hover:bg-teal-100/50 dark:border-teal-800/30 dark:bg-teal-900/5"
                             >
                                 <Camera className="h-8 w-8 text-teal-400" />
-                                <span className="font-plus-jakarta text-sm font-bold text-teal-700 dark:text-teal-400">Nhấn để Chụp Ảnh Hàng</span>
-                                <span className="font-plus-jakarta text-xs text-teal-500/70">Mở seal, khách cầm hàng trên tay</span>
+                                <span className="font-plus-jakarta text-sm font-bold text-teal-700 dark:text-teal-400">
+                                    {mode === "return" ? "Nhấn để Chụp Ảnh Thu Hồi" : "Nhấn để Chụp Ảnh Hàng"}
+                                </span>
+                                <span className="font-plus-jakarta text-xs text-teal-500/70">
+                                    {mode === "return" ? "Đóng gói kỹ, kiểm tra niêm phong" : "Mở seal, khách cầm hàng trên tay"}
+                                </span>
                             </button>
                         </div>
                     )}
@@ -319,9 +338,11 @@ function ShipperPodContent() {
                     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-[#111]">
                         <div className="flex items-center gap-2 mb-4">
                             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 font-plus-jakarta text-xs font-black text-white">3</div>
-                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Xác Nhận Giao Hàng</p>
+                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
+                                {mode === "return" ? "Xác Nhận Thu Hồi" : "Xác Nhận Giao Hàng"}
+                            </p>
                         </div>
-                        <SwipeConfirmSlider onConfirm={handleConfirmDelivery} isSubmitting={isSubmitting} />
+                        <SwipeConfirmSlider onConfirm={handleConfirmAction} isSubmitting={isSubmitting} mode={mode} />
                     </div>
                 )}
             </div>
