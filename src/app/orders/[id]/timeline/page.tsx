@@ -113,9 +113,10 @@ export default function OrderTimelinePage() {
     const deliveredAt = order.timeline?.find(t => t.status === "DELIVERED")?.changedAt;
     const daysSinceDelivery = deliveredAt ? differenceInDays(new Date(), new Date(deliveredAt)) : 0;
     const isWithinReturnWindow = daysSinceDelivery <= 7;
-    const isReturnable = order.status === "DELIVERED" && isWithinReturnWindow;
-    const isReviewable = order.status === "COMPLETED";
-    const isAlreadyReviewed = !!(order as any).review;
+    
+    // Status Logic
+    const isReturnable = order.status === "DELIVERED" && isWithinReturnWindow && !order.returnRequestId;
+    const isReviewable = order.status === "COMPLETED" && !order.isReviewed;
     const hasReturnRequest = !!order.returnRequestId;
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -437,7 +438,7 @@ export default function OrderTimelinePage() {
                                 </motion.div>
                             )}
 
-                            {order.status === "COMPLETED" && (
+                            {order.status === "COMPLETED" && !order.isReviewed && (
                                 <motion.div className="mb-8 rounded-3xl border border-gold/30 bg-gold/5 p-8 shadow-inner shadow-gold/5">
                                     <div className="flex items-start gap-6">
                                         <div className="p-4 rounded-2xl bg-gold text-white shadow-lg shadow-gold/20"><Star size={24} /></div>
@@ -447,6 +448,29 @@ export default function OrderTimelinePage() {
                                             <button onClick={() => setIsReviewModalOpen(true)} className="inline-flex items-center gap-3 rounded-xl bg-gold px-8 py-3.5 text-xs font-bold text-white uppercase hover:bg-gold/90 transition-all">
                                                 Rate & Review <Star size={16} fill="currentColor" />
                                             </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {order.isReviewed && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-8 rounded-3xl border border-emerald-100 bg-emerald-50/50 p-8 text-center"
+                                >
+                                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+                                        <CheckCircle2 size={32} />
+                                    </div>
+                                    <h3 className="font-serif text-2xl text-emerald-900 dark:text-emerald-400">Thank You for Your Feedback!</h3>
+                                    <p className="mt-3 text-sm text-emerald-700/80 leading-relaxed max-w-md mx-auto">
+                                        Sharing your acquisition helps our artisans maintain the highest standard of excellence. 
+                                        <br />
+                                        <span className="font-bold">Please check your email for your exclusive reward coupon!</span>
+                                    </p>
+                                    <div className="mt-8 flex justify-center gap-3">
+                                        <div className="rounded-full bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600 border border-emerald-100 shadow-sm">
+                                            Reward Dispatched
                                         </div>
                                     </div>
                                 </motion.div>

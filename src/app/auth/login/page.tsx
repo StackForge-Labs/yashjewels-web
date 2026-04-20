@@ -65,9 +65,8 @@ const LoginContent = () => {
             if (res.success && !res.requiresTwoFactor) {
                 if (returnUrl) {
                     router.push(returnUrl);
-                } else {
-                    router.push("/");
                 }
+                // No else push("/"): let the useLogin hook handle role-based redirection
                 return;
             }
 
