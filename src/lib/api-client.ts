@@ -84,6 +84,14 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
+        // Auth endpoints (login, social login) return 401 for wrong credentials / ban / suspend.
+        // Never retry these — just surface the error body directly to the caller.
+        const authEndpoints = ["/auth/login", "/auth/google-login", "/auth/facebook-login"];
+        const isAuthEndpoint = authEndpoints.some((ep) => originalRequest.url?.includes(ep));
+        if (isAuthEndpoint) {
+            return Promise.reject(error);
+        }
+
         // If refresh is already in progress, queue this request
         if (isRefreshing) {
             return new Promise((resolve, reject) => {
