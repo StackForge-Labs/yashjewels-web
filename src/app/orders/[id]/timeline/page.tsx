@@ -107,7 +107,7 @@ export default function OrderTimelinePage() {
     if (error || !order) return <div className="py-40 text-center font-serif text-lg text-rose-500">Order not found.</div>;
 
     const currentStatusIdx = orderSteps.map(s => s.statuses.includes(order.status)).lastIndexOf(true);
-    const isCancelled = ["CANCELLED", "REFUNDING", "REFUNDED", "VENDOR_REJECTED"].includes(order.status);
+    const isCancelled = ["CANCELLED", "REFUNDING", "REFUNDED", "VENDOR_REJECTED"].includes(order.status.toUpperCase());
 
     // Return & Review Logic
     const deliveredAt = order.timeline?.find(t => t.status === "DELIVERED")?.changedAt;
@@ -292,7 +292,7 @@ export default function OrderTimelinePage() {
                         </motion.div>
                     )}
 
-                    <div className="mb-0 rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
+                    <div className="mb-8 rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
                         {order.status === "REFUNDED" ? (
                             <div className="flex flex-col items-center justify-center py-10 text-center">
                                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 shadow-inner">
@@ -300,7 +300,7 @@ export default function OrderTimelinePage() {
                                 </div>
                                 <h3 className="mb-3 font-serif text-3xl text-emerald-950 dark:text-emerald-400">Refund Completed</h3>
                                 <p className="max-w-md text-sm leading-relaxed text-emerald-700/70">
-                                    The integrity of your experience is our priority. Your refund has been successfully processed via the original payment method. 
+                                    The integrity of your experience is our priority. Your refund has been successfully processed via the original payment method.
                                     <br />
                                     <span className="font-bold">Thank you for your patience and trust in Yash Jewels.</span>
                                 </p>
@@ -388,8 +388,6 @@ export default function OrderTimelinePage() {
                                     )}
                                 </div>
                             </div>
-
-                            {/* ── DIGITAL DOCUMENT VAULT ────────────────────── */}
                             <div className="rounded-3xl border border-gray-100 bg-white/60 p-6 shadow-sm dark:border-white/5 dark:bg-[#0C0A09]/60 relative overflow-hidden group">
                                 <div className="absolute -right-4 -top-4 text-gold/10 transition-transform group-hover:scale-110 group-hover:rotate-12 duration-700">
                                     <ShieldCheck size={120} />
@@ -426,8 +424,8 @@ export default function OrderTimelinePage() {
                                         </a>
                                     )}
 
-                                    {/* Certification Documents (Only when COMPLETED) */}
-                                    {order.status === "COMPLETED" ? (
+                                    {/* Certification Documents (Unlocked when SHIPPED, DELIVERED, REDELIVERING, REDELIVERED, or COMPLETED) */}
+                                    {["SHIPPED", "DELIVERED", "REDELIVERING", "REDELIVERED", "COMPLETED"].includes(order.status.toUpperCase()) ? (
                                         <div className="pt-4 border-t border-gray-100 dark:border-white/5 space-y-3">
                                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gold mb-2">Certifications</p>
                                             {order.items.map((item, idx) => (
@@ -450,7 +448,7 @@ export default function OrderTimelinePage() {
                                     ) : (
                                         <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 mt-4">
                                             <p className="text-[9px] font-bold text-amber-700/80 dark:text-amber-500/80 uppercase leading-relaxed text-center tracking-widest italic">
-                                                Certifications will be unlocked upon completion.
+                                                Certifications will be unlocked upon shipment.
                                             </p>
                                         </div>
                                     )}
@@ -459,13 +457,13 @@ export default function OrderTimelinePage() {
                         </div>
 
                         <div className="lg:col-span-8">
-                            {(order.status === "DELIVERED" || order.status === "REDELIVERED") && !hasReturnRequest && (
-                                <motion.div className={`mb-8 rounded-3xl border p-8 ${order.status === "REDELIVERED" ? "border-blue-200 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-900/10" : "border-teal-200 bg-teal-50/50 dark:border-teal-900/30 dark:bg-teal-900/10"}`}>
-                                    <h3 className={`mb-2 font-serif text-xl ${order.status === "REDELIVERED" ? "text-blue-900 dark:text-blue-400" : "text-teal-900 dark:text-teal-400"}`}>
-                                        {order.status === "REDELIVERED" ? "Item Returned to You" : "Order Delivered"}
+                            {((order.status.toUpperCase() === "DELIVERED" && !hasReturnRequest) || order.status.toUpperCase() === "REDELIVERED") && (
+                                <motion.div className={`mb-8 rounded-3xl border p-8 ${order.status.toUpperCase() === "REDELIVERED" ? "border-blue-200 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-900/10" : "border-teal-200 bg-teal-50/50 dark:border-teal-900/30 dark:bg-teal-900/10"}`}>
+                                    <h3 className={`mb-2 font-serif text-xl ${order.status.toUpperCase() === "REDELIVERED" ? "text-blue-900 dark:text-blue-400" : "text-teal-900 dark:text-teal-400"}`}>
+                                        {order.status.toUpperCase() === "REDELIVERED" ? "Item Returned to You" : "Order Delivered"}
                                     </h3>
-                                    <p className={`mb-6 text-sm leading-relaxed ${order.status === "REDELIVERED" ? "text-blue-700/80" : "text-teal-700/80"}`}>
-                                        {order.status === "REDELIVERED"
+                                    <p className={`mb-6 text-sm leading-relaxed ${order.status.toUpperCase() === "REDELIVERED" ? "text-blue-700/80" : "text-teal-700/80"}`}>
+                                        {order.status.toUpperCase() === "REDELIVERED"
                                             ? "The item has been successfully returned to you following the return rejection. This order is now finalized."
                                             : "Please confirm receipt of your luxury acquisition."}
                                     </p>
@@ -525,6 +523,7 @@ export default function OrderTimelinePage() {
                                     </div>
                                 </motion.div>
                             )}
+
 
                             <div className="rounded-3xl border border-gray-100 bg-white/60 p-8 dark:border-white/5 dark:bg-[#0C0A09]/60">
                                 <h3 className="mb-8 font-serif text-xl border-b border-gray-100 pb-4 dark:border-white/5 uppercase tracking-widest">Tracking Logistics</h3>

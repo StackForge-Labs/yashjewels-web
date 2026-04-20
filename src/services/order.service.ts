@@ -33,6 +33,7 @@ export interface OrderDetailDto {
     items: OrderItemDto[];
     invoiceUrl?: string;
     insuranceUrl?: string;
+    cancelReason?: string;
 }
 
 export interface OrderItemDto {
