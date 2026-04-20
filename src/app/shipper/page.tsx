@@ -19,6 +19,10 @@ const statusConfig: Record<string, { label: string; className: string; dot: stri
     RETURN_AUTHORIZED: { label: "Hỗ Trợ Thu Hồi (Chờ)", className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", dot: "bg-amber-500 animate-pulse" },
     RETURN_IN_TRANSIT: { label: "Đang Đi Thu Hồi", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
     RETURN_RECEIVED: { label: "Đã Bàn Giao Kho", className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400", dot: "bg-purple-500" },
+    RETURN_REJECTED: { label: "Bị Từ Chối (Giao Lại)", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400", dot: "bg-rose-500 animate-pulse" },
+    REDELIVERING: { label: "Đang Trả Hàng Khách", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
+    REDELIVERED: { label: "Đã Trả Hàng Cho Khách", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
+    REFUNDED: { label: "Đã Hoàn Tiền", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
 };
 
 function formatVnd(n: number) {
@@ -119,12 +123,28 @@ function TripCard({
                             Giao hàng <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                     )}
+                    {order.status === "REDELIVERING" && (
+                        <Link
+                            href={`/shipper/scanner?orderId=${order.orderId}&mode=redelivery`}
+                            className="flex h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-blue-700 ml-1"
+                        >
+                            Trả hàng khách <ChevronRight className="h-3.5 w-3.5" />
+                        </Link>
+                    )}
                     {order.status === "RETURN_AUTHORIZED" && (
                         <button
                             onClick={() => onAccept(order)}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-amber-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-amber-700 ml-1"
                         >
                             Nhận Thu Hồi <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {order.status === "RETURN_REJECTED" && (
+                        <button
+                            onClick={() => onAccept(order)}
+                            className="flex h-10 items-center gap-1.5 rounded-xl bg-rose-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-rose-700 ml-1"
+                        >
+                            Nhận Giao Lại <ChevronRight className="h-3.5 w-3.5" />
                         </button>
                     )}
                     {order.status === "RETURN_IN_TRANSIT" && (!order.qrUsed ? (
@@ -142,7 +162,7 @@ function TripCard({
                             Bàn Giao Kho <ChevronRight className="h-3.5 w-3.5" />
                         </button>
                     ))}
-                    {(order.status === "DELIVERED" || order.status === "COMPLETED" || order.status === "RETURN_RECEIVED") ? (
+                    {(order.status === "DELIVERED" || order.status === "COMPLETED" || order.status === "RETURN_RECEIVED" || order.status === "REFUNDED" || order.status === "REDELIVERED") ? (
                         <span className="flex h-10 items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-100 px-4 font-plus-jakarta text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-900 dark:text-emerald-400 ml-1">
                             <CheckCircle2 className="h-4 w-4" /> Xong
                         </span>
@@ -176,20 +196,25 @@ function TripCard({
 function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber, status }: { isOpen: boolean; onClose: () => void; onConfirm: () => Promise<void>; orderNumber: string; status: string }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     if (!isOpen) return null;
+    
+    // Determine the type of task for UI customization
+    const isReturnPickup = status === "RETURN_AUTHORIZED";
+    const isReturnRedelivery = status === "RETURN_REJECTED";
+    const isReturnRelated = isReturnPickup || isReturnRedelivery || orderNumber.startsWith("RET-") || orderNumber.includes("RETURN") || status.startsWith("RETURN_");
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-sm rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-zinc-900 border border-gray-100 dark:border-white/5 animate-in fade-in zoom-in duration-300">
                 <div className="flex flex-col items-center text-center">
-                    <div className="mb-6 rounded-full bg-indigo-500/10 p-4 text-indigo-600 dark:bg-indigo-500/20">
+                    <div className={`mb-6 rounded-full p-4 ${isReturnRedelivery ? "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20" : "bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20"}`}>
                         <Truck size={32} />
                     </div>
                     <h3 className="font-serif text-2xl text-gray-900 dark:text-white mb-2">
-                        {(orderNumber.startsWith("RET-") || orderNumber.includes("RETURN") || status.startsWith("RETURN_")) ? "Nhận Thu Hồi?" : "Nhận Đơn Hàng?"}
+                        {isReturnRedelivery ? "Nhận Giao Lại?" : isReturnPickup ? "Nhận Thu Hồi?" : "Nhận Đơn Hàng?"}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-                        Bạn có chắc chắn muốn nhận nhiệm vụ <span className="font-bold text-indigo-600">#{orderNumber}</span> không?
+                        Bạn có chắc chắn muốn nhận nhiệm vụ <span className={`font-bold ${isReturnRedelivery ? "text-rose-600" : "text-indigo-600"}`}>#{orderNumber}</span> không?
                     </p>
 
                     <div className="flex w-full gap-3">
@@ -206,11 +231,13 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber, status }:
                                 setIsSubmitting(false);
                             }}
                             disabled={isSubmitting}
-                            className="flex-[1.5] rounded-2xl bg-indigo-600 py-4 text-xs font-bold uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                            className={`flex-[1.5] rounded-2xl py-4 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 ${isReturnRedelivery ? "bg-rose-600 shadow-rose-500/20 hover:bg-rose-700" : "bg-indigo-600 shadow-indigo-500/20 hover:bg-indigo-700"}`}
                         >
                             {isSubmitting ? (
                                 <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                            ) : (orderNumber.startsWith("RET-") || orderNumber.includes("RETURN") || status.startsWith("RETURN_")) ? (
+                            ) : isReturnRedelivery ? (
+                                "Xác nhận giao lại"
+                            ) : isReturnPickup ? (
                                 "Xác nhận lấy hàng"
                             ) : (
                                 "Xác nhận giao đơn"
@@ -279,14 +306,14 @@ export default function ShipperHomePage() {
         loadOrders();
     }, []);
 
-    const pendingCount = orders.filter((o) => ["SHIP_PENDING", "SHIPPED", "RETURN_AUTHORIZED", "RETURN_IN_TRANSIT"].includes(o.status)).length;
-    const deliveredCount = orders.filter((o) => o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED").length;
+    const pendingCount = orders.filter((o) => ["SHIP_PENDING", "SHIPPED", "RETURN_AUTHORIZED", "RETURN_IN_TRANSIT", "RETURN_REJECTED", "REDELIVERING"].includes(o.status)).length;
+    const deliveredCount = orders.filter((o) => ["DELIVERED", "COMPLETED", "RETURN_RECEIVED", "REFUNDED", "REDELIVERED"].includes(o.status)).length;
     const totalCount = orders.length;
 
     const filtered = orders.filter((o) => {
         const matchFilter = activeFilter === "ALL" ||
-            (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED") :
-                activeFilter === "RETURN_JOBS" ? (o.status === "RETURN_AUTHORIZED" || o.status === "RETURN_IN_TRANSIT") :
+            (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED" || o.status === "REFUNDED" || o.status === "REDELIVERED") :
+                activeFilter === "RETURN_JOBS" ? (o.status === "RETURN_AUTHORIZED" || o.status === "RETURN_IN_TRANSIT" || o.status === "RETURN_REJECTED" || o.status === "REDELIVERING") :
                     o.status === activeFilter);
         const term = search.toLowerCase();
         const matchSearch =
@@ -378,7 +405,11 @@ export default function ShipperHomePage() {
             <ConfirmAcceptModal
                 isOpen={!!acceptModalOrder}
                 onClose={() => setAcceptModalOrder(null)}
-                onConfirm={() => handleAccept(acceptModalOrder!.orderId)}
+                onConfirm={async () => {
+                    if (acceptModalOrder) {
+                        await handleAccept(acceptModalOrder.orderId);
+                    }
+                }}
                 orderNumber={acceptModalOrder?.orderNumber || ""}
                 status={acceptModalOrder?.status || ""}
             />

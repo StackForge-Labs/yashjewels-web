@@ -51,12 +51,12 @@ const StatusIcon = ({ status }: { status: string }) => {
 
 const ActorBadge = ({ type }: { type: string }) => {
     const icon = type === "CUSTOMER" ? <User size={10} /> : type === "VENDOR" ? <Store size={10} /> : <Settings size={10} />;
-    const color = type === "CUSTOMER" ? "bg-amber-100/50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-500" 
-        : type === "VENDOR" ? "bg-gold/10 text-gold" 
-        : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
+    const color = type === "CUSTOMER" ? "bg-amber-100/50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-500"
+        : type === "VENDOR" ? "bg-gold/10 text-gold"
+            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
 
     return (
-        <span className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest backdrop-blur-md ${color}`}>
+        <span className={`flex items-center gap-1.5 my-1.5 rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-widest backdrop-blur-md ${color}`}>
             {icon} {type}
         </span>
     );
@@ -66,13 +66,13 @@ export default function OrderTimelinePage() {
     const params = useParams();
     const router = useRouter();
     const orderId = params.id as string;
-    
+
     // Return States
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
     const [returnReason, setReturnReason] = useState("");
     const [unboxingVideo, setUnboxingVideo] = useState<File | null>(null);
     const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
-    
+
     // Review States
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [rating, setProjectRating] = useState(5);
@@ -97,9 +97,9 @@ export default function OrderTimelinePage() {
             { label: "Order Placed", icon: <Package size={20} />, statuses: ["CHECKOUT_INITIATED", "PAYMENT_PENDING", "PAYMENT_FAILED", "DEPOSIT_PENDING", "DEPOSIT_PAID", "CONFIRMED", "AWAITING_FULL_PAYMENT", "PREPARING", "SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
             { label: "Deposit Secured", icon: <Wallet size={20} />, statuses: ["DEPOSIT_PAID", "CONFIRMED", "AWAITING_FULL_PAYMENT", "PREPARING", "SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
             { label: "Preparing", icon: <Store size={20} />, statuses: ["PREPARING", "SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
-            { label: "Packaged", icon: <Package size={20} />, statuses: ["SHIP_PENDING", "SHIPPED", "DELIVERED", "COMPLETED"] },
-            { label: "In Transit", icon: <Truck size={20} />, statuses: ["SHIPPED", "DELIVERED", "COMPLETED"] },
-            { label: "Completed", icon: <CheckCircle2 size={20} />, statuses: ["DELIVERED", "COMPLETED"] }
+            { label: "Packaged", icon: <Package size={20} />, statuses: ["SHIP_PENDING", "SHIPPED", "REDELIVERING", "DELIVERED", "REDELIVERED", "COMPLETED"] },
+            { label: "In Transit", icon: <Truck size={20} />, statuses: ["SHIPPED", "REDELIVERING", "DELIVERED", "REDELIVERED", "COMPLETED"] },
+            { label: "Completed", icon: <CheckCircle2 size={20} />, statuses: ["DELIVERED", "REDELIVERED", "COMPLETED"] }
         ];
     }, []);
 
@@ -108,12 +108,12 @@ export default function OrderTimelinePage() {
 
     const currentStatusIdx = orderSteps.map(s => s.statuses.includes(order.status)).lastIndexOf(true);
     const isCancelled = ["CANCELLED", "REFUNDING", "REFUNDED", "VENDOR_REJECTED"].includes(order.status);
-    
+
     // Return & Review Logic
     const deliveredAt = order.timeline?.find(t => t.status === "DELIVERED")?.changedAt;
     const daysSinceDelivery = deliveredAt ? differenceInDays(new Date(), new Date(deliveredAt)) : 0;
     const isWithinReturnWindow = daysSinceDelivery <= 7;
-    
+
     // Status Logic
     const isReturnable = order.status === "DELIVERED" && isWithinReturnWindow && !order.returnRequestId;
     const isReviewable = order.status === "COMPLETED" && !order.isReviewed;
@@ -157,7 +157,7 @@ export default function OrderTimelinePage() {
             // Frontend upload to Cloudinary (Bypass backend for large files)
             const CLOUD_NAME = "dilzxumho";
             const UPLOAD_PRESET = "yash_unsigned";
-            
+
             const formData = new FormData();
             formData.append("file", unboxingVideo);
             formData.append("upload_preset", UPLOAD_PRESET);
@@ -171,15 +171,15 @@ export default function OrderTimelinePage() {
             );
 
             if (!response.ok) throw new Error("Failed to upload evidence to Cloudinary.");
-            
+
             const uploadData = await response.json();
             const evidenceUrl = uploadData.secure_url;
 
             // Submit URL to our API
-            const res = await postSalesService.submitReturnRequest({ 
-                orderId, 
-                reason: returnReason, 
-                evidenceUrl 
+            const res = await postSalesService.submitReturnRequest({
+                orderId,
+                reason: returnReason,
+                evidenceUrl
             });
 
             if (res.success) {
@@ -219,16 +219,16 @@ export default function OrderTimelinePage() {
         setIsCompleting(true);
         try {
             const res = await orderService.completeOrder(orderId);
-            if (res.success) { 
-                toast.success("Order complete!"); 
-                refetch(); 
+            if (res.success) {
+                toast.success("Order complete!");
+                refetch();
             } else {
                 toast.error(res.message || "Failed.");
             }
-        } catch (err) { 
-            toast.error("Network error."); 
-        } finally { 
-            setIsCompleting(false); 
+        } catch (err) {
+            toast.error("Network error.");
+        } finally {
+            setIsCompleting(false);
         }
     };
 
@@ -266,7 +266,7 @@ export default function OrderTimelinePage() {
                     </button>
 
                     {isClaimable && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="mb-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-8 shadow-lg shadow-emerald-500/10 dark:border-emerald-900/30 dark:bg-emerald-950/20"
@@ -281,7 +281,7 @@ export default function OrderTimelinePage() {
                                         <p className="text-sm text-emerald-700/80">Your physical return has been verified. You can now claim your refund.</p>
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={handleClaimRefund}
                                     disabled={isClaiming}
                                     className="flex w-full md:w-auto items-center justify-center gap-3 rounded-2xl bg-emerald-600 px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-500/30 transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
@@ -292,10 +292,41 @@ export default function OrderTimelinePage() {
                         </motion.div>
                     )}
 
-                    <div className="mb-8 rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
-                        {isCancelled ? (
-                            <div className="flex items-center justify-center py-6 text-rose-500">
-                                <AlertCircle size={40} className="mr-4" /><h3 className="font-serif text-2xl">Order Cancelled</h3>
+                    <div className="mb-0 rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
+                        {order.status === "REFUNDED" ? (
+                            <div className="flex flex-col items-center justify-center py-10 text-center">
+                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 shadow-inner">
+                                    <CheckCircle2 size={40} />
+                                </div>
+                                <h3 className="mb-3 font-serif text-3xl text-emerald-950 dark:text-emerald-400">Refund Completed</h3>
+                                <p className="max-w-md text-sm leading-relaxed text-emerald-700/70">
+                                    The integrity of your experience is our priority. Your refund has been successfully processed via the original payment method. 
+                                    <br />
+                                    <span className="font-bold">Thank you for your patience and trust in Yash Jewels.</span>
+                                </p>
+                            </div>
+                        ) : order.status === "REFUNDING" ? (
+                            <div className="flex flex-col items-center justify-center py-10 text-center">
+                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 shadow-inner">
+                                    <RotateCcw className="animate-spin-slow" size={40} />
+                                </div>
+                                <h3 className="mb-3 font-serif text-3xl text-amber-900 dark:text-amber-400">Refund in Progress</h3>
+                                <p className="max-w-md text-sm leading-relaxed text-amber-700/70">
+                                    Our artisans and finance team are finalizing the return of your funds. You will be notified the moment the transaction is complete.
+                                </p>
+                            </div>
+                        ) : isCancelled ? (
+                            <div className="flex flex-col items-center justify-center py-10 text-center">
+                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
+                                    <AlertCircle size={40} />
+                                </div>
+                                <h3 className="mb-3 font-serif text-3xl text-rose-950 dark:text-rose-400">
+                                    {order.status === "VENDOR_REJECTED" ? "Order Declined" : "Order Cancelled"}
+                                </h3>
+                                <p className="max-w-md text-sm leading-relaxed text-rose-700/70">
+                                    We regret to inform you that this journey has concluded earlier than expected.
+                                    {order.cancelReason && <span className="mt-2 block font-medium">Reason: {order.cancelReason}</span>}
+                                </p>
                             </div>
                         ) : (
                             <div className="relative flex justify-between">
@@ -345,7 +376,7 @@ export default function OrderTimelinePage() {
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {order.status === "AWAITING_FULL_PAYMENT" && (
                                         <div className="mt-6 border-t border-gray-100 pt-6 dark:border-white/5 text-center">
                                             <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest font-bold">Remaining Balance</p>
@@ -363,12 +394,12 @@ export default function OrderTimelinePage() {
                                 <div className="absolute -right-4 -top-4 text-gold/10 transition-transform group-hover:scale-110 group-hover:rotate-12 duration-700">
                                     <ShieldCheck size={120} />
                                 </div>
-                                
+
                                 <h3 className="mb-6 font-serif text-xl flex items-center gap-3 relative z-10">
-                                    <ShieldCheck className="text-gold" size={20} /> 
+                                    <ShieldCheck className="text-gold" size={20} />
                                     The Jewel Vault
                                 </h3>
-                                
+
                                 <div className="space-y-3 relative z-10">
                                     {/* Base Documents */}
                                     {order.invoiceUrl && (
@@ -428,12 +459,18 @@ export default function OrderTimelinePage() {
                         </div>
 
                         <div className="lg:col-span-8">
-                            {order.status === "DELIVERED" && !hasReturnRequest && (
-                                <motion.div className="mb-8 rounded-3xl border border-teal-200 bg-teal-50/50 p-8 dark:border-teal-900/30 dark:bg-teal-900/10">
-                                    <h3 className="mb-2 font-serif text-xl text-teal-900 dark:text-teal-400">Order Delivered</h3>
-                                    <p className="mb-6 text-sm text-teal-700/80 leading-relaxed">Please confirm receipt of your luxury acquisition.</p>
-                                    <button onClick={handleCompleteOrder} disabled={isCompleting} className="inline-flex items-center gap-3 rounded-2xl bg-teal-600 px-8 py-3.5 text-xs font-bold text-white uppercase transition-all hover:bg-teal-700 disabled:opacity-50">
-                                        {isCompleting ? "Confirming..." : "Confirm Receipt"} <CheckCircle2 size={16} />
+                            {(order.status === "DELIVERED" || order.status === "REDELIVERED") && !hasReturnRequest && (
+                                <motion.div className={`mb-8 rounded-3xl border p-8 ${order.status === "REDELIVERED" ? "border-blue-200 bg-blue-50/50 dark:border-blue-900/30 dark:bg-blue-900/10" : "border-teal-200 bg-teal-50/50 dark:border-teal-900/30 dark:bg-teal-900/10"}`}>
+                                    <h3 className={`mb-2 font-serif text-xl ${order.status === "REDELIVERED" ? "text-blue-900 dark:text-blue-400" : "text-teal-900 dark:text-teal-400"}`}>
+                                        {order.status === "REDELIVERED" ? "Item Returned to You" : "Order Delivered"}
+                                    </h3>
+                                    <p className={`mb-6 text-sm leading-relaxed ${order.status === "REDELIVERED" ? "text-blue-700/80" : "text-teal-700/80"}`}>
+                                        {order.status === "REDELIVERED"
+                                            ? "The item has been successfully returned to you following the return rejection. This order is now finalized."
+                                            : "Please confirm receipt of your luxury acquisition."}
+                                    </p>
+                                    <button onClick={handleCompleteOrder} disabled={isCompleting} className={`inline-flex items-center gap-3 rounded-2xl px-8 py-3.5 text-xs font-bold text-white uppercase transition-all disabled:opacity-50 ${order.status === "REDELIVERED" ? "bg-blue-600 hover:bg-blue-700" : "bg-teal-600 hover:bg-teal-700"}`}>
+                                        {isCompleting ? "Confirming..." : "Finalize Order"} <CheckCircle2 size={16} />
                                     </button>
                                 </motion.div>
                             )}
@@ -454,7 +491,7 @@ export default function OrderTimelinePage() {
                             )}
 
                             {order.isReviewed && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="mb-8 rounded-3xl border border-emerald-100 bg-emerald-50/50 p-8 text-center"
@@ -464,7 +501,7 @@ export default function OrderTimelinePage() {
                                     </div>
                                     <h3 className="font-serif text-2xl text-emerald-900 dark:text-emerald-400">Thank You for Your Feedback!</h3>
                                     <p className="mt-3 text-sm text-emerald-700/80 leading-relaxed max-w-md mx-auto">
-                                        Sharing your acquisition helps our artisans maintain the highest standard of excellence. 
+                                        Sharing your acquisition helps our artisans maintain the highest standard of excellence.
                                         <br />
                                         <span className="font-bold">Please check your email for your exclusive reward coupon!</span>
                                     </p>
@@ -493,7 +530,7 @@ export default function OrderTimelinePage() {
                                 <h3 className="mb-8 font-serif text-xl border-b border-gray-100 pb-4 dark:border-white/5 uppercase tracking-widest">Tracking Logistics</h3>
                                 <div className="space-y-10 pl-8 relative">
                                     <div className="absolute top-2 bottom-2 left-[15px] w-[2px] bg-gray-100 dark:bg-white/10" />
-                                    {[...(order.timeline || [])].sort((a,b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).map((item, idx) => {
+                                    {[...(order.timeline || [])].sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).map((item, idx) => {
                                         // Parse evidenceUrl: could be JSON array ["url1","url2"] or legacy single URL
                                         let evidenceList: string[] = [];
                                         if (item.evidenceUrl) {
@@ -506,26 +543,26 @@ export default function OrderTimelinePage() {
                                         }
 
                                         return (
-                                        <div key={item.id} className="relative ml-2">
-                                            <div className={`absolute -left-[35px] top-1 h-[22px] w-[22px] rounded-full border-4 border-white dark:border-[#0C0A09] ${idx === 0 ? "bg-gold" : "bg-gray-200"}`} />
-                                            <h4 className={`text-sm font-bold uppercase ${idx === 0 ? 'text-gold' : ''}`}>{item.status.replace(/_/g, " ")}</h4>
-                                            <ActorBadge type={item.actorType} />
-                                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{item.note}</p>
-                                            <p className="mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest">{format(new Date(item.changedAt), "dd MMM yyyy, HH:mm")}</p>
-                                            
-                                            {/* Shipment Evidence Gallery */}
-                                            {evidenceList.length > 0 && (
-                                                <div className="mt-4 grid grid-cols-2 gap-3">
-                                                    {evidenceList.map((url, i) => (
-                                                        url.match(/\.(mp4|mov|webm|avi)/i) ? (
-                                                            <video key={i} src={url} controls className="w-full rounded-xl border border-gray-100 dark:border-white/10 aspect-video object-cover" />
-                                                        ) : (
-                                                            <img key={i} src={url} alt={`Dispatch Evidence ${i + 1}`} className="w-full rounded-xl border border-gray-100 dark:border-white/10 aspect-video object-cover" />
-                                                        )
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
+                                            <div key={item.id} className="relative ml-2">
+                                                <div className={`absolute -left-[35px] top-1 h-[22px] w-[22px] rounded-full border-4 border-white dark:border-[#0C0A09] ${idx === 0 ? "bg-gold" : "bg-gray-200"}`} />
+                                                <h4 className={`text-sm font-bold uppercase ${idx === 0 ? 'text-gold' : ''}`}>{item.status.replace(/_/g, " ")}</h4>
+                                                <ActorBadge type={item.actorType} />
+                                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{item.note}</p>
+                                                <p className="mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest">{format(new Date(item.changedAt), "dd MMM yyyy, HH:mm")}</p>
+
+                                                {/* Shipment Evidence Gallery */}
+                                                {evidenceList.length > 0 && (
+                                                    <div className="mt-4 grid grid-cols-2 gap-3">
+                                                        {evidenceList.map((url, i) => (
+                                                            url.match(/\.(mp4|mov|webm|avi)/i) ? (
+                                                                <video key={i} src={url} controls className="w-full rounded-xl border border-gray-100 dark:border-white/10 aspect-video object-cover" />
+                                                            ) : (
+                                                                <img key={i} src={url} alt={`Dispatch Evidence ${i + 1}`} className="w-full rounded-xl border border-gray-100 dark:border-white/10 aspect-video object-cover" />
+                                                            )
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         );
                                     })}
                                 </div>

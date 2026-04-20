@@ -20,6 +20,16 @@ interface ReturnRequest {
     totalAmount: number;
     evidenceUrls: string; // From backend is String (URL)
     originalGirdleId?: string;
+    timeline: OrderStatusTimeline[];
+}
+
+interface OrderStatusTimeline {
+    id: string;
+    status: string;
+    note: string;
+    actorType: string;
+    evidenceUrl?: string;
+    changedAt: string;
 }
 
 const statusCfg: Record<ReturnStatus, { label: string; className: string }> = {
@@ -79,7 +89,7 @@ function ReviewModal({
                         <p className="mt-2 font-plus-jakarta text-sm text-gray-700 dark:text-gray-300">{req.reason}</p>
                     </div>
 
-                    {isOnlineAudit && evidenceList.length > 0 && (
+                    {evidenceList.length > 0 && (
                         <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800 bg-gray-50 dark:bg-black/50">
                             <p className="font-plus-jakarta text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Unboxing Video / Media Evidence</p>
                             <div className="grid grid-cols-1 gap-3">
@@ -142,6 +152,37 @@ function ReviewModal({
                         <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
                             <p className="font-plus-jakarta text-[10px] uppercase tracking-wider text-gray-400">Total Paid</p>
                             <p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatVnd(req.totalAmount)}</p>
+                        </div>
+                    </div>
+
+                    {/* ─── NEW: Order Timeline Section ─── */}
+                    <div className="mt-2 rounded-2xl border border-gray-100 bg-gray-50/50 p-6 dark:border-gray-800 dark:bg-black/20">
+                        <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Order History & Status Path</p>
+                        <div className="flex flex-col gap-6">
+                            {req.timeline && req.timeline.length > 0 ? (
+                                req.timeline.map((t, idx) => (
+                                    <div key={t.id} className="relative flex gap-4">
+                                        {/* Connector Line */}
+                                        {idx !== req.timeline.length - 1 && (
+                                            <div className="absolute left-2.5 top-5 h-full w-px bg-gray-200 dark:bg-gray-800" />
+                                        )}
+                                        
+                                        {/* Dot */}
+                                        <div className={`z-10 mt-1 h-5 w-5 shrink-0 rounded-full border-4 border-white dark:border-[#161616] ${idx === 0 ? "bg-amber-500 ring-2 ring-amber-500/20" : "bg-gray-300 dark:bg-gray-700"}`} />
+                                        
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-plus-jakarta text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">{t.status.replace(/_/g, " ")}</span>
+                                                <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">{t.actorType}</span>
+                                            </div>
+                                            {t.note && <p className="font-plus-jakarta text-xs text-gray-500 italic">"{t.note}"</p>}
+                                            <p className="font-plus-jakarta text-[10px] text-gray-400">{new Date(t.changedAt).toLocaleString("vi-VN")}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-xs text-gray-400 italic">No history available for this order.</p>
+                            )}
                         </div>
                     </div>
                 </div>

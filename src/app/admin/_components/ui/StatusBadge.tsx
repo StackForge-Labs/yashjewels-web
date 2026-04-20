@@ -7,7 +7,7 @@ type StatusKey =
     | "checkout_initiated" | "payment_pending" | "payment_failed" | "deposit_pending"
     | "deposit_paid" | "awaiting_full_payment" | "confirmed" | "preparing"
     | "contact_failed" | "vendor_rejected" | "refunding" | "return_requested"
-    | "return_approved" | "return_rejected";
+    | "return_approved" | "return_rejected" | "redelivering" | "redelivered";
 
 const variants: Record<StatusKey, { cls: string; dot?: boolean }> = {
     active:      { cls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", dot: true },
@@ -40,6 +40,8 @@ const variants: Record<StatusKey, { cls: string; dot?: boolean }> = {
     return_requested: { cls: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" },
     return_approved: { cls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" },
     return_rejected: { cls: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400" },
+    redelivering: { cls: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" },
+    redelivered: { cls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" },
 };
 
 interface StatusBadgeProps {

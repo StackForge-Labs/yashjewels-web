@@ -14,6 +14,18 @@ export function GlobalOrderWatcher() {
     const [dismissedOrders, setDismissedOrders] = useState<string[]>([]);
     const pathname = usePathname();
 
+    // Load dismissed alerts from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem("yash_dismissed_alerts");
+        if (saved) {
+            try {
+                setDismissedOrders(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse dismissed alerts", e);
+            }
+        }
+    }, []);
+
     useEffect(() => {
         if (!isAuthenticated) return;
 
@@ -29,8 +41,8 @@ export function GlobalOrderWatcher() {
                     // Find the first actionable urgent order that hasn't been dismissed
                     const criticalOrder = sorted.find(
                         (o) =>
-                            ["AWAITING_FULL_PAYMENT", "VENDOR_REJECTED", "DELIVERED", "RETURN_APPROVED"].includes(o.status) &&
-                            !dismissedOrders.includes(o.orderId)
+                            ["AWAITING_FULL_PAYMENT", "VENDOR_REJECTED", "DELIVERED", "REDELIVERED", "RETURN_APPROVED"].includes(o.status) &&
+                            !dismissedOrders.includes(`${o.orderId}:${o.status}`)
                     );
                     if (criticalOrder) {
                         setUrgentOrder(criticalOrder);
@@ -87,6 +99,16 @@ export function GlobalOrderWatcher() {
                     desc: "Vui lòng kiểm tra hàng hóa. Bạn có 7 ngày để 'Xác Nhận Đã Nhận Hàng' hoặc 'Yêu Cầu Hoàn Trả'. Sau 7 ngày, đơn hàng sẽ tự động hoàn tất.",
                     actionText: "Kiểm Tra Ngay"
                 };
+            case "REDELIVERED":
+                return {
+                    title: "Đã Trả Lại Hàng Cho Bạn",
+                    icon: Truck,
+                    color: "text-blue-500",
+                    bg: "bg-blue-500/10",
+                    border: "border-blue-200 dark:border-blue-800/30",
+                    desc: "Món trang sức đã được giao lại tận tay bạn sau khi quá trình kiểm định trả hàng không được duyệt. Đơn hàng hiện đã chính thức kết thúc.",
+                    actionText: "Xem Chi Tiết"
+                };
             default:
                 return {
                     title: "Cập Nhật Đơn Hàng",
@@ -108,7 +130,9 @@ export function GlobalOrderWatcher() {
             <div className={`relative w-full max-w-md rounded-3xl border bg-white p-8 shadow-2xl dark:bg-[#111] ${content.border}`}>
                 <button
                     onClick={() => {
-                        setDismissedOrders((prev) => [...prev, urgentOrder.orderId]);
+                        const newDismissed = [...dismissedOrders, `${urgentOrder.orderId}:${urgentOrder.status}`];
+                        setDismissedOrders(newDismissed);
+                        localStorage.setItem("yash_dismissed_alerts", JSON.stringify(newDismissed));
                         setUrgentOrder(null);
                     }}
                     className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -131,7 +155,9 @@ export function GlobalOrderWatcher() {
                     <Link
                         href={`/orders/${urgentOrder.orderId}/timeline`}
                         onClick={() => {
-                            setDismissedOrders((prev) => [...prev, urgentOrder.orderId]);
+                            const newDismissed = [...dismissedOrders, `${urgentOrder.orderId}:${urgentOrder.status}`];
+                            setDismissedOrders(newDismissed);
+                            localStorage.setItem("yash_dismissed_alerts", JSON.stringify(newDismissed));
                             setUrgentOrder(null);
                         }}
                         className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-lg ${
