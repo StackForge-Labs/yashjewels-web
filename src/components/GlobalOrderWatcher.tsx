@@ -29,7 +29,7 @@ export function GlobalOrderWatcher() {
                     // Find the first actionable urgent order that hasn't been dismissed
                     const criticalOrder = sorted.find(
                         (o) =>
-                            ["AWAITING_FULL_PAYMENT", "VENDOR_REJECTED", "DELIVERED"].includes(o.status) &&
+                            ["AWAITING_FULL_PAYMENT", "VENDOR_REJECTED", "DELIVERED", "RETURN_APPROVED"].includes(o.status) &&
                             !dismissedOrders.includes(o.orderId)
                     );
                     if (criticalOrder) {
@@ -66,6 +66,16 @@ export function GlobalOrderWatcher() {
                     border: "border-red-200 dark:border-red-800/30",
                     desc: "Người bán đã từ chối đơn hàng của bạn. Số tiền cọc của bạn đang được hoàn lại vào thẻ tín dụng. Vui lòng kiểm tra chi tiết đơn hàng.",
                     actionText: "Xem Chi Tiết"
+                };
+            case "RETURN_APPROVED":
+                return {
+                    title: "Yêu Cầu Trả Hàng Được Duyệt",
+                    icon: ShieldAlert,
+                    color: "text-emerald-500",
+                    bg: "bg-emerald-500/10",
+                    border: "border-emerald-200 dark:border-emerald-800/30",
+                    desc: "Yêu cầu trả hàng và hoàn tiền của bạn đã được kiểm duyệt bởi đội ngũ chuyên gia của Yash Jewels. Bạn hãy nhấn nút bên dưới để nhận lại tiền hoàn ngay lập tức.",
+                    actionText: "Nhận Hoàn Tiền Ngay"
                 };
             case "DELIVERED":
                 return {
@@ -126,7 +136,7 @@ export function GlobalOrderWatcher() {
                         }}
                         className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-lg ${
                             urgentOrder.status === 'VENDOR_REJECTED' ? 'bg-red-600 text-white hover:bg-red-700' :
-                            urgentOrder.status === 'DELIVERED' ? 'bg-emerald-600 text-white hover:bg-emerald-700' :
+                            (urgentOrder.status === 'DELIVERED' || urgentOrder.status === 'RETURN_APPROVED') ? 'bg-emerald-600 text-white hover:bg-emerald-700' :
                             'bg-gold text-white hover:brightness-110 shadow-gold/20'
                         }`}
                     >

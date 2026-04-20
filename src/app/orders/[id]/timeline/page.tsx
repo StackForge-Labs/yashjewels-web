@@ -237,7 +237,7 @@ export default function OrderTimelinePage() {
         try {
             const res = await postSalesService.claimRefund(orderId);
             if (res.success) {
-                toast.success("Refund processed successfully via Stripe!");
+                toast.success(res.message || "Refund processed successfully!");
                 refetch();
             } else {
                 toast.error(res.message || "Failed to process refund.");
