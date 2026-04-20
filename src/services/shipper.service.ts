@@ -30,5 +30,15 @@ export const shipperService = {
     resendQrCode: async (orderId: string) => {
         const res = await apiClient.post<ApiResponse<boolean>>(`/shipper/orders/${orderId}/resend-qr`);
         return res.data;
+    },
+
+    pickupReturn: async (orderId: string) => {
+        const res = await apiClient.put<ApiResponse<boolean>>(`/shipper/orders/${orderId}/return/pickup`);
+        return res.data;
+    },
+
+    deliverReturnToStore: async (orderId: string) => {
+        const res = await apiClient.put<ApiResponse<boolean>>(`/shipper/orders/${orderId}/return/deliver`);
+        return res.data;
     }
 };

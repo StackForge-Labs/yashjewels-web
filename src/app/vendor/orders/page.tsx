@@ -124,22 +124,39 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
     const handleUpload = async () => {
         if (files.length === 0) return;
         setIsUploading(true);
-        // Simulate upload to Cloudinary (progress bar effect)
+        const CLOUD_NAME = "dilzxumho";
+        const UPLOAD_PRESET = "yash_unsigned";
+
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500)); 
+            const uploadedUrls: string[] = [];
             
-            // Generate distinct fake URLs based on file type
-            const uploadedUrls = files.map(file => {
-                if (file.type.startsWith('video/')) {
-                    return `https://res.cloudinary.com/demo/video/upload/v1/${file.name.replace(/[^a-zA-Z0-9]/g, "")}.mp4`;
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", UPLOAD_PRESET);
+                
+                const resourceType = file.type.startsWith("video/") ? "video" : "image";
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Failed to upload ${file.name}`);
                 }
-                return `https://res.cloudinary.com/demo/image/upload/v1/${file.name.replace(/[^a-zA-Z0-9]/g, "")}.jpg`;
-            });
+
+                const data = await response.json();
+                uploadedUrls.push(data.secure_url);
+            }
             
             await onConfirm(uploadedUrls);
             onClose();
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.error("Cloudinary upload error:", err);
+            toast.error(err.message || "Lỗi khi tải tệp lên Cloudinary");
         } finally {
             setIsUploading(false);
         }

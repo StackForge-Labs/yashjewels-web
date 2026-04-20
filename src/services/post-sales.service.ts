@@ -62,5 +62,61 @@ export const postSalesService = {
                 message: getErrorMessage(error) || "Failed to submit return request",
             } as ApiResponse<string>;
         }
+    },
+
+    getAdminReturns: async () => {
+        try {
+            const { data } = await apiClient.get<ApiResponse<any[]>>("/post-sales/admin/returns");
+            return data;
+        } catch (error) {
+            return {
+                success: false,
+                message: getErrorMessage(error) || "Failed to fetch return requests",
+            } as ApiResponse<any[]>;
+        }
+    },
+
+    processReturn: async (requestId: string, approve: boolean, note?: string) => {
+        try {
+            const { data } = await apiClient.post<ApiResponse<boolean>>(
+                `/post-sales/admin/returns/${requestId}/process`,
+                { approve, note }
+            );
+            return data;
+        } catch (error) {
+            return {
+                success: false,
+                message: getErrorMessage(error) || "Failed to process return request",
+            } as ApiResponse<boolean>;
+        }
+    },
+
+    finalProcessReturn: async (requestId: string, approve: boolean, deductInsurance: boolean, note?: string) => {
+        try {
+            const { data } = await apiClient.post<ApiResponse<boolean>>(
+                `/post-sales/admin/returns/${requestId}/final-process`,
+                { approve, deductInsurance, note }
+            );
+            return data;
+        } catch (error) {
+            return {
+                success: false,
+                message: getErrorMessage(error) || "Failed to finalize return request",
+            } as ApiResponse<boolean>;
+        }
+    },
+
+    claimRefund: async (orderId: string) => {
+        try {
+            const { data } = await apiClient.post<ApiResponse<boolean>>(
+                `/post-sales/order/${orderId}/claim-refund`
+            );
+            return data;
+        } catch (error) {
+            return {
+                success: false,
+                message: getErrorMessage(error) || "Failed to claim refund",
+            } as ApiResponse<boolean>;
+        }
     }
 };

@@ -16,6 +16,9 @@ const statusConfig: Record<string, { label: string; className: string; dot: stri
     DELIVERED: { label: "Đã Giao", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
     COMPLETED: { label: "Hoàn Thành", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
     RETURN_REQUESTED: { label: "Có Cố Cáo", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300", dot: "bg-rose-500" },
+    RETURN_AUTHORIZED: { label: "Cần Lấy Hàng Trả", className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", dot: "bg-amber-500 animate-pulse" },
+    RETURN_IN_TRANSIT: { label: "Đang Về Kho", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
+    RETURN_RECEIVED: { label: "Đã Về Kho", className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400", dot: "bg-purple-500" },
 };
 
 function formatVnd(n: number) {
@@ -23,7 +26,17 @@ function formatVnd(n: number) {
 }
 
 // ─── Trip Card ────────────────────────────────────────────────
-function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (order: ShipperOrderDto) => void }) {
+function TripCard({ 
+    order, 
+    onAccept,
+    onPickupReturn,
+    onDeliverReturn
+}: { 
+    order: ShipperOrderDto; 
+    onAccept: (order: ShipperOrderDto) => void;
+    onPickupReturn: (order: ShipperOrderDto) => void;
+    onDeliverReturn: (order: ShipperOrderDto) => void;
+}) {
     const cfg = statusConfig[order.status] || { label: order.status, className: "bg-gray-50 text-gray-700", dot: "bg-gray-500" };
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.shippingAddress)}`;
 
@@ -107,7 +120,23 @@ function TripCard({ order, onAccept }: { order: ShipperOrderDto; onAccept: (orde
                             Giao hàng <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                     )}
-                    {order.status === "DELIVERED" || order.status === "COMPLETED" ? (
+                    {order.status === "RETURN_AUTHORIZED" && (
+                        <button
+                            onClick={() => onPickupReturn(order)}
+                            className="flex h-10 items-center gap-1.5 rounded-xl bg-amber-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-amber-700 ml-1"
+                        >
+                            Xác nhận Lấy hàng <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {order.status === "RETURN_IN_TRANSIT" && (
+                        <button
+                            onClick={() => onDeliverReturn(order)}
+                            className="flex h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-indigo-700 ml-1"
+                        >
+                            Giao hàng tới Kho <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {(order.status === "DELIVERED" || order.status === "COMPLETED" || order.status === "RETURN_RECEIVED") ? (
                         <span className="flex h-10 items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-100 px-4 font-plus-jakarta text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-900 dark:text-emerald-400 ml-1">
                             <CheckCircle2 className="h-4 w-4" /> Xong
                         </span>
@@ -203,6 +232,34 @@ export default function ShipperHomePage() {
         }
     };
 
+    const handlePickupReturn = async (orderId: string) => {
+        try {
+            const res = await shipperService.pickupReturn(orderId);
+            if (res.success) {
+                toast.success("Đã lấy hàng trả thành công!");
+                loadOrders();
+            } else {
+                toast.error(res.message || "Lỗi khi lấy hàng");
+            }
+        } catch (error) {
+            toast.error("Lỗi ngoại lệ.");
+        }
+    };
+
+    const handleDeliverReturn = async (orderId: string) => {
+        try {
+            const res = await shipperService.deliverReturnToStore(orderId);
+            if (res.success) {
+                toast.success("Đã bàn giao hàng về kho thành công!");
+                loadOrders();
+            } else {
+                toast.error(res.message || "Lỗi khi bàn giao");
+            }
+        } catch (error) {
+            toast.error("Lỗi ngoại lệ.");
+        }
+    };
+
     const loadOrders = async () => {
         try {
             setIsLoading(true);
@@ -222,13 +279,13 @@ export default function ShipperHomePage() {
         loadOrders();
     }, []);
 
-    const pendingCount = orders.filter((o) => ["SHIP_PENDING", "SHIPPED"].includes(o.status)).length;
-    const deliveredCount = orders.filter((o) => o.status === "DELIVERED" || o.status === "COMPLETED").length;
+    const pendingCount = orders.filter((o) => ["SHIP_PENDING", "SHIPPED", "RETURN_AUTHORIZED", "RETURN_IN_TRANSIT"].includes(o.status)).length;
+    const deliveredCount = orders.filter((o) => o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED").length;
     const totalCount = orders.length;
 
     const filtered = orders.filter((o) => {
         const matchFilter = activeFilter === "ALL" ||
-            (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED") : o.status === activeFilter);
+            (activeFilter === "DELIVERED" ? (o.status === "DELIVERED" || o.status === "COMPLETED" || o.status === "RETURN_RECEIVED") : o.status === activeFilter);
         const term = search.toLowerCase();
         const matchSearch =
             (o.shippingName || o.customerName).toLowerCase().includes(term) ||
@@ -246,12 +303,12 @@ export default function ShipperHomePage() {
                 <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest opacity-80 relative z-10">Ca Của Bạn</p>
                 <div className="mt-2 flex items-end gap-3 relative z-10">
                     <span className="font-plus-jakarta text-6xl font-black leading-none">{pendingCount}</span>
-                    <span className="mb-2 font-plus-jakarta text-sm font-semibold opacity-80">đơn cần giao</span>
+                    <span className="mb-2 font-plus-jakarta text-sm font-semibold opacity-80">đơn cần xử lý</span>
                 </div>
                 <div className="mt-4 flex items-center gap-4 border-t border-white/20 pt-4 relative z-10">
                     <div>
                         <p className="font-plus-jakarta text-2xl font-black">{deliveredCount}</p>
-                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Đã Giao</p>
+                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Hoàn Tất</p>
                     </div>
                     <div className="h-8 w-px bg-white/20" />
                     <div>
@@ -304,7 +361,15 @@ export default function ShipperHomePage() {
                         Không có đơn hàng nào
                     </div>
                 ) : (
-                    filtered.map((order) => <TripCard key={order.orderId} order={order} onAccept={(o) => setAcceptModalOrder(o)} />)
+                    filtered.map((order) => (
+                        <TripCard 
+                            key={order.orderId} 
+                            order={order} 
+                            onAccept={(o) => setAcceptModalOrder(o)} 
+                            onPickupReturn={(o) => handlePickupReturn(o.orderId)}
+                            onDeliverReturn={(o) => handleDeliverReturn(o.orderId)}
+                        />
+                    ))
                 )}
             </div>
 
