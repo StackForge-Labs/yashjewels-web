@@ -3,7 +3,7 @@
 import React from "react";
 import { RotateCcw } from "lucide-react";
 import FilterDropdown from "./FilterDropdown";
-import { RefItem } from "@/services/catalog.service";
+import { CatalogItem as RefItem } from "@/services/catalog.service";
 
 interface CollectionSidebarProps {
     brands: RefItem[];

@@ -70,9 +70,10 @@ const navGroups = [
         ],
     },
     {
-        title: "Finance & Marketing",
+        title: "Finance & Analytics",
         items: [
-            { name: "Payments & Ledger", href: "/admin/finance", icon: Wallet },
+            { name: "Financial Ledger", href: "/admin/finance", icon: Wallet },
+            { name: "Returns & Claims", href: "/admin/returns", icon: ArrowLeftRight },
             { name: "Gold Rate History", href: "/admin/gold-rates", icon: TrendingUp },
             { name: "Coupons & Promos", href: "/admin/marketing", icon: Ticket },
         ],

@@ -11,7 +11,7 @@ import ProductCard from "@/app/(home)/_components/ProductCard";
 
 import { productService } from "@/services/product.service";
 import { Product } from "@/types/product.types";
-import { catalogService, RefItem } from "@/services/catalog.service";
+import { catalogService, CatalogItem as RefItem } from "@/services/catalog.service";
 import { categoryService } from "@/services/category.service";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
@@ -48,8 +48,8 @@ const ProductDetailPage = () => {
                 setMainImage(found.images?.[0]?.imageUrl || fallbackImages[0]);
                 
                 // Fetch references to show real names
-                catalogService.getBrands().then(brands => {
-                    const b = brands.find(x => x.id === found.brandId);
+                catalogService.brands.getAll().then(res => {
+                    const b = res.data.find(x => x.id === found.brandId);
                     if(b) setBrandName(b.name);
                 });
                 categoryService.getAll().then(cats => {

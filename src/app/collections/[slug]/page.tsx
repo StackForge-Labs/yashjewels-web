@@ -11,7 +11,7 @@ import CollectionSidebar from "../_components/CollectionSidebar";
 import Pagination from "../_components/Pagination";
 
 import { productService } from "@/services/product.service";
-import { catalogService, RefItem } from "@/services/catalog.service";
+import { catalogService, CatalogItem as RefItem } from "@/services/catalog.service";
 import { categoryService } from "@/services/category.service";
 import { Product } from "@/types/product.types";
 import { Category } from "@/types/category.types";
@@ -44,7 +44,7 @@ const CollectionsPage = () => {
         const loadInitialData = async () => {
             const [allCats, allBrands] = await Promise.all([
                 categoryService.getAll(),
-                catalogService.getBrands(),
+                catalogService.brands.getAll(),
             ]);
 
             const cat = allCats.find((c) => c.slug === slug);
@@ -60,7 +60,7 @@ const CollectionsPage = () => {
                     createdAt: "",
                 });
             }
-            setBrands(allBrands);
+            setBrands(allBrands.data);
         };
         loadInitialData();
     }, [slug]);
