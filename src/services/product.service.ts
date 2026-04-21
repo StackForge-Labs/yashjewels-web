@@ -32,6 +32,16 @@ export const productService = {
     }
   },
 
+  getById: async (id: string): Promise<Product | null> => {
+    try {
+      const { data } = await apiClient.get(`/products/${id}`);
+      return data.success ? data.data : null;
+    } catch (error) {
+      console.error(`Failed to fetch product with id: ${id}`, getErrorMessage(error));
+      return null;
+    }
+  },
+
   getBySlug: async (slug: string): Promise<Product | null> => {
     try {
       const { data } = await apiClient.get(`/products/slug/${slug}`);
@@ -86,6 +96,37 @@ export const productService = {
       return { success: data.success, data: data.data, message: data.message || "OK" };
     } catch (error) {
       return { success: false, message: getErrorMessage(error) ?? "An error occurred" };
+    }
+  },
+
+  uploadImages: async (productId: string, files: FileList | File[]): Promise<{ success: boolean; message: string }> => {
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append("files", file));
+      const { data } = await apiClient.post(`/products/${productId}/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return { success: data.success, message: data.message || "Images uploaded successfully" };
+    } catch (error) {
+      return { success: false, message: getErrorMessage(error) ?? "Failed to upload images" };
+    }
+  },
+
+  deleteImage: async (productId: string, imageId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const { data } = await apiClient.delete(`/products/${productId}/images/${imageId}`);
+      return { success: data.success, message: data.message || "Image deleted" };
+    } catch (error) {
+      return { success: false, message: getErrorMessage(error) ?? "Failed to delete image" };
+    }
+  },
+
+  setPrimaryImage: async (productId: string, imageId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const { data } = await apiClient.patch(`/products/${productId}/images/${imageId}/set-primary`);
+      return { success: data.success, message: data.message || "Primary image updated" };
+    } catch (error) {
+      return { success: false, message: getErrorMessage(error) ?? "Failed to set primary image" };
     }
   },
 };

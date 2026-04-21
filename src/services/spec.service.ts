@@ -1,29 +1,59 @@
-import apiClient from "@/lib/api-client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import apiClient, { getErrorMessage } from "@/lib/api-client";
 import { ApiResponse } from "@/types/user.types";
 
 export interface JewelrySpecItem {
     id: string;
-    name?: string; // For general refs
-    caratLabel?: string; // For Gold Karat
-    gradeName?: string; // For Diamond Quality
-    certCode?: string; // For Certification
     isActive: boolean;
+    // Common fields depending on spec
+    name?: string;
+    caratLabel?: string; 
+    gradeName?: string; 
+    certCode?: string; 
+    description?: string;
+    karatValue?: number;
 }
 
+const createSpecCrudService = (endpoint: string) => ({
+    getAll: async (): Promise<{ success: boolean; data: JewelrySpecItem[] }> => {
+        try {
+            const { data } = await apiClient.get<ApiResponse<JewelrySpecItem[]>>(endpoint);
+            return { success: data.success, data: data.success ? data.data : [] };
+        } catch {
+            return { success: false, data: [] };
+        }
+    },
+    create: async (payload: any): Promise<{ success: boolean; message: string; data?: JewelrySpecItem }> => {
+        try {
+            const { data } = await apiClient.post<ApiResponse<JewelrySpecItem>>(endpoint, payload);
+            return { success: data.success, message: data.message || "Created successfully", data: data.data };
+        } catch (error) {
+            return { success: false, message: getErrorMessage(error) ?? "An error occurred" };
+        }
+    },
+    update: async (id: string, payload: any): Promise<{ success: boolean; message: string; data?: JewelrySpecItem }> => {
+        try {
+            const { data } = await apiClient.put<ApiResponse<JewelrySpecItem>>(`${endpoint}/${id}`, payload);
+            return { success: data.success, message: data.message || "Updated successfully", data: data.data };
+        } catch (error) {
+            return { success: false, message: getErrorMessage(error) ?? "An error occurred" };
+        }
+    },
+    delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            const { data } = await apiClient.delete<ApiResponse<any>>(`${endpoint}/${id}`);
+            return { success: data.success, message: data.message || "Deleted successfully" };
+        } catch (error) {
+            return { success: false, message: getErrorMessage(error) ?? "An error occurred" };
+        }
+    },
+});
+
 export const specService = {
-    // Gold Karats
-    getGoldKarats: () => apiClient.get<ApiResponse<JewelrySpecItem[]>>("/jewelry-specs/gold-karats").then(r => r.data),
-    createGoldKarat: (data: any) => apiClient.post<ApiResponse<any>>("/jewelry-specs/gold-karats", data).then(r => r.data),
-    updateGoldKarat: (id: string, data: any) => apiClient.put<ApiResponse<any>>(`/jewelry-specs/gold-karats/${id}`, data).then(r => r.data),
-    deleteGoldKarat: (id: string) => apiClient.delete<ApiResponse<any>>(`/jewelry-specs/gold-karats/${id}`).then(r => r.data),
-
-    // Diamond Qualities
-    getDiamondQualities: () => apiClient.get<ApiResponse<JewelrySpecItem[]>>("/jewelry-specs/diamond-qualities").then(r => r.data),
-    createDiamondQuality: (data: any) => apiClient.post<ApiResponse<any>>("/jewelry-specs/diamond-qualities", data).then(r => r.data),
-    updateDiamondQuality: (id: string, data: any) => apiClient.put<ApiResponse<any>>(`/jewelry-specs/diamond-qualities/${id}`, data).then(r => r.data),
-    deleteDiamondQuality: (id: string) => apiClient.delete<ApiResponse<any>>(`/jewelry-specs/diamond-qualities/${id}`).then(r => r.data),
-
-    // Jewel Types
-    getJewelTypes: () => apiClient.get<ApiResponse<JewelrySpecItem[]>>("/jewelTypes").then(r => r.data),
-    // ... we can add more as needed, but let's start with these primary ones for Attributes management
+    goldKarats: createSpecCrudService("/jewelry-specs/gold-karats"),
+    diamondQualities: createSpecCrudService("/jewelry-specs/diamond-qualities"),
+    diamondSubTypes: createSpecCrudService("/jewelry-specs/diamond-sub-types"),
+    stoneQualities: createSpecCrudService("/jewelry-specs/stone-qualities"),
+    certifications: createSpecCrudService("/jewelry-specs/certifications"),
+    jewelTypes: createSpecCrudService("/jewel-types"),
 };

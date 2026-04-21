@@ -1,3 +1,10 @@
+export interface ProductImage {
+  id: string;
+  imageUrl: string;
+  isPrimary: boolean;
+  displayOrder: number;
+}
+
 export interface Product {
   id: string;
   categoryId: string;
@@ -34,13 +41,45 @@ export interface Product {
   deletedAt?: string;
 
   estimatedFinalPrice: number;
-  images: {
-    id: string;
-    imageUrl: string;
-    altText?: string;
-    isPrimary: boolean;
-    sortOrder: number;
-  }[];
+  stones: ProductStone[];
+  diamonds: ProductDiamond[];
+  images: ProductImage[];
+}
+
+export interface ProductStone {
+  id: string;
+  name: string;
+  stoneQuality: string;
+  quantity: number;
+  weightGm: number;
+  ratePerGm: number;
+  amount: number;
+}
+
+export interface ProductDiamond {
+  id: string;
+  diamondQuality: string;
+  diamondCut: string;
+  quantity: number;
+  weightCts: number;
+  ratePerCt: number;
+  amount: number;
+}
+
+export interface StoneCreateRequest {
+  name: string;
+  stoneQuality: string;
+  quantity: number;
+  weightGm: number;
+  ratePerGm: number;
+}
+
+export interface DiamondCreateRequest {
+  diamondQuality: string;
+  diamondCut: string;
+  quantity: number;
+  weightCts: number;
+  ratePerCt: number;
 }
 
 export interface ProductCreateRequest {
@@ -67,6 +106,8 @@ export interface ProductCreateRequest {
   otherMakingCharge: number;
   vatRate: number;
   quantity: number;
+  stones?: StoneCreateRequest[];
+  diamonds?: DiamondCreateRequest[];
 }
 
 export interface ProductUpdateRequest extends Partial<ProductCreateRequest> {}
