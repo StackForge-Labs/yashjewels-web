@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/lib/api-client";
 import { ApiResponse, PendingKycDto } from "@/types/user.types";
 
@@ -65,7 +66,9 @@ export const getAdminCustomersApi = (
     pageSize: number = 20,
     search?: string,
     status?: number,
-    kycStatus?: string
+    kycStatus?: string,
+    joinedFrom?: string,
+    joinedTo?: string
 ) => {
     const params = new URLSearchParams();
     params.set("page", String(page));
@@ -73,6 +76,8 @@ export const getAdminCustomersApi = (
     if (search) params.set("search", search);
     if (status !== undefined) params.set("status", String(status));
     if (kycStatus) params.set("kycStatus", kycStatus);
+    if (joinedFrom) params.set("joinedFrom", joinedFrom);
+    if (joinedTo) params.set("joinedTo", joinedTo);
     return apiClient.get<ApiResponse<any[]>>(`/admin/customers?${params.toString()}`).then((r) => r.data);
 };
 
@@ -95,11 +100,13 @@ export const banCustomerApi = (id: string, data: Omit<BanCustomerDto, "userId">)
 export const updateUserStatusApi = (userId: string, status: number) =>
     banCustomerApi(userId, { status });
 
-export const exportCustomersApi = async (search?: string, status?: number, kycStatus?: string) => {
+export const exportCustomersApi = async (search?: string, status?: number, kycStatus?: string, joinedFrom?: string, joinedTo?: string) => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (status !== undefined) params.set("status", String(status));
     if (kycStatus) params.set("kycStatus", kycStatus);
+    if (joinedFrom) params.set("joinedFrom", joinedFrom);
+    if (joinedTo) params.set("joinedTo", joinedTo);
     const res = await apiClient.get(`/admin/customers/export?${params.toString()}`, { responseType: "blob" });
     return res.data as Blob;
 };

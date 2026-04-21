@@ -23,10 +23,15 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function resolveErrorMessage(raw: string | null | undefined): string | null {
     if (!raw) return null;
     const lower = raw.toLowerCase();
+    
+    // If the message already contains structured info from server (like "until [date]"), keep it.
+    if (lower.includes("until")) return raw;
+
     if (lower.includes("permanently banned"))
-        return "Your account has been permanently banned. Please contact support@yashjewels.com if you believe this is a mistake.";
+        return "Your account has been permanently banned. Please contact support@yashjewels.com.";
     if (lower.includes("suspended"))
-        return "Your account is temporarily suspended. Please try again later or contact support@yashjewels.com.";
+        return "Your account is temporarily suspended. Please try again later.";
+        
     return raw;
 }
 
