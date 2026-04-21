@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { Plus, Edit3, Mail, MapPin, ShieldCheck, ShieldAlert, Download, Upload, Clock, Ban, Trash2 } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { Plus, Edit3, Mail, MapPin, ShieldCheck, ShieldAlert, Download, Upload, Clock, Ban, Trash2, Calendar, RotateCcw } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
 import { Modal } from "../_components/ui/Modal";
-import { SearchFilterBar } from "../_components/ui/SearchFilterBar";
 import { FormField, inputCls, selectCls, textareaCls } from "../_components/ui/FormField";
 import {
     getCustomersApi,
@@ -54,6 +53,8 @@ interface Customer {
     createdAt: string;
     lifetimeValue: number;
     isActive: boolean;
+    userStatus: string;
+    suspendedUntil?: string;
     lastLoginAt?: string;
     dateOfBirth?: string;
     orderCount?: number;
@@ -62,6 +63,34 @@ interface Customer {
     lastOrderAt?: string;
     recentOrders?: CustomerOrder[];
     addresses?: CustomerAddress[];
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+function getStatusConfig(userStatus: string, suspendedUntil?: string) {
+    const status = userStatus?.toUpperCase();
+    switch (status) {
+        case "ACTIVE":
+            return { label: "Active", classes: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+        case "SUSPENDED": {
+            const until = suspendedUntil ? ` until ${new Date(suspendedUntil).toLocaleDateString()}` : "";
+            return { label: `Suspended${until}`, classes: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+        }
+        case "BANNED":
+            return { label: "Banned", classes: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+        case "UNVERIFIED":
+            return { label: "Unverified", classes: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" };
+        default:
+            return { label: status || "Unknown", classes: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" };
+    }
+}
+
+function UserStatusBadge({ userStatus, suspendedUntil }: { userStatus: string; suspendedUntil?: string }) {
+    const cfg = getStatusConfig(userStatus, suspendedUntil);
+    return (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wide ${cfg.classes}`}>
+            {cfg.label}
+        </span>
+    );
 }
 
 // ── Zod schemas ────────────────────────────────────────────────
@@ -99,6 +128,8 @@ export default function CustomersPage() {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState<string>("");
     const [filterKyc, setFilterKyc] = useState<string>("");
+    const [joinedFrom, setJoinedFrom] = useState<string>("");
+    const [joinedTo, setJoinedTo] = useState<string>("");
 
     const [selected, setSelected] = useState<Customer | null>(null);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -119,20 +150,38 @@ export default function CustomersPage() {
     const watchBanType = banForm.watch("banType");
 
     // ── Load ────────────────────────────────────────────────────
-    const load = async () => {
+    const load = useCallback(async () => {
         setLoading(true);
         try {
             const statusNum = filterStatus ? parseInt(filterStatus) : undefined;
-            const res = await getCustomersApi(page, 20, search || undefined, statusNum, filterKyc || undefined);
+            const res = await getCustomersApi(
+                page, 20, 
+                search || undefined, 
+                statusNum, 
+                filterKyc || undefined,
+                joinedFrom || undefined,
+                joinedTo || undefined
+            );
             if (res.success) setCustomers(res.data);
         } catch {
             toast.error("Failed to load customers");
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, search, filterStatus, filterKyc, joinedFrom, joinedTo]);
 
-    useEffect(() => { load(); }, [page, search, filterStatus, filterKyc]);
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    const handleResetFilters = () => {
+        setSearch("");
+        setFilterStatus("");
+        setFilterKyc("");
+        setJoinedFrom("");
+        setJoinedTo("");
+        setPage(1);
+    };
 
     // ── Profile ─────────────────────────────────────────────────
     const handleViewProfile = async (id: string) => {
@@ -256,7 +305,13 @@ export default function CustomersPage() {
     const handleExport = async () => {
         try {
             const statusNum = filterStatus ? parseInt(filterStatus) : undefined;
-            const blob = await exportCustomersApi(search || undefined, statusNum, filterKyc || undefined);
+            const blob = await exportCustomersApi(
+                search || undefined, 
+                statusNum, 
+                filterKyc || undefined,
+                joinedFrom || undefined,
+                joinedTo || undefined
+            );
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -297,50 +352,76 @@ export default function CustomersPage() {
 
             <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70">
                 {/* Toolbar */}
-                <SearchFilterBar
-                    placeholder="Search by name, email or phone..."
-                    value={search}
-                    onChange={(v) => { setSearch(v); setPage(1); }}
-                    extra={
+                <div className="flex flex-col gap-4 border-b border-gray-100 p-6 md:flex-row md:items-center dark:border-gray-800/50">
+                    {/* Left Side: Search + Filters */}
+                    <div className="flex flex-1 flex-wrap items-center gap-3">
+                        <div className="relative flex min-w-100 items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 transition-all focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/5 dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:focus-within:border-blue-500">
+                            <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <input
+                                type="text"
+                                placeholder="Search by name, email or phone..."
+                                value={search}
+                                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                                className="w-full bg-transparent font-plus-jakarta text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500"
+                            />
+                        </div>
+
+                        {/* Filters Group */}
                         <div className="flex items-center gap-2">
-                            {/* Status filter */}
                             <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-                                className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-sm font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
+                                className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300 focus:outline-none">
                                 <option value="">All Status</option>
                                 <option value="1">Active</option>
                                 <option value="2">Suspended</option>
                                 <option value="3">Banned</option>
                                 <option value="0">Unverified</option>
                             </select>
-                            {/* KYC filter */}
+                            
                             <select value={filterKyc} onChange={e => { setFilterKyc(e.target.value); setPage(1); }}
-                                className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-sm font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
+                                className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300 focus:outline-none">
                                 <option value="">All KYC</option>
                                 <option value="NONE">None</option>
                                 <option value="PENDING">Pending</option>
                                 <option value="VERIFIED">Verified</option>
                                 <option value="REJECTED">Rejected</option>
                             </select>
-                            {/* Import */}
-                            <input ref={importRef} type="file" accept=".xlsx" className="hidden"
-                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ""; }} />
-                            <button onClick={() => importRef.current?.click()}
-                                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
-                                <Upload className="h-4 w-4" /> Import
-                            </button>
-                            {/* Export */}
-                            <button onClick={handleExport}
-                                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
-                                <Download className="h-4 w-4" /> Export
-                            </button>
-                            {/* New Customer */}
-                            <button onClick={() => setIsCreateOpen(true)}
-                                className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 transition-colors">
-                                <Plus className="h-4 w-4" /> New Customer
+
+                            {/* Join Date Filters */}
+                            <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-800 dark:bg-[#111]">
+                                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                                <input type="date" value={joinedFrom} onChange={e => { setJoinedFrom(e.target.value); setPage(1); }}
+                                    className="bg-transparent font-plus-jakarta text-xs text-gray-600 focus:outline-none dark:text-gray-300" />
+                                <span className="text-gray-300">→</span>
+                                <input type="date" value={joinedTo} onChange={e => { setJoinedTo(e.target.value); setPage(1); }}
+                                    className="bg-transparent font-plus-jakarta text-xs text-gray-600 focus:outline-none dark:text-gray-300" />
+                            </div>
+
+                            <button onClick={handleResetFilters}
+                                className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-gray-400 hover:text-rose-500 transition-colors">
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                Reset
                             </button>
                         </div>
-                    }
-                />
+                    </div>
+
+                    {/* Right Side: Actions */}
+                    <div className="ml-auto flex items-center gap-2">
+                        <input ref={importRef} type="file" accept=".xlsx" className="hidden"
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ""; }} />
+                        <button onClick={() => importRef.current?.click()}
+                            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
+                            <Upload className="h-4 w-4" /> Import
+                        </button>
+                        <button onClick={handleExport}
+                            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
+                            <Download className="h-4 w-4" /> Export
+                        </button>
+                        <button onClick={() => setIsCreateOpen(true)}
+                            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 transition-colors">
+                            <Plus className="h-4 w-4" /> New Customer
+                        </button>
+                    </div>
+                </div>
 
                 {/* Table */}
                 <div className="overflow-x-auto">
@@ -349,7 +430,7 @@ export default function CustomersPage() {
                     ) : (
                         <table className="w-full whitespace-nowrap text-left text-sm">
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                                <tr>{["Client", "Security", "KYC", "Joined", "Spent", "Actions"].map(h => (
+                                <tr>{["Client", "Security", "KYC", "Account Status", "Joined", "Spent", "Actions"].map(h => (
                                     <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>
                                 ))}</tr>
                             </thead>
@@ -377,7 +458,10 @@ export default function CustomersPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4"><StatusBadge status={c.kycStatus.toLowerCase()} label={c.kycStatus} /></td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4">
+                                            <UserStatusBadge userStatus={c.userStatus ?? (c.isActive ? "ACTIVE" : "UNVERIFIED")} suspendedUntil={c.suspendedUntil} />
+                                        </td>
+                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString("en-GB")}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.lifetimeValue?.toLocaleString() ?? 0} VND</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5">
@@ -389,7 +473,7 @@ export default function CustomersPage() {
                                                     className="rounded-lg bg-gray-100 p-1.5 text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:bg-gray-800 dark:text-gray-400">
                                                     <Edit3 className="h-3.5 w-3.5" />
                                                 </button>
-                                                {c.isActive ? (
+                                                {(c.userStatus === "ACTIVE" || (!c.userStatus && c.isActive)) ? (
                                                     <button onClick={() => { setSelected(c); openBan(c); }}
                                                         className="rounded-lg bg-rose-50 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-rose-600 hover:bg-rose-100">
                                                         Restrict
@@ -408,7 +492,7 @@ export default function CustomersPage() {
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan={6} className="px-6 py-20 text-center font-plus-jakarta text-sm text-gray-400">No customers found.</td></tr>
+                                    <tr><td colSpan={7} className="px-6 py-20 text-center font-plus-jakarta text-sm text-gray-400">No customers found.</td></tr>
                                 )}
                             </tbody>
                         </table>
