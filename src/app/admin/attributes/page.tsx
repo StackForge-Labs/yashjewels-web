@@ -36,9 +36,9 @@ export default function AttributesPage() {
         setLoading(true);
         try {
             const [karats, qualities, types] = await Promise.all([
-                specService.getGoldKarats(),
-                specService.getDiamondQualities(),
-                specService.getJewelTypes()
+                specService.goldKarats.getAll(),
+                specService.diamondQualities.getAll(),
+                specService.jewelTypes.getAll()
             ]);
 
             const unified: UnifiedAttribute[] = [
@@ -67,10 +67,13 @@ export default function AttributesPage() {
             let res;
             if (form.type === "Gold Karat") {
                 const payload = { caratLabel: form.value, isActive: form.is_active };
-                res = mode === "create" ? await specService.createGoldKarat(payload) : await specService.updateGoldKarat(selected!.id, payload);
+                res = mode === "create" ? await specService.goldKarats.create(payload) : await specService.goldKarats.update(selected!.id, payload);
             } else if (form.type === "Diamond Quality") {
                 const payload = { gradeName: form.value, isActive: form.is_active };
-                res = mode === "create" ? await specService.createDiamondQuality(payload) : await specService.updateDiamondQuality(selected!.id, payload);
+                res = mode === "create" ? await specService.diamondQualities.create(payload) : await specService.diamondQualities.update(selected!.id, payload);
+            } else if (form.type === "Jewel Type") {
+                const payload = { name: form.value, isActive: form.is_active };
+                res = mode === "create" ? await specService.jewelTypes.create(payload) : await specService.jewelTypes.update(selected!.id, payload);
             }
 
             if (res?.success) {
@@ -90,8 +93,9 @@ export default function AttributesPage() {
         setActionLoading(true);
         try {
             let res;
-            if (selected.type === "Gold Karat") res = await specService.deleteGoldKarat(selected.id);
-            if (selected.type === "Diamond Quality") res = await specService.deleteDiamondQuality(selected.id);
+            if (selected.type === "Gold Karat") res = await specService.goldKarats.delete(selected.id);
+            if (selected.type === "Diamond Quality") res = await specService.diamondQualities.delete(selected.id);
+            if (selected.type === "Jewel Type") res = await specService.jewelTypes.delete(selected.id);
             
             if (res?.success) {
                 toast.success("Deleted successfully.");

@@ -1,70 +1,115 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Eye, Store, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, UserCog, Mail, Phone, Calendar } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
-import { FormField, inputCls, selectCls } from "../_components/ui/FormField";
+import { FormField, inputCls } from "../_components/ui/FormField";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { adminService } from "@/services/admin.service";
+import { toast } from "sonner";
 
 const vendorSchema = z.object({
-    business_name: z.string().min(2, "Business name is required"),
-    tax_code: z.string().min(5, "Valid tax code is required"),
-    commission_rate: z.coerce.number().min(0, "Must be positive"),
-    vendor_level: z.coerce.number().min(1),
-    max_sub_vendors: z.coerce.number().min(0),
+    fullName: z.string().min(2, "Full name is required"),
+    email: z.string().email("Valid email is required"),
+    phoneNumber: z.string().min(10, "Valid phone number is required"),
 });
+
 type VendorFormData = z.infer<typeof vendorSchema>;
 
 type Vendor = {
-    id: string; business_name: string; tax_code: string; commission_rate: number;
-    vendor_level: number; max_sub_vendors: number; kyc_status: "verified" | "pending" | "rejected";
-    status: "active" | "inactive"; sla_violations: number; joined: string;
+    userId: string;
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    status: number; // 0=Unverified, 1=Active, 2=Suspended, 3=Banned
+    createdAt: string;
 };
 
-const initialVendors: Vendor[] = [
-    { id: "1", business_name: "Premium Gems Ltd", tax_code: "MST-0123456789", commission_rate: 12, vendor_level: 1, max_sub_vendors: 10, kyc_status: "verified", status: "active", sla_violations: 0, joined: "2026-01-10" },
-    { id: "2", business_name: "Aurum Mines Corp", tax_code: "MST-9876543210", commission_rate: 8, vendor_level: 2, max_sub_vendors: 5, kyc_status: "verified", status: "active", sla_violations: 1, joined: "2026-03-22" },
-    { id: "3", business_name: "Jade Dynasty Trade", tax_code: "MST-1122334455", commission_rate: 10, vendor_level: 1, max_sub_vendors: 8, kyc_status: "pending", status: "inactive", sla_violations: 0, joined: "2026-04-01" },
-];
-
-type FormData = { business_name: string; tax_code: string; commission_rate: number; vendor_level: number; max_sub_vendors: number };
-const emptyForm: FormData = { business_name: "", tax_code: "", commission_rate: 10, vendor_level: 1, max_sub_vendors: 5 };
-
 export default function VendorsPage() {
-    const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+    const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [selected, setSelected] = useState<Vendor | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isSuspendOpen, setIsSuspendOpen] = useState(false);
+    const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
 
-    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<VendorFormData>({
         resolver: zodResolver(vendorSchema),
-        defaultValues: { business_name: "", tax_code: "", commission_rate: 10, vendor_level: 1, max_sub_vendors: 5 }
+        defaultValues: { fullName: "", email: "", phoneNumber: "" }
     });
 
-    const handleCreate = (data: VendorFormData) => {
-        setVendors([{ ...data, id: Date.now().toString(), kyc_status: "pending", status: "inactive", sla_violations: 0, joined: new Date().toISOString().split("T")[0] }, ...vendors]);
-        setIsDrawerOpen(false);
-        reset();
+    const fetchVendors = async () => {
+        setIsLoading(true);
+        try {
+            const res = await adminService.getVendorsApi();
+            if (res.success) setVendors(res.data);
+        } catch {
+            toast.error("Failed to load vendors");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleToggle = () => {
+    useEffect(() => {
+        fetchVendors();
+    }, []);
+
+    const handleCreate = async (data: VendorFormData) => {
+        try {
+            const res = await adminService.createVendorApi(data);
+            if (res.success) {
+                toast.success("Vendor created and invitation sent via email!");
+                setIsDrawerOpen(false);
+                reset();
+                fetchVendors();
+            } else {
+                toast.error(res.message);
+            }
+        } catch {
+            toast.error("An error occurred during vendor creation");
+        }
+    };
+
+    const handleToggleStatus = async () => {
         if (!selected) return;
-        setVendors(vendors.map(v => v.id === selected.id ? { ...v, status: v.status === "active" ? "inactive" : "active" } : v));
-        setIsSuspendOpen(false);
+        const newStatus = selected.status === 1 ? 2 : 1; // 1=Active, 2=Suspended
+        try {
+            const res = await adminService.updateVendorStatusApi(selected.userId, newStatus);
+            if (res.success) {
+                toast.success(`Vendor status updated successfully`);
+                setIsStatusConfirmOpen(false);
+                fetchVendors();
+            }
+        } catch {
+            toast.error("Failed to update status");
+        }
+    };
+
+    const getStatusStr = (status: number) => {
+        switch (status) {
+            case 0: return "unverified";
+            case 1: return "active";
+            case 2: return "suspended";
+            case 3: return "banned";
+            default: return "inactive";
+        }
     };
 
     return (
         <div className="flex flex-col gap-8">
-            <PageHeader title="Vendor Management" description="Manage B2B partners, supplier commissions, and business KYC."
+            <PageHeader 
+                title="Staff Management" 
+                description="Manage your internal store staff and vendors. Invite new members via email invitation."
                 actions={
-                    <button onClick={() => { reset(emptyForm as any); setIsDrawerOpen(true); }} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] hover:bg-blue-700">
-                        <Plus className="h-4 w-4" /> Add Vendor
+                    <button 
+                        onClick={() => { reset(); setIsDrawerOpen(true); }} 
+                        className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.3)] hover:bg-blue-700"
+                    >
+                        <Plus className="h-4 w-4" /> Invite Staff
                     </button>
                 }
             />
@@ -73,35 +118,57 @@ export default function VendorsPage() {
                 <div className="overflow-x-auto">
                     <table className="w-full whitespace-nowrap text-left text-sm">
                         <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                            <tr>{["Business", "Level & Rate", "Sub-Vendors", "KYC", "SLA Violations", "Status", ""].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
+                            <tr>
+                                {["Full Name", "Contact info", "Date Joined", "Status", ""].map(h => (
+                                    <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>
+                                ))}
+                            </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                            {vendors.map(v => (
-                                <tr key={v.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                            {isLoading ? (
+                                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">Loading vendors...</td></tr>
+                            ) : vendors.length === 0 ? (
+                                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No staff members found.</td></tr>
+                            ) : vendors.map(v => (
+                                <tr key={v.userId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20"><Store className="h-4 w-4 text-blue-600 dark:text-blue-400" /></div>
-                                            <div>
-                                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{v.business_name}</p>
-                                                <p className="font-plus-jakarta text-xs text-gray-400">{v.tax_code}</p>
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20">
+                                                <UserCog className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                             </div>
+                                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{v.fullName}</p>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Level {v.vendor_level}</span>
-                                        <span className="ml-2 font-plus-jakarta text-sm font-bold text-blue-600">{v.commission_rate}%</span>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                                <Mail className="h-3 w-3" /> {v.email}
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                                <Phone className="h-3 w-3" /> {v.phoneNumber}
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{v.max_sub_vendors} max</td>
-                                    <td className="px-6 py-4"><StatusBadge status={v.kyc_status} /></td>
-                                    <td className="px-6 py-4">
-                                        <span className={`font-plus-jakarta text-sm font-bold ${v.sla_violations > 0 ? "text-rose-600" : "text-emerald-600"}`}>{v.sla_violations}</span>
+                                    <td className="px-6 py-4 text-gray-500">
+                                        <div className="flex items-center gap-1.5 font-plus-jakarta text-xs">
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            {v.createdAt ? new Date(v.createdAt).toLocaleDateString() : "-"}
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4"><StatusBadge status={v.status} /></td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => { setSelected(v); setIsDetailOpen(true); }} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-800"><Eye className="h-4 w-4" /></button>
-                                            <button onClick={() => { setSelected(v); setIsSuspendOpen(true); }} className={`rounded-lg px-2.5 py-1 font-plus-jakarta text-xs font-bold ${v.status === "active" ? "bg-rose-50 text-rose-600 hover:bg-rose-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}`}>
-                                                {v.status === "active" ? "Suspend" : "Activate"}
+                                        <StatusBadge status={getStatusStr(v.status)} />
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center justify-end">
+                                            <button 
+                                                onClick={() => { setSelected(v); setIsStatusConfirmOpen(true); }}
+                                                className={`rounded-lg px-3 py-1.5 font-plus-jakarta text-xs font-bold transition-colors ${
+                                                    v.status === 1 
+                                                        ? "bg-rose-50 text-rose-600 hover:bg-rose-100" 
+                                                        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                                                }`}
+                                            >
+                                                {v.status === 1 ? "Suspend" : "Activate"}
                                             </button>
                                         </div>
                                     </td>
@@ -112,71 +179,50 @@ export default function VendorsPage() {
                 </div>
             </div>
 
-            {/* Add Vendor Drawer */}
-            <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="Add New Vendor" subtitle="Register a new B2B business partner"
-                footer={<>
-                    <button onClick={() => setIsDrawerOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
-                    <button onClick={handleSubmit(handleCreate)} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">Add Vendor</button>
-                </>}>
-                <form onSubmit={handleSubmit(handleCreate)} className="flex flex-col gap-4">
-                    <FormField label="Business Name" required>
-                        <input className={inputCls} placeholder="e.g. Premium Gems Ltd" {...register("business_name")} />
-                        {errors.business_name && <p className="text-rose-500 text-xs mt-1">{errors.business_name.message}</p>}
-                    </FormField>
-                    <FormField label="Tax Code (MST)" required>
-                        <input className={inputCls} placeholder="MST-0123456789" {...register("tax_code")} />
-                        {errors.tax_code && <p className="text-rose-500 text-xs mt-1">{errors.tax_code.message}</p>}
-                    </FormField>
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Vendor Level">
-                            <select className={selectCls} {...register("vendor_level")}>
-                                <option value={1}>Level 1 (Primary)</option>
-                                <option value={2}>Level 2 (Sub)</option>
-                                <option value={3}>Level 3 (Sub-sub)</option>
-                            </select>
-                        </FormField>
-                        <FormField label="Commission Rate (%)">
-                            <input type="number" step="0.5" className={inputCls} placeholder="10" {...register("commission_rate")} />
-                        </FormField>
+            {/* Invite Staff Drawer */}
+            <Drawer 
+                isOpen={isDrawerOpen} 
+                onClose={() => setIsDrawerOpen(false)} 
+                title="Invite New Staff" 
+                subtitle="They will receive an invitation link to set their secure password."
+                footer={
+                    <div className="flex gap-3">
+                        <button onClick={() => setIsDrawerOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
+                        <button 
+                            onClick={handleSubmit(handleCreate)} 
+                            disabled={isSubmitting}
+                            className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40"
+                        >
+                            {isSubmitting ? "Sending..." : "Send Invitation"}
+                        </button>
                     </div>
-                    <FormField label="Max Sub-Vendors">
-                        <input type="number" className={inputCls} placeholder="5" {...register("max_sub_vendors")} />
+                }
+            >
+                <form onSubmit={handleSubmit(handleCreate)} className="flex flex-col gap-5">
+                    <FormField label="Full Name" required>
+                        <input className={inputCls} placeholder="e.g. John Doe" {...register("fullName")} />
+                        {errors.fullName && <p className="text-rose-500 text-xs mt-1">{errors.fullName.message}</p>}
+                    </FormField>
+                    <FormField label="Email Address" required>
+                        <input className={inputCls} type="email" placeholder="staff@yashjewels.com" {...register("email")} />
+                        {errors.email && <p className="text-rose-500 text-xs mt-1">{errors.email.message}</p>}
+                    </FormField>
+                    <FormField label="Phone Number" required>
+                        <input className={inputCls} placeholder="+84 123 456 789" {...register("phoneNumber")} />
+                        {errors.phoneNumber && <p className="text-rose-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
                     </FormField>
                 </form>
             </Drawer>
 
-            {/* Detail Modal */}
-            {selected && (
-                <div className={`fixed inset-0 z-[200] flex items-center justify-center p-4 ${isDetailOpen ? "" : "hidden"}`}>
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsDetailOpen(false)} />
-                    <div className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-[#111]">
-                        <h2 className="font-plus-jakarta text-lg font-bold text-gray-900 dark:text-white mb-4">{selected.business_name}</h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { label: "Tax Code", value: selected.tax_code },
-                                { label: "Level", value: `Level ${selected.vendor_level}` },
-                                { label: "Commission", value: `${selected.commission_rate}%` },
-                                { label: "Max Sub-Vendors", value: String(selected.max_sub_vendors) },
-                                { label: "SLA Violations", value: String(selected.sla_violations) },
-                                { label: "Joined", value: selected.joined },
-                            ].map(({ label, value }) => (
-                                <div key={label} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
-                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">{label}</p>
-                                    <p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{value}</p>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-4 flex gap-3"><StatusBadge status={selected.status} /><StatusBadge status={selected.kyc_status} /></div>
-                        <button onClick={() => setIsDetailOpen(false)} className="mt-5 w-full rounded-xl bg-blue-600 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700">Close</button>
-                    </div>
-                </div>
-            )}
-
-            <ConfirmDialog isOpen={isSuspendOpen} onClose={() => setIsSuspendOpen(false)} onConfirm={handleToggle}
-                title={selected?.status === "active" ? "Suspend Vendor" : "Activate Vendor"}
-                description={`${selected?.status === "active" ? "Suspend" : "Activate"} "${selected?.business_name}"?`}
-                confirmLabel={selected?.status === "active" ? "Suspend" : "Activate"}
-                isDestructive={selected?.status === "active"} />
+            <ConfirmDialog 
+                isOpen={isStatusConfirmOpen} 
+                onClose={() => setIsStatusConfirmOpen(false)} 
+                onConfirm={handleToggleStatus}
+                title={selected?.status === 1 ? "Suspend Account" : "Activate Account"}
+                description={`Are you sure you want to ${selected?.status === 1 ? "suspend" : "activate"} user "${selected?.fullName}"?`}
+                confirmLabel={selected?.status === 1 ? "Suspend" : "Activate"}
+                isDestructive={selected?.status === 1} 
+            />
         </div>
     );
 }
