@@ -2,13 +2,13 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Plus, Edit3, Mail, MapPin, ShieldCheck, ShieldAlert, Download, Upload, Clock, Ban, Trash2, Calendar, RotateCcw } from "lucide-react";
+import { Plus, Edit3, Mail, MapPin, ShieldCheck, ShieldAlert, Download, Upload, Clock, Ban, Trash2, Calendar, RotateCcw, CheckCircle2, UserX, HelpCircle, Search, Filter } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { ConfirmDialog } from "../_components/ui/ConfirmDialog";
 import { Modal } from "../_components/ui/Modal";
-import { FormField, inputCls, selectCls, textareaCls } from "../_components/ui/FormField";
+import { FormField, inputCls, textareaCls } from "../_components/ui/FormField";
 import {
     getCustomersApi,
     getCustomerDetailApi,
@@ -67,28 +67,54 @@ interface Customer {
 }
 
 // ── Helpers ────────────────────────────────────────────────────
-function getStatusConfig(userStatus: string, suspendedUntil?: string) {
-    const status = userStatus?.toUpperCase();
-    switch (status) {
+function getStatusConfig(userStatus: any, suspendedUntil?: string) {
+    const s = String(userStatus || "").toUpperCase();
+    switch (s) {
+        case "1":
         case "ACTIVE":
-            return { label: "Active", classes: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+            return { 
+                label: "Active", 
+                icon: <CheckCircle2 className="h-3 w-3" />,
+                classes: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" 
+            };
+        case "2":
         case "SUSPENDED": {
-            const until = suspendedUntil ? ` until ${new Date(suspendedUntil).toLocaleDateString()}` : "";
-            return { label: `Suspended${until}`, classes: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+            const until = suspendedUntil ? ` • ${new Date(suspendedUntil).toLocaleDateString()}` : "";
+            return { 
+                label: `Suspended${until}`, 
+                icon: <Clock className="h-3 w-3" />,
+                classes: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" 
+            };
         }
+        case "3":
         case "BANNED":
-            return { label: "Banned", classes: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+            return { 
+                label: "Banned", 
+                icon: <Ban className="h-3 w-3" />,
+                classes: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" 
+            };
+        case "0":
         case "UNVERIFIED":
-            return { label: "Unverified", classes: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" };
+            return { 
+                label: "Unverified", 
+                icon: <UserX className="h-3 w-3" />,
+                classes: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" 
+            };
         default:
-            return { label: status || "Unknown", classes: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" };
+            return { 
+                label: s || "Unknown", 
+                icon: <HelpCircle className="h-3 w-3" />,
+                classes: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" 
+            };
     }
 }
 
-function UserStatusBadge({ userStatus, suspendedUntil }: { userStatus: string; suspendedUntil?: string }) {
+function UserStatusBadge({ userStatus, suspendedUntil }: { userStatus: string | any; suspendedUntil?: string }) {
+    // Robust check for both camelCase and PascalCase from API
     const cfg = getStatusConfig(userStatus, suspendedUntil);
     return (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wide ${cfg.classes}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wide ${cfg.classes}`}>
+            {cfg.icon}
             {cfg.label}
         </span>
     );
@@ -160,7 +186,6 @@ export default function CustomersPage() {
 
     const createForm = useForm<CreateForm>({ resolver: zodResolver(createSchema) });
     const editForm = useForm<EditForm>({ resolver: zodResolver(editSchema) });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const banForm = useForm<BanForm>({ resolver: zodResolver(banSchema) as any, defaultValues: { banType: "2", durationValue: 7, durationUnit: "days" } });
     const watchBanType = banForm.watch("banType");
 
@@ -375,8 +400,22 @@ export default function CustomersPage() {
             <PageHeader
                 title="Customer Directory"
                 description="Manage client profiles, KYC status, and purchase history."
-                badge={{ count: customers.filter(c => c.kycStatus === "Pending").length, label: "KYC pending", color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" }}
             />
+
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                {[
+                    { label: "Total Active", count: customers.filter(c => c.userStatus === "ACTIVE" || c.userStatus === "1").length, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { label: "Suspended", count: customers.filter(c => c.userStatus === "SUSPENDED" || c.userStatus === "2").length, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "Banned", count: customers.filter(c => c.userStatus === "BANNED" || c.userStatus === "3").length, color: "text-rose-600", bg: "bg-rose-50" },
+                    { label: "KYC Pending", count: customers.filter(c => c.kycStatus === "PENDING").length, color: "text-blue-600", bg: "bg-blue-50" },
+                ].map((s, i) => (
+                    <div key={i} className={`rounded-2xl border border-gray-100 ${s.bg} p-4 dark:border-gray-800`}>
+                        <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">{s.label}</p>
+                        <p className={`mt-1 font-plus-jakarta text-2xl font-bold ${s.color}`}>{s.count}</p>
+                    </div>
+                ))}
+            </div>
 
             <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70">
                 {/* Toolbar */}
@@ -384,7 +423,7 @@ export default function CustomersPage() {
                     {/* Left Side: Search + Filters */}
                     <div className="flex flex-1 flex-wrap items-center gap-3">
                         <div className="relative flex min-w-100 items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 transition-all focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/5 dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:focus-within:border-blue-500">
-                            <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <Search className="h-4 w-4 shrink-0 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search by name, email or phone..."
@@ -396,14 +435,17 @@ export default function CustomersPage() {
 
                         {/* Filters Group */}
                         <div className="flex items-center gap-2">
-                            <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-                                className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300 focus:outline-none">
+                            <div className="relative flex items-center">
+                                <Filter className="absolute left-3 h-3 w-3 text-gray-400 pointer-events-none" />
+                                <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+                                    className="rounded-xl border border-gray-200 bg-white pl-8 pr-3 py-2.5 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300 focus:outline-none appearance-none">
                                 <option value="">All Status</option>
                                 <option value="1">Active</option>
                                 <option value="2">Suspended</option>
                                 <option value="3">Banned</option>
                                 <option value="0">Unverified</option>
-                            </select>
+                                </select>
+                            </div>
                             
                             <select value={filterKyc} onChange={e => { setFilterKyc(e.target.value); setPage(1); }}
                                 className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300 focus:outline-none">
@@ -487,7 +529,7 @@ export default function CustomersPage() {
                                         </td>
                                         <td className="px-6 py-4"><StatusBadge status={c.kycStatus.toLowerCase()} label={c.kycStatus} /></td>
                                         <td className="px-6 py-4">
-                                            <UserStatusBadge userStatus={c.userStatus ?? (c.isActive ? "ACTIVE" : "UNVERIFIED")} suspendedUntil={c.suspendedUntil} />
+                                            <UserStatusBadge userStatus={(c as any).userStatus || (c as any).UserStatus} suspendedUntil={c.suspendedUntil} />
                                         </td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString("en-GB")}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.lifetimeValue?.toLocaleString() ?? 0} VND</td>
