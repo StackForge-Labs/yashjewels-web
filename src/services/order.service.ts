@@ -32,9 +32,12 @@ export interface OrderDetailDto {
     timeline: OrderTimelineDto[];
     items: OrderItemDto[];
     invoiceUrl?: string;
+    invoiceThumbnailUrl?: string;
     insuranceUrl?: string;
+    insuranceThumbnailUrl?: string;
     cancelReason?: string;
 }
+
 
 export interface OrderItemDto {
     orderItemId: string;
@@ -44,7 +47,9 @@ export interface OrderItemDto {
     unitPrice: number;
     quantity: number;
     certificationUrl?: string;
+    certificationThumbnailUrl?: string;
 }
+
 
 export const orderService = {
     getOrders: async () => {

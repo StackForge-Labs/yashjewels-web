@@ -8,7 +8,9 @@ export interface ProductImage {
 export interface Product {
   id: string;
   categoryId: string;
+  categoryName?: string;
   brandId: string;
+  brandName?: string;
   productTypeId: string;
   jewelTypeId: string;
   goldKaratId: string;

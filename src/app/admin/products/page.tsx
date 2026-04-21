@@ -16,6 +16,8 @@ import {
     ProductStone, ProductDiamond, StoneCreateRequest, DiamondCreateRequest 
 } from "@/types/product.types";
 import { Category } from "@/types/category.types";
+import { ConfirmModal } from "../_components/ui/ConfirmModal";
+
 
 // ─── Constants ──────────────────────────────────────────────────
 const STATUS_OPTIONS = [
@@ -145,6 +147,13 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
         }
     }, [isEdit, productId]);
 
+    const refreshImages = async () => {
+        if (!productId) return;
+        const data = await productService.getById(productId);
+        if (data) setProductImages(data.images || []);
+    };
+
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         const val = type === "number" ? parseFloat(value) || 0 : value;
@@ -174,6 +183,13 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     };
 
     const handleSubmit = async () => {
+        // Validation logic
+        if (!formData.name) return toast.error("Product name is required");
+        if (!formData.styleCode) return toast.error("Style code is required");
+        if (!formData.categoryId) return toast.error("Category is required");
+        if (!formData.productTypeId) return toast.error("Product type is required");
+        if (formData.goldWeightGm <= 0) return toast.error("Gold weight must be greater than 0");
+
         setSubmitting(true);
         try {
             if (isEdit) {
@@ -188,8 +204,6 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                 if (res.success) {
                     toast.success("Product created! Now you can upload images.");
                     onSuccess();
-                    // Don't close, switch to edit mode or ask to upload images?
-                    // For now, close and let user edit
                     onClose();
                 } else toast.error(res.message);
             }
@@ -199,6 +213,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
             setSubmitting(false);
         }
     };
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm transition-opacity">
@@ -478,7 +493,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/30 p-12 transition-all hover:border-amber-400 hover:bg-amber-50/30 dark:border-gray-800">
+                                                <div className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/30 p-12 transition-all hover:border-amber-400 hover:bg-amber-50/30 dark:border-gray-800">
                                                     <Upload className="h-8 w-8 text-amber-600" />
                                                     <p className="mt-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:text-gray-300">Master Photography Upload</p>
                                                     <p className="font-plus-jakarta text-xs text-gray-400 mt-1">Accepts high-res PNG, JPG (Max 5MB/file)</p>
@@ -487,7 +502,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                             const res = await productService.uploadImages(productId!, e.target.files);
                                                             if (res.success) {
                                                                 toast.success(res.message);
-                                                                // Reload images...
+                                                                refreshImages();
                                                             } else toast.error(res.message);
                                                         }
                                                     }} />
@@ -498,10 +513,10 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                         <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-800">
                                                             <img src={img.imageUrl} className="h-full w-full object-cover transition-transform group-hover:scale-110" alt="Product" />
                                                             <div className="absolute inset-x-0 bottom-0 flex h-10 translate-y-full items-center justify-between bg-black/60 px-3 transition-all group-hover:translate-y-0">
-                                                                <button onClick={() => productService.setPrimaryImage(productId!, img.id)} className={`text-white transition-colors ${img.isPrimary ? 'text-amber-400' : 'hover:text-amber-400'}`}>
+                                                                <button onClick={async () => { await productService.setPrimaryImage(productId!, img.id); refreshImages(); }} className={`text-white transition-colors ${img.isPrimary ? 'text-amber-400' : 'hover:text-amber-400'}`}>
                                                                     <Star className={`h-4 w-4 ${img.isPrimary ? 'fill-current' : ''}`} />
                                                                 </button>
-                                                                <button onClick={() => productService.deleteImage(productId!, img.id)} className="text-white hover:text-rose-400">
+                                                                <button onClick={async () => { await productService.deleteImage(productId!, img.id); refreshImages(); }} className="text-white hover:text-rose-400">
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </button>
                                                             </div>
@@ -512,6 +527,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                     ))}
                                                 </div>
                                             </>
+
                                         )}
                                     </div>
                                 )}
@@ -551,6 +567,9 @@ export default function AdminProductsPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState<string>();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
@@ -572,6 +591,25 @@ export default function AdminProductsPage() {
         fetchProducts();
         categoryService.getAll().then(setCategories);
     }, [fetchProducts]);
+
+    const handleDelete = async () => {
+        if (!selectedProductId) return;
+        setDeleteLoading(true);
+        try {
+            const res = await productService.delete(selectedProductId);
+            if (res.success) {
+                toast.success("Design permanently removed from vault.");
+                setIsDeleteModalOpen(false);
+                setSelectedProductId(undefined);
+                fetchProducts();
+            } else toast.error(res.message);
+        } catch (e) {
+            toast.error("Deletion failed");
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
 
     const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 
@@ -701,10 +739,10 @@ export default function AdminProductsPage() {
                                     <td className="px-4 py-5">
                                         <div className="flex flex-col gap-1.5">
                                             <span className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                                <LayoutGrid className="h-3 w-3" /> Category TBA
+                                                <LayoutGrid className="h-3 w-3" /> {p.categoryName || "Uncategorized"}
                                             </span>
                                             <span className="font-plus-jakarta text-[10px] text-gray-400 flex items-center gap-1">
-                                                <CheckCircle2 className="h-3 w-3 text-amber-500" /> Brand TBA
+                                                <CheckCircle2 className="h-3 w-3 text-amber-500" /> {p.brandName || "Generic Brand"}
                                             </span>
                                         </div>
                                     </td>
@@ -743,13 +781,22 @@ export default function AdminProductsPage() {
                                         })()}
                                     </td>
                                     <td className="px-8 py-5 text-right">
-                                        <button 
-                                            onClick={() => { setSelectedProductId(p.id); setIsDrawerOpen(true); }}
-                                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-amber-200 hover:text-amber-600 dark:border-gray-800 dark:bg-[#111]"
-                                        >
-                                            <Settings2 className="h-4 w-4" />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button 
+                                                onClick={() => { setSelectedProductId(p.id); setIsDrawerOpen(true); }}
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-amber-200 hover:text-amber-600 dark:border-gray-800 dark:bg-[#111]"
+                                            >
+                                                <Settings2 className="h-4 w-4" />
+                                            </button>
+                                            <button 
+                                                onClick={() => { setSelectedProductId(p.id); setIsDeleteModalOpen(true); }}
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-rose-100 hover:text-rose-600 dark:border-gray-800 dark:bg-[#111]"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))}
                         </tbody>
@@ -778,7 +825,19 @@ export default function AdminProductsPage() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                onClose={() => { setIsDeleteModalOpen(false); setSelectedProductId(undefined); }}
+                onConfirm={handleDelete}
+                loading={deleteLoading}
+                title="De-catalog Master Item?"
+                description="This action will permanently withdraw this design from all storefronts and catalog indexes. Historical order data will remain preserved."
+                confirmText="Permanently Delete"
+                type="danger"
+            />
         </div>
+
     );
 }
 

@@ -5,8 +5,9 @@ import {
     Eye, CheckCircle2, XCircle, PhoneCall, 
     RefreshCw, AlertTriangle, FileText, Upload, 
     Truck, ShieldCheck, ExternalLink,
-    Search, Filter, Plus
+    Search, Filter, Plus, Download, FileBox
 } from "lucide-react";
+
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
@@ -59,6 +60,10 @@ export default function OrdersPage() {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewTitle, setPreviewTitle] = useState("");
+
     
     // Action states
     const [contactForm, setContactForm] = useState({ note: "", isSuccess: true });
@@ -347,11 +352,34 @@ export default function OrdersPage() {
                                         </div>
                                     </div>
                                     
-                                    <div className="flex items-center gap-2 pt-2 border-t border-gray-50 dark:border-gray-800/50">
+                                    <div className="flex items-center gap-3 pt-3 border-t border-gray-50 dark:border-gray-800/50">
                                         {item.certificationUrl ? (
-                                            <a href={item.certificationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                                <ShieldCheck className="h-3 w-3" /> GIA/IGI Certificated
-                                            </a>
+                                            <div className="flex items-center gap-3 w-full">
+                                                <div 
+                                                    onClick={() => { setPreviewUrl(item.certificationUrl!); setPreviewTitle("Jewel Certification"); setIsPreviewModalOpen(true); }}
+                                                    className="relative h-16 w-12 rounded-lg border border-gray-100 bg-white overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all dark:bg-gray-800 dark:border-gray-700"
+                                                >
+                                                    {item.certificationThumbnailUrl ? (
+                                                        <img src={item.certificationThumbnailUrl} className="h-full w-full object-cover" alt="Cert" />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
+                                                            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                        <Eye className="h-3 w-3 text-white" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Certification</span>
+                                                    <button 
+                                                        onClick={() => { setPreviewUrl(item.certificationUrl!); setPreviewTitle("Jewel Certification"); setIsPreviewModalOpen(true); }}
+                                                        className="text-[11px] font-bold text-blue-600 hover:underline text-left"
+                                                    >
+                                                        Click to View GIA/IGI
+                                                    </button>
+                                                </div>
+                                            </div>
                                         ) : (
                                             <button 
                                                 onClick={() => { setDocType("certification"); setSelectedItemId(item.orderItemId); setIsDocModalOpen(true); }}
@@ -361,6 +389,7 @@ export default function OrdersPage() {
                                             </button>
                                         )}
                                     </div>
+
                                 </div>
                             ))}
                         </div>
@@ -374,18 +403,65 @@ export default function OrdersPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square ${detail.invoiceUrl ? 'border-emerald-100 bg-emerald-50/20' : 'border-dashed border-gray-200'}`}>
-                                    <FileText className={`h-8 w-8 ${detail.invoiceUrl ? 'text-emerald-500' : 'text-gray-200'}`} />
-                                    <span className="text-[10px] font-bold uppercase text-gray-500">Sales Invoice</span>
-                                    {detail.invoiceUrl && <a href={detail.invoiceUrl} target="_blank" rel="noreferrer" className="absolute top-2 right-2 p-1.5 rounded-lg bg-white shadow-sm text-gray-400 hover:text-blue-500"><ExternalLink className="h-3 w-3" /></a>}
+                                <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square overflow-hidden transition-all ${detail.invoiceUrl ? 'border-emerald-100 bg-white shadow-sm ring-1 ring-emerald-50' : 'border-dashed border-gray-200 bg-gray-50/30'}`}>
+                                    {detail.invoiceUrl ? (
+                                        <>
+                                            <div onClick={() => { setPreviewUrl(detail.invoiceUrl!); setPreviewTitle("Sales Invoice"); setIsPreviewModalOpen(true); }} className="relative w-full h-full cursor-pointer group">
+                                                {detail.invoiceThumbnailUrl ? (
+                                                    <img src={detail.invoiceThumbnailUrl} className="h-full w-full object-cover" alt="Invoice" />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center bg-emerald-50/50">
+                                                        <FileText className="h-8 w-8 text-emerald-500" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Eye className="h-6 w-6 text-white mb-1" />
+                                                    <span className="text-[10px] font-bold text-white uppercase">Preview</span>
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-2 flex items-center justify-between border-t border-gray-100">
+                                                <span className="text-[10px] font-bold text-gray-500 truncate">Invoice.pdf</span>
+                                                <a href={detail.invoiceUrl} download target="_blank" rel="noreferrer" className="p-1 px-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"><Download className="h-3 w-3" /></a>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FileText className="h-8 w-8 text-gray-200" />
+                                            <span className="text-[10px] font-bold uppercase text-gray-400">No Invoice</span>
+                                        </>
+                                    )}
                                 </div>
-                                <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square ${detail.insuranceUrl ? 'border-blue-100 bg-blue-50/20' : 'border-dashed border-gray-200'}`} 
-                                     onClick={() => { if(!detail.insuranceUrl) { setDocType("insurance"); setIsDocModalOpen(true); } }}>
-                                    <ShieldCheck className={`h-8 w-8 ${detail.insuranceUrl ? 'text-blue-500' : 'text-gray-200'}`} />
-                                    <span className="text-[10px] font-bold uppercase text-gray-500">Insurance</span>
-                                    {detail.insuranceUrl && <a href={detail.insuranceUrl} target="_blank" rel="noreferrer" className="absolute top-2 right-2 p-1.5 rounded-lg bg-white shadow-sm text-gray-400 hover:text-blue-500"><ExternalLink className="h-3 w-3" /></a>}
+
+                                <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square overflow-hidden transition-all ${detail.insuranceUrl ? 'border-blue-100 bg-white shadow-sm ring-1 ring-blue-50' : 'border-dashed border-gray-200 bg-gray-50/30'}`}>
+                                    {detail.insuranceUrl ? (
+                                        <>
+                                            <div onClick={() => { setPreviewUrl(detail.insuranceUrl!); setPreviewTitle("Insurance Policy"); setIsPreviewModalOpen(true); }} className="relative w-full h-full cursor-pointer group">
+                                                {detail.insuranceThumbnailUrl ? (
+                                                    <img src={detail.insuranceThumbnailUrl} className="h-full w-full object-cover" alt="Insurance" />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center bg-blue-50/50">
+                                                        <ShieldCheck className="h-8 w-8 text-blue-500" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Eye className="h-6 w-6 text-white mb-1" />
+                                                    <span className="text-[10px] font-bold text-white uppercase">Preview</span>
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-2 flex items-center justify-between border-t border-gray-100">
+                                                <span className="text-[10px] font-bold text-gray-500 truncate">Insurance.pdf</span>
+                                                <a href={detail.insuranceUrl} download target="_blank" rel="noreferrer" className="p-1 px-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"><Download className="h-3 w-3" /></a>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2" onClick={() => { setDocType("insurance"); setIsDocModalOpen(true); }}>
+                                            <ShieldCheck className="h-8 w-8 text-gray-200" />
+                                            <span className="text-[10px] font-bold uppercase text-gray-400">Add Insurance</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+
                         </div>
 
                         {/* Customer & Shipping */}
@@ -485,7 +561,47 @@ export default function OrdersPage() {
                     </div>
                 </div>
             </Modal>
+
+            {/* PDF Preview Modal */}
+            <Modal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title={previewTitle}
+                size="lg"
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <button onClick={() => setIsPreviewModalOpen(false)} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 hover:bg-gray-50">Close Preview</button>
+                        {previewUrl && (
+                            <a 
+                                href={previewUrl} 
+                                download 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                            >
+                                <Download className="h-4 w-4" /> Download Official PDF
+                            </a>
+                        )}
+                    </div>
+                }
+            >
+                <div className="w-full aspect-[1/1.4] bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
+                    {previewUrl ? (
+                        <iframe 
+                            src={`${previewUrl}#toolbar=0`} 
+                            className="w-full h-full border-none"
+                            title="PDF Preview"
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-4">
+                            <FileBox className="h-12 w-12 text-gray-300 animate-bounce" />
+                            <p className="font-plus-jakarta text-sm font-bold text-gray-400">Loading document vault...</p>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
+
     );
 }
 
