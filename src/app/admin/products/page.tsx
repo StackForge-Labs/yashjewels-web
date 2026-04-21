@@ -614,7 +614,7 @@ export default function AdminProductsPage() {
     const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 
     return (
-        <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-full overflow-x-hidden">
+        <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-full">
             {isDrawerOpen && (
                 <ProductDrawer 
                     productId={selectedProductId} 
@@ -695,12 +695,16 @@ export default function AdminProductsPage() {
             {/* Table Area */}
             <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white/50 backdrop-blur-xl dark:border-gray-800/50 dark:bg-[#0a0a0a]/50 shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full whitespace-nowrap text-left">
+                    <table className="w-full text-left table-fixed min-w-[1000px]">
                         <thead>
-                            <tr className="border-b border-gray-100 bg-gray-50/30 dark:border-gray-800/50 dark:bg-[#111]/30">
-                                {["Product Visual / Identity", "Catalog Meta", "Technical Specs", "Pricing Estimate", "Vault Quantity", "Status", ""].map(h => (
-                                    <th key={h} className="px-4 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-gray-400">{h}</th>
-                                ))}
+                            <tr className="border-b border-gray-100 bg-gray-50/30 dark:border-gray-800/50 dark:bg-[#111]/30 text-gray-400">
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[35%]">Product Visual / Identity</th>
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[15%]">Catalog Meta</th>
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[15%]">Technical Specs</th>
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[15%]">Pricing</th>
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[10%]">Vault</th>
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[10%]">Status</th>
+                                <th className="px-3 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider w-[80px]"></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
@@ -721,78 +725,80 @@ export default function AdminProductsPage() {
                                 </tr>
                             ) : products.map(p => (
                                 <tr key={p.id} className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
-                                    <td className="px-4 py-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
+                                    <td className="px-3 py-5">
+                                        <div className="flex items-center gap-4 overflow-hidden">
+                                            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
                                                 {p.images?.find(i => i.isPrimary)?.imageUrl ? (
                                                     <img src={p.images.find(i => i.isPrimary)!.imageUrl} className="h-full w-full object-cover" alt="" />
                                                 ) : (
                                                     <div className="flex h-full w-full items-center justify-center text-gray-300"><ImageIcon className="h-6 w-6" /></div>
                                                 )}
                                             </div>
-                                            <div>
-                                                <h5 className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors">{p.name}</h5>
-                                                <p className="font-mono text-[10px] text-gray-400 mt-0.5">{p.styleCode}</p>
+                                            <div className="min-w-0">
+                                                <h5 className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors truncate" title={p.name}>{p.name}</h5>
+                                                <p className="font-mono text-[10px] text-gray-400 mt-0.5 truncate">{p.styleCode}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-5">
-                                        <div className="flex flex-col gap-1.5">
-                                            <span className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                                <LayoutGrid className="h-3 w-3" /> {p.categoryName || "Uncategorized"}
+                                    <td className="px-2 py-5">
+                                        <div className="flex flex-col gap-1 overflow-hidden">
+                                            <span className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-gray-100 px-2 py-0.5 font-plus-jakarta text-[9px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400 truncate max-w-full">
+                                                <LayoutGrid className="h-2.5 w-2.5" /> {p.categoryName || "Uncat."}
                                             </span>
-                                            <span className="font-plus-jakarta text-[10px] text-gray-400 flex items-center gap-1">
-                                                <CheckCircle2 className="h-3 w-3 text-amber-500" /> {p.brandName || "Generic Brand"}
+                                            <span className="font-plus-jakarta text-[9px] text-gray-400 flex items-center gap-1 truncate">
+                                                <CheckCircle2 className="h-2.5 w-2.5 text-amber-500" /> {p.brandName || "Generic"}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-5">
-                                        <div className="flex flex-col gap-1 font-plus-jakarta text-xs text-gray-500">
+                                    <td className="px-2 py-5">
+                                        <div className="flex flex-col gap-1 font-plus-jakarta text-[11px] text-gray-500">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-gray-900 dark:text-white">{p.goldWeightGm}g</span>
-                                                <span className="text-[10px] uppercase tracking-tighter">Gold Weight</span>
+                                                <span className="font-bold text-gray-900 dark:text-white">{(p.goldWeightGm || 0).toFixed(2)}g</span>
+                                                <span className="text-[9px] uppercase tracking-tighter opacity-70">Gold</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-blue-600">{p.diamonds?.length || 0}</span>
-                                                <span className="text-[10px] uppercase tracking-tighter">Diam. Components</span>
+                                                <span className="text-[9px] uppercase tracking-tighter opacity-70">Diam.</span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-5">
-                                        <div className="font-plus-jakarta">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{formatVnd(p.estimatedFinalPrice)}</p>
-                                            <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1"><TrendingUp className="h-3 w-3 text-emerald-500" /> Dynamic MSRP</p>
+                                    <td className="px-2 py-5">
+                                        <div className="font-plus-jakarta min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{formatVnd(p.estimatedFinalPrice)}</p>
+                                            <p className="text-[9px] text-gray-400 flex items-center gap-1"><TrendingUp className="h-2.5 w-2.5 text-emerald-500" /> MSRP</p>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`h-2.5 w-2.5 rounded-full ${p.quantity === 0 ? 'bg-rose-500' : p.quantity <= 2 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.quantity} Units</span>
+                                    <td className="px-2 py-5">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`h-2 w-2 rounded-full flex-shrink-0 ${p.quantity === 0 ? 'bg-rose-500' : p.quantity <= 2 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">{p.quantity} U</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-5">
+                                    <td className="px-2 py-5">
                                         {(() => {
                                             const status = STATUS_OPTIONS.find(s => s.value === p.status);
                                             return (
-                                                <span className={`inline-flex items-center gap-1.5 rounded-full bg-${status?.color}-50 px-3 py-1 font-plus-jakarta text-[10px] font-bold text-${status?.color}-600 dark:bg-${status?.color}-500/10 dark:text-${status?.color}-400`}>
+                                                <span className={`inline-flex items-center gap-1.5 rounded-full bg-${status?.color}-50 px-2 py-0.5 font-plus-jakarta text-[9px] font-bold text-${status?.color}-600 dark:bg-${status?.color}-500/10 dark:text-${status?.color}-400`}>
                                                     {status?.label}
                                                 </span>
                                             );
                                         })()}
                                     </td>
-                                    <td className="px-8 py-5 text-right">
-                                        <div className="flex items-center gap-2">
+                                    <td className="px-3 py-5 text-right w-[80px]">
+                                        <div className="flex items-center justify-end gap-1.5 overflow-visible">
                                             <button 
                                                 onClick={() => { setSelectedProductId(p.id); setIsDrawerOpen(true); }}
-                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-amber-200 hover:text-amber-600 dark:border-gray-800 dark:bg-[#111]"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-amber-200 hover:text-amber-600 dark:border-gray-800 dark:bg-[#111]"
+                                                title="Edit Master"
                                             >
-                                                <Settings2 className="h-4 w-4" />
+                                                <Settings2 className="h-3.5 w-3.5" />
                                             </button>
                                             <button 
                                                 onClick={() => { setSelectedProductId(p.id); setIsDeleteModalOpen(true); }}
-                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-rose-100 hover:text-rose-600 dark:border-gray-800 dark:bg-[#111]"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-rose-100 hover:text-rose-600 dark:border-gray-800 dark:bg-[#111]"
+                                                title="Delete Master"
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <Trash2 className="h-3.5 w-3.5" />
                                             </button>
                                         </div>
                                     </td>
