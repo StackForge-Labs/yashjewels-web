@@ -115,4 +115,5 @@ export const setDefaultAddressApi = (id: string) =>
 
 // ── Invitation ─────────────────────────────────────────────
 export const acceptInviteApi = (data: { token: string; password: string }) =>
-    apiClient.post<ApiResponse<boolean>>("/auth/accept-invite", data).then((r) => r.data);
+    apiClient.post<ApiResponse<AuthResponse>>("/auth/accept-invite", data).then((r) => r.data);
+

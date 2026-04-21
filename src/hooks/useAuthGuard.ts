@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getAccessToken } from "@/lib/api-client";
 import { useProfile } from "./useAuth";
 
-const getHomeUrl = (role?: string) => {
+export const getHomeUrl = (role?: string) => {
     const r = role?.toLowerCase();
     if (r === "admin") return "/admin";
     if (r === "vendor") return "/vendor";
@@ -53,7 +53,12 @@ export function useRedirectIfAuthenticated() {
                 sessionStorage.removeItem("redirect_after_login");
                 router.replace(redirectUrl);
             } else {
-                router.replace("/");
+                // Get role from cookie to determine correct dashboard
+                const role = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('user_role='))
+                    ?.split('=')[1];
+                router.replace(getHomeUrl(role));
             }
         }
     }, [router]);

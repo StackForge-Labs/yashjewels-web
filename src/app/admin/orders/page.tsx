@@ -89,7 +89,7 @@ export default function OrdersPage() {
         setIsDetailOpen(true);
         setDetailLoading(true);
         try {
-            const res = await orderService.getOrderById(id);
+            const res = await adminService.getOrderDetailApi(id);
             if (res.success) setDetail(res.data);
         } catch (error) {
             toast.error("Could not fetch order details");

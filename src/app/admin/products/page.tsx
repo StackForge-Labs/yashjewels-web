@@ -576,7 +576,7 @@ export default function AdminProductsPage() {
     const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 
     return (
-        <div className="flex flex-col gap-6 p-4 sm:p-8">
+        <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-full overflow-x-hidden">
             {isDrawerOpen && (
                 <ProductDrawer 
                     productId={selectedProductId} 
@@ -661,7 +661,7 @@ export default function AdminProductsPage() {
                         <thead>
                             <tr className="border-b border-gray-100 bg-gray-50/30 dark:border-gray-800/50 dark:bg-[#111]/30">
                                 {["Product Visual / Identity", "Catalog Meta", "Technical Specs", "Pricing Estimate", "Vault Quantity", "Status", ""].map(h => (
-                                    <th key={h} className="px-8 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{h}</th>
+                                    <th key={h} className="px-4 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-gray-400">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -683,7 +683,7 @@ export default function AdminProductsPage() {
                                 </tr>
                             ) : products.map(p => (
                                 <tr key={p.id} className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
-                                    <td className="px-8 py-5">
+                                    <td className="px-4 py-5">
                                         <div className="flex items-center gap-4">
                                             <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
                                                 {p.images?.find(i => i.isPrimary)?.imageUrl ? (
@@ -698,7 +698,7 @@ export default function AdminProductsPage() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5">
+                                    <td className="px-4 py-5">
                                         <div className="flex flex-col gap-1.5">
                                             <span className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                                                 <LayoutGrid className="h-3 w-3" /> Category TBA
@@ -708,7 +708,7 @@ export default function AdminProductsPage() {
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5">
+                                    <td className="px-4 py-5">
                                         <div className="flex flex-col gap-1 font-plus-jakarta text-xs text-gray-500">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-gray-900 dark:text-white">{p.goldWeightGm}g</span>
@@ -720,19 +720,19 @@ export default function AdminProductsPage() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5">
+                                    <td className="px-4 py-5">
                                         <div className="font-plus-jakarta">
                                             <p className="text-sm font-bold text-gray-900 dark:text-white">{formatVnd(p.estimatedFinalPrice)}</p>
                                             <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1"><TrendingUp className="h-3 w-3 text-emerald-500" /> Dynamic MSRP</p>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5">
+                                    <td className="px-4 py-5">
                                         <div className="flex items-center gap-3">
                                             <div className={`h-2.5 w-2.5 rounded-full ${p.quantity === 0 ? 'bg-rose-500' : p.quantity <= 2 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                                             <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.quantity} Units</span>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5">
+                                    <td className="px-4 py-5">
                                         {(() => {
                                             const status = STATUS_OPTIONS.find(s => s.value === p.status);
                                             return (

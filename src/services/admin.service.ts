@@ -131,6 +131,9 @@ export const getFinanceOverview = getFinanceOverviewApi;
 export const getOrdersApi = () =>
     apiClient.get<ApiResponse<any[]>>("/admin/orders/all").then((r) => r.data);
 
+export const getOrderDetailApi = (id: string) =>
+    apiClient.get<ApiResponse<any>>(`/admin/orders/${id}`).then((r) => r.data);
+
 export const confirmOrderApi = (orderId: string, approve: boolean, reason?: string) =>
     apiClient.put<ApiResponse<boolean>>(`/admin/orders/${orderId}/override`, { orderId, approve, reason }).then((r) => r.data);
 
@@ -189,6 +192,7 @@ export const adminService = {
     getFinanceOverviewApi,
     getFinanceOverview,
     getOrdersApi,
+    getOrderDetailApi,
     confirmOrderApi,
     confirmOrderDecisionApi,
     recordOrderContactApi,

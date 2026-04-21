@@ -197,19 +197,30 @@ export default function ReturnsManagementPage() {
                                 </div>
 
                                 <div>
-                                    <div className="text-xs text-slate-400 uppercase font-bold mb-2">Customer Evidence</div>
-                                    <a 
-                                        href={selectedRequest.evidenceUrls} 
-                                        target="_blank" 
-                                        className="flex items-center gap-3 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl text-indigo-600 hover:scale-[1.02] transition-all"
-                                    >
-                                        <FileVideo className="h-8 w-8" />
-                                        <div>
-                                            <div className="text-sm font-bold">Unboxing Video</div>
-                                            <div className="text-xs opacity-70 italic">Click to verify evidence</div>
-                                        </div>
-                                    </a>
+                                    <div className="text-xs text-slate-400 uppercase font-bold mb-3">Customer Evidence</div>
+                                    <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-black aspect-video flex items-center justify-center">
+                                        {selectedRequest.evidenceUrls ? (
+                                            <video 
+                                                src={selectedRequest.evidenceUrls} 
+                                                controls 
+                                                className="w-full h-full object-contain"
+                                                poster="/placeholder-video.png"
+                                            />
+                                        ) : (
+                                            <div className="text-slate-500 text-xs flex flex-col items-center gap-2">
+                                                <AlertCircle className="h-6 w-6" />
+                                                No video evidence provided
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase">Verification Evidence</span>
+                                        <a href={selectedRequest.evidenceUrls} target="_blank" className="text-[10px] font-bold text-indigo-500 hover:underline flex items-center gap-1">
+                                            <FileVideo className="h-2.5 w-2.5" /> High-Res Source
+                                        </a>
+                                    </div>
                                 </div>
+
 
                                 <div>
                                     <div className="text-xs text-slate-400 uppercase font-bold mb-2">Internal Note / Reason</div>

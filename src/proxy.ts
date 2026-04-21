@@ -49,8 +49,9 @@ export function proxy(request: NextRequest) {
 // Matches /admin and /admin/* and /auth/* but skips static files, images, and _next internals
 export const config = {
   matcher: [
-    '/admin',
     '/admin/:path*',
+    '/vendor/:path*',
+    '/shipper/:path*',
     '/auth/:path*',
   ],
 }
