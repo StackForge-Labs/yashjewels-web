@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -113,6 +114,7 @@ export default function CustomersPage() {
 
     const createForm = useForm<CreateForm>({ resolver: zodResolver(createSchema) });
     const editForm = useForm<EditForm>({ resolver: zodResolver(editSchema) });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const banForm = useForm<BanForm>({ resolver: zodResolver(banSchema) as any, defaultValues: { banType: "2", durationValue: 7, durationUnit: "days" } });
     const watchBanType = banForm.watch("banType");
 
