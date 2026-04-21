@@ -7,7 +7,8 @@ type StatusKey =
     | "checkout_initiated" | "payment_pending" | "payment_failed" | "deposit_pending"
     | "deposit_paid" | "awaiting_full_payment" | "confirmed" | "preparing"
     | "contact_failed" | "vendor_rejected" | "refunding" | "return_requested"
-    | "return_approved" | "return_rejected" | "redelivering" | "redelivered";
+    | "return_approved" | "return_rejected" | "redelivering" | "redelivered"
+    | "return_received" | "received_at_store" | "completed";
 
 const variants: Record<StatusKey, { cls: string; dot?: boolean }> = {
     active:      { cls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", dot: true },
@@ -42,6 +43,9 @@ const variants: Record<StatusKey, { cls: string; dot?: boolean }> = {
     return_rejected: { cls: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400" },
     redelivering: { cls: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" },
     redelivered: { cls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" },
+    return_received: { cls: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400", dot: true },
+    received_at_store: { cls: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400", dot: true },
+    completed: { cls: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400", dot: false },
 };
 
 interface StatusBadgeProps {

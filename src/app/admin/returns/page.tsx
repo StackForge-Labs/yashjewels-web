@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { 
-    RotateCcw, Eye, CheckCircle2, XCircle, 
-    AlertCircle, FileVideo, Calendar, Search, 
+import {
+    RotateCcw, Eye, CheckCircle2, XCircle,
+    AlertCircle, FileVideo, Calendar, Search,
     ArrowRight, DollarSign, ShieldAlert,
-    TrendingUp, Clock, Ban, BarChart3
+    TrendingUp, Clock, Ban, BarChart3,
+    Truck
 } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
@@ -45,7 +46,7 @@ export default function ReturnsManagementPage() {
         const pending = returns.filter(r => r.status === "SUBMITTED").length;
         const refunded = returns.filter(r => r.status === "COMPLETED" || r.status === "REFUNDED").length;
         const rejected = returns.filter(r => r.status === "REJECTED").length;
-        
+
         const totalValue = returns
             .filter(r => r.status === "COMPLETED" || r.status === "REFUNDED")
             .reduce((sum, r) => sum + (r.totalAmount || 0), 0);
@@ -58,7 +59,7 @@ export default function ReturnsManagementPage() {
         ];
     }, [returns]);
 
-    const filteredReturns = returns.filter(r => 
+    const filteredReturns = returns.filter(r =>
         r.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.customerName.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -123,8 +124,8 @@ export default function ReturnsManagementPage() {
 
     return (
         <div className="flex flex-col gap-8 animate-in fade-in duration-700">
-            <PageHeader 
-                title="Returns & Claims Hub" 
+            <PageHeader
+                title="Returns & Claims Hub"
                 description="Oversee jewelry return lifecycles and authenticity inspection workflows."
                 actions={
                     <button onClick={fetchReturns} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300 transition-all">
@@ -154,8 +155,8 @@ export default function ReturnsManagementPage() {
                     <h3 className="font-plus-jakarta font-bold text-gray-900 dark:text-white">Active Rejection Threads</h3>
                     <div className="relative w-full sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             placeholder="Filter by Order or Name..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -207,10 +208,17 @@ export default function ReturnsManagementPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <StatusBadge status={req.status} />
+                                        <StatusBadge
+                                            status={req.status}
+                                            label={
+                                                req.status === "SUBMITTED" ? "Return Requested" : 
+                                                req.status === "REJECTED" ? "Return Rejected" : 
+                                                undefined
+                                            }
+                                        />
                                     </td>
                                     <td className="px-6 py-5 text-right">
-                                        <button 
+                                        <button
                                             onClick={() => handleViewDetail(req)}
                                             className="px-4 py-2 bg-gray-900 dark:bg-white dark:text-black text-white text-xs font-bold rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white transition-all shadow-sm"
                                         >
@@ -232,14 +240,14 @@ export default function ReturnsManagementPage() {
                 footer={
                     selectedRequest?.status === "SUBMITTED" ? (
                         <div className="grid grid-cols-2 gap-3 w-full">
-                            <button 
+                            <button
                                 disabled={actionLoading}
                                 onClick={() => handleInitialProcess(selectedRequest.id, false)}
                                 className="py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 border border-rose-100 transition-all"
                             >
                                 Reject Claim
                             </button>
-                            <button 
+                            <button
                                 disabled={actionLoading}
                                 onClick={() => handleInitialProcess(selectedRequest.id, true)}
                                 className="py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
@@ -247,16 +255,16 @@ export default function ReturnsManagementPage() {
                                 Authorize Return
                             </button>
                         </div>
-                    ) : selectedRequest?.status === "AUTHORIZED" ? (
+                    ) : (selectedRequest?.status === "RETURN_RECEIVED" || selectedRequest?.status === "RECEIVED_AT_STORE") ? (
                         <div className="grid grid-cols-2 gap-3 w-full">
-                            <button 
+                            <button
                                 disabled={actionLoading}
                                 onClick={() => handleFinalProcess(selectedRequest.id, false)}
                                 className="py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 border border-rose-100 transition-all"
                             >
                                 Inspection Failed
                             </button>
-                            <button 
+                            <button
                                 disabled={actionLoading}
                                 onClick={() => handleFinalProcess(selectedRequest.id, true)}
                                 className="py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
@@ -290,11 +298,25 @@ export default function ReturnsManagementPage() {
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Customer Unboxing Evidence</p>
                             <div className="rounded-2xl overflow-hidden border border-gray-100 bg-black aspect-video flex items-center justify-center relative group">
                                 {selectedRequest.evidenceUrls ? (
-                                    <video 
-                                        src={selectedRequest.evidenceUrls} 
-                                        controls 
-                                        className="w-full h-full object-contain"
-                                    />
+                                    (() => {
+                                        const isVideo = selectedRequest.evidenceUrls.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/i) ||
+                                            selectedRequest.evidenceUrls.includes('/video/upload/');
+
+                                        return isVideo ? (
+                                            <video
+                                                src={selectedRequest.evidenceUrls}
+                                                controls
+                                                className="w-full h-full object-contain"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={selectedRequest.evidenceUrls}
+                                                alt="Evidence"
+                                                className="w-full h-full object-contain cursor-zoom-in"
+                                                onClick={() => window.open(selectedRequest.evidenceUrls, '_blank')}
+                                            />
+                                        );
+                                    })()
                                 ) : (
                                     <div className="text-gray-500 text-xs flex flex-col items-center gap-2">
                                         <AlertCircle className="h-8 w-8 text-gray-300" />
@@ -304,40 +326,51 @@ export default function ReturnsManagementPage() {
                             </div>
                         </div>
 
-                        {/* Inspection Notes */}
-                        <div className="flex flex-col gap-3">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Official Inspection Record</label>
-                            <textarea 
-                                value={decisionNote}
-                                onChange={(e) => setDecisionNote(e.target.value)}
-                                placeholder="Detail the results of physical inspection or reasoning for rejection..."
-                                className="w-full h-32 px-4 py-3 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none font-plus-jakarta"
-                            />
-                        </div>
-
-                        {selectedRequest.status === "AUTHORIZED" && (
-                            <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/50 rounded-2xl p-4">
-                                <div className="flex items-start gap-3">
-                                    <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Physical Integrity Required</p>
-                                        <p className="text-[10px] text-amber-600/80 mt-1 leading-relaxed">Ensure the jewel is returned in original condition with GIA certificates. Refund should only proceed after a clean assessment.</p>
-                                    </div>
-                                </div>
-                                <label className="flex items-center gap-3 mt-4 p-3 bg-white/50 dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-white transition-all ring-1 ring-amber-100">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={deductInsurance} 
-                                        onChange={(e) => setDeductInsurance(e.target.checked)}
-                                        className="h-5 w-5 rounded-md border-gray-200 text-blue-600 focus:ring-blue-500"
+                        {/* Inspection Phase (Only when RECEIVED) */}
+                        {(selectedRequest.status === "RETURN_RECEIVED" || selectedRequest.status === "RECEIVED_AT_STORE") ? (
+                            <>
+                                {/* Inspection Notes */}
+                                <div className="flex flex-col gap-3">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Official Inspection Record</label>
+                                    <textarea
+                                        value={decisionNote}
+                                        onChange={(e) => setDecisionNote(e.target.value)}
+                                        placeholder="Detail the results of physical inspection or reasoning for rejection..."
+                                        className="w-full h-32 px-4 py-3 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none font-plus-jakarta"
                                     />
-                                    <div>
-                                        <p className="text-[11px] font-bold text-gray-700 dark:text-gray-300">Apply Restocking Surcharge (2%)</p>
-                                        <p className="text-[9px] text-gray-400 font-medium">Standard for non-defect returns.</p>
+                                </div>
+
+                                <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/50 rounded-2xl p-4">
+                                    <div className="flex items-start gap-3">
+                                        <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Physical Integrity Required</p>
+                                            <p className="text-[10px] text-amber-600/80 mt-1 leading-relaxed">Ensure the jewel is returned in original condition with GIA certificates. Refund should only proceed after a clean assessment.</p>
+                                        </div>
                                     </div>
-                                </label>
+                                    <label className="flex items-center gap-3 mt-4 p-3 bg-white/50 dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-white transition-all ring-1 ring-amber-100">
+                                        <input
+                                            type="checkbox"
+                                            checked={deductInsurance}
+                                            onChange={(e) => setDeductInsurance(e.target.checked)}
+                                            className="h-5 w-5 rounded-md border-gray-200 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <div>
+                                            <p className="text-[11px] font-bold text-gray-700 dark:text-gray-300">Apply Restocking Surcharge (2%)</p>
+                                            <p className="text-[9px] text-gray-400 font-medium">Standard for non-defect returns.</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </>
+                        ) : selectedRequest.status === "AUTHORIZED" ? (
+                            <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
+                                <Truck className="h-8 w-8 text-blue-500 opacity-50" />
+                                <div>
+                                    <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Return Logistics in Progress</p>
+                                    <p className="text-[10px] text-blue-600/80 mt-1 leading-relaxed">The return shipment has been authorized. Admin actions are suspended until the item is physically received at the store.</p>
+                                </div>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 )}
             </Drawer>

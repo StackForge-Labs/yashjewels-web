@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { 
-    Eye, CheckCircle2, XCircle, PhoneCall, 
-    RefreshCw, AlertTriangle, FileText, Upload, 
+    Eye, CheckCircle2, XCircle, 
+    RefreshCw, AlertTriangle, FileText, 
     Truck, ShieldCheck, ExternalLink,
-    Search, Filter, Plus, Download, FileBox
+    Search, Filter, Download, FileBox
 } from "lucide-react";
 
 import { PageHeader } from "../_components/ui/PageHeader";
@@ -58,20 +58,12 @@ export default function OrdersPage() {
     
     // UI Modals
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-    const [isDocModalOpen, setIsDocModalOpen] = useState(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [previewTitle, setPreviewTitle] = useState("");
 
     
-    // Action states
-    const [contactForm, setContactForm] = useState({ note: "", isSuccess: true });
     const [actionLoading, setActionLoading] = useState(false);
-
-    // Document state (Simplified: in a real app, use a Cloudinary widget or service)
-    const [docType, setDocType] = useState<"invoice" | "insurance" | "certification">("invoice");
-    const [selectedItemId, setSelectedItemId] = useState<string | "">("");
 
     const fetchOrders = useCallback(async () => {
         setLoading(true);
@@ -123,62 +115,7 @@ export default function OrdersPage() {
         }
     };
 
-    const handleLogContact = async () => {
-        if (!detail) return;
-        setActionLoading(true);
-        try {
-            // Determine attempt number based on existing timeline entries for contact
-            const attempts = detail.timeline.filter(t => t.note?.includes("Contact attempt")).length;
-            const res = await adminService.recordOrderContactApi({
-                orderId: detail.orderId,
-                attemptNumber: attempts + 1,
-                isSuccess: contactForm.isSuccess,
-                note: contactForm.note
-            });
-            if (res.success) {
-                toast.success("Contact logged");
-                setIsContactModalOpen(false);
-                setContactForm({ note: "", isSuccess: true });
-                handleViewDetail(detail.orderId); // Refresh detail
-            }
-        } catch(error) {
-            toast.error("Failed to log contact");
-        } finally {
-            setActionLoading(false);
-        }
-    };
 
-    const handleUploadDoc = async (url: string, publicId: string) => {
-        if (!detail) return;
-        setActionLoading(true);
-        try {
-            const payload: any = {};
-            if (docType === "invoice") {
-                payload.invoiceUrl = url;
-                payload.invoicePublicId = publicId;
-            } else if (docType === "insurance") {
-                payload.insuranceUrl = url;
-                payload.insurancePublicId = publicId;
-            } else {
-                payload.itemCertifications = [{
-                    orderItemId: selectedItemId,
-                    certificationUrl: url,
-                    certificationPublicId: publicId
-                }];
-            }
-
-            const res = await adminService.updateOrderDocumentsApi(detail.orderId, payload);
-            if (res.success) {
-                toast.success("Document updated successfully");
-                setIsDocModalOpen(false);
-                handleViewDetail(detail.orderId); // Refresh
-            }
-        } catch (error) {
-            toast.error("Upload failed");
-        } finally {
-            setActionLoading(false);
-        }
-    };
 
     const filtered = orders.filter(o => {
         const matchesSearch = o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -310,7 +247,7 @@ export default function OrdersPage() {
                     <div className="flex gap-3 w-full">
                         <button onClick={() => setIsDetailOpen(false)} className="flex-1 rounded-xl border border-gray-200 py-3 font-plus-jakarta text-sm font-bold text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400">Cancel</button>
                         {detail?.status === "DEPOSIT_PAID" && (
-                            <button disabled={actionLoading} onClick={() => handleDecision(true)} className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20">Clear for Fulfillment</button>
+                            <button disabled={actionLoading} onClick={() => handleDecision(true)} className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20">Approve & Start Processing</button>
                         )}
                     </div>
                 }
@@ -381,12 +318,10 @@ export default function OrdersPage() {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <button 
-                                                onClick={() => { setDocType("certification"); setSelectedItemId(item.orderItemId); setIsDocModalOpen(true); }}
-                                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:bg-gray-800"
-                                            >
-                                                <Plus className="h-3 w-3" /> Add Certificate
-                                            </button>
+                                            <div className="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                                <AlertTriangle className="h-3 w-3 text-amber-500" />
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase">Awaiting Gen</span>
+                                            </div>
                                         )}
                                     </div>
 
@@ -398,9 +333,6 @@ export default function OrdersPage() {
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center justify-between">
                                 <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Final Documentation</p>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => { setDocType("invoice"); setIsDocModalOpen(true); }} className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:text-blue-600 dark:bg-gray-800"><Upload className="h-4 w-4" /></button>
-                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square overflow-hidden transition-all ${detail.invoiceUrl ? 'border-emerald-100 bg-white shadow-sm ring-1 ring-emerald-50' : 'border-dashed border-gray-200 bg-gray-50/30'}`}>
@@ -454,9 +386,9 @@ export default function OrdersPage() {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="flex flex-col items-center gap-2" onClick={() => { setDocType("insurance"); setIsDocModalOpen(true); }}>
+                                        <div className="flex flex-col items-center gap-2 opacity-50">
                                             <ShieldCheck className="h-8 w-8 text-gray-200" />
-                                            <span className="text-[10px] font-bold uppercase text-gray-400">Add Insurance</span>
+                                            <span className="text-[10px] font-bold uppercase text-gray-400">Pending Policy</span>
                                         </div>
                                     )}
                                 </div>
@@ -476,9 +408,6 @@ export default function OrdersPage() {
                                             <p className="font-plus-jakarta text-xs text-gray-500">{detail.shippingPhone}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => setIsContactModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-[10px] font-bold text-amber-600 hover:bg-amber-100">
-                                        <PhoneCall className="h-3 w-3" /> Call Customer
-                                    </button>
                                 </div>
                                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800/60">
                                     <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400 mb-1">Destiny Address</p>
@@ -490,77 +419,7 @@ export default function OrdersPage() {
                 )}
             </Drawer>
 
-            {/* Document Upload Simulation Modal */}
-            <Modal
-                isOpen={isDocModalOpen}
-                onClose={() => setIsDocModalOpen(false)}
-                title="Update Fulfillment Document"
-                subtitle={`Securely attach a PDF for the ${docType === 'certification' ? 'Jewel Certification' : docType}`}
-                size="sm"
-                footer={<button onClick={() => setIsDocModalOpen(false)} className="w-full py-3 rounded-xl border border-gray-100 text-sm font-bold text-gray-500 hover:bg-gray-50">Cancel</button>}
-            >
-                <div className="flex flex-col gap-6">
-                    <div className="flex flex-col items-center justify-center gap-4 py-8 border-2 border-dashed border-gray-100 rounded-3xl group hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer"
-                         onClick={() => {
-                             // Mocking a Cloudinary upload result
-                             const mockUrl = "https://res.cloudinary.com/demo/image/upload/sample.pdf";
-                             const mockId = `doc_${Math.random().toString(36).substr(2, 9)}`;
-                             handleUploadDoc(mockUrl, mockId);
-                         }}>
-                        <div className="p-4 rounded-2xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <Upload className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                            <p className="font-plus-jakarta text-sm font-bold text-gray-900">Click to upload PDF</p>
-                            <p className="text-[10px] text-gray-400 font-medium">Cloudinary Secure Storage</p>
-                        </div>
-                        <input type="file" className="hidden" accept="application/pdf" />
-                    </div>
-                    
-                    <div className="flex items-center gap-3 p-4 bg-gray-50/50 rounded-2xl">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        <p className="font-plus-jakarta text-[10px] font-bold text-gray-400 leading-tight">Documents must be in PDF format. Once saved, they will be visible to the customer in their Jewel Vault.</p>
-                    </div>
-                </div>
-            </Modal>
 
-            {/* Contact Attempt Modal */}
-            <Modal
-                isOpen={isContactModalOpen}
-                onClose={() => setIsContactModalOpen(false)}
-                title="Log Customer Outreach"
-                subtitle="Document your communication for other staff members"
-                size="md"
-                footer={<button 
-                    disabled={actionLoading || !contactForm.note.trim()} 
-                    onClick={handleLogContact} 
-                    className="w-full py-3 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 disabled:opacity-40 transition-colors"
-                >Document Official Attempt</button>}
-            >
-                <div className="flex flex-col gap-6">
-                    <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => setContactForm({ ...contactForm, isSuccess: true })} className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 transition-all ${contactForm.isSuccess ? 'border-blue-500 bg-blue-50/50 text-blue-700' : 'border-gray-50 text-gray-400 hover:border-gray-100'}`}>
-                            <CheckCircle2 className="h-6 w-6" />
-                            <span className="text-[11px] font-black uppercase">Confirmed</span>
-                        </button>
-                        <button onClick={() => setContactForm({ ...contactForm, isSuccess: false })} className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 transition-all ${!contactForm.isSuccess ? 'border-rose-500 bg-rose-50/50 text-rose-700' : 'border-gray-50 text-gray-400 hover:border-gray-100'}`}>
-                            <XCircle className="h-6 w-6" />
-                            <span className="text-[11px] font-black uppercase">No Response</span>
-                        </button>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2">
-                        <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Communication Insight</label>
-                        <textarea 
-                            rows={4} 
-                            value={contactForm.note} 
-                            onChange={e => setContactForm({ ...contactForm, note: e.target.value })}
-                            className="w-full rounded-2xl border border-gray-100 bg-gray-50/50 p-4 font-plus-jakarta text-sm focus:border-blue-500 focus:bg-white focus:outline-none"
-                            placeholder="Detail what happened during the call..."
-                        />
-                    </div>
-                </div>
-            </Modal>
 
             {/* PDF Preview Modal */}
             <Modal
