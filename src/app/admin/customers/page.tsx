@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/lib/api-client";
 
 // ── Types ──────────────────────────────────────────────────────
 interface CustomerAddress {
@@ -97,15 +98,29 @@ function UserStatusBadge({ userStatus, suspendedUntil }: { userStatus: string; s
 const createSchema = z.object({
     email: z.string().min(1, "Email is required").email("Invalid email"),
     fullName: z.string().min(2, "Full name is required"),
-    phone: z.string().optional(),
-    dateOfBirth: z.string().optional(),
+    phone: z.string().optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
+    dateOfBirth: z.string().optional().or(z.literal("")).refine((val) => {
+        if (!val) return true;
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return false;
+        if (d > new Date()) return false; // Cannot be in future
+        if (d.getFullYear() < 1900) return false; // Too old
+        return true;
+    }, "Invalid date of birth").transform(v => v === "" ? undefined : v),
 });
 type CreateForm = z.infer<typeof createSchema>;
 
 const editSchema = z.object({
     fullName: z.string().min(2, "Full name is required"),
-    phone: z.string().optional(),
-    dateOfBirth: z.string().optional(),
+    phone: z.string().optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
+    dateOfBirth: z.string().optional().or(z.literal("")).refine((val) => {
+        if (!val) return true;
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return false;
+        if (d > new Date()) return false;
+        if (d.getFullYear() < 1900) return false;
+        return true;
+    }, "Invalid date of birth").transform(v => v === "" ? undefined : v),
 });
 type EditForm = z.infer<typeof editSchema>;
 
@@ -204,11 +219,24 @@ export default function CustomersPage() {
                 createForm.reset();
                 load();
             } else {
-                toast.error(res.errors?.[0] ?? "Failed to create customer");
+                handleFieldError(res.errors?.[0], createForm);
             }
-        } catch {
-            toast.error("An error occurred");
+        } catch (err: any) {
+            handleFieldError(getErrorMessage(err), createForm);
         }
+    };
+
+    const handleFieldError = (msg: string | null | undefined, form: any) => {
+        if (!msg) return;
+        const lowerMsg = msg.toLowerCase();
+        if (lowerMsg.includes("email")) {
+            form.setError("email", { message: msg });
+        } else if (lowerMsg.includes("phone")) {
+            form.setError("phone", { message: msg });
+        } else if (lowerMsg.includes("full name")) {
+            form.setError("fullName", { message: msg });
+        }
+        toast.error(msg);
     };
 
     // ── Edit ────────────────────────────────────────────────────
@@ -231,10 +259,10 @@ export default function CustomersPage() {
                 setIsEditOpen(false);
                 load();
             } else {
-                toast.error(res.errors?.[0] ?? "Failed to update");
+                handleFieldError(res.errors?.[0], editForm);
             }
-        } catch {
-            toast.error("An error occurred");
+        } catch (err: any) {
+            handleFieldError(getErrorMessage(err), editForm);
         }
     };
 
