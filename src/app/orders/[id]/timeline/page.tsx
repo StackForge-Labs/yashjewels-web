@@ -424,8 +424,8 @@ export default function OrderTimelinePage() {
                                         </a>
                                     )}
 
-                                    {/* Certification Documents (Unlocked when SHIPPED, DELIVERED, REDELIVERING, REDELIVERED, or COMPLETED) */}
-                                    {["SHIPPED", "DELIVERED", "REDELIVERING", "REDELIVERED", "COMPLETED"].includes(order.status.toUpperCase()) ? (
+                                    {/* Certification Documents (Unlocked when DELIVERED, REDELIVERED, or COMPLETED) */}
+                                    {["DELIVERED", "REDELIVERED", "COMPLETED"].includes(order.status.toUpperCase()) ? (
                                         <div className="pt-4 border-t border-gray-100 dark:border-white/5 space-y-3">
                                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gold mb-2">Certifications</p>
                                             {order.items.map((item, idx) => (
@@ -448,7 +448,7 @@ export default function OrderTimelinePage() {
                                     ) : (
                                         <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 mt-4">
                                             <p className="text-[9px] font-bold text-amber-700/80 dark:text-amber-500/80 uppercase leading-relaxed text-center tracking-widest italic">
-                                                Certifications will be unlocked upon shipment.
+                                                Certifications will be unlocked upon successful delivery.
                                             </p>
                                         </div>
                                     )}
