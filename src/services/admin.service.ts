@@ -137,8 +137,38 @@ export const confirmOrderApi = (orderId: string, approve: boolean, reason?: stri
 export const confirmOrderDecisionApi = (orderId: string, approve: boolean, reason?: string) =>
     apiClient.put<ApiResponse<boolean>>(`/vendor/orders/${orderId}/decision`, { isApproved: approve, reason }).then((r) => r.data);
 
-export const recordOrderContactApi = (data: { orderId: string, method: number, result: number, notes?: string }) =>
+export const recordOrderContactApi = (data: { orderId: string, attemptNumber: number, isSuccess: boolean, note: string }) =>
     apiClient.post<ApiResponse<boolean>>("/admin/orders/contact-log", data).then((r) => r.data);
+
+export const updateOrderDocumentsApi = (orderId: string, data: any) =>
+    apiClient.put<ApiResponse<boolean>>(`/admin/orders/${orderId}/documents`, data).then((r) => r.data);
+
+// --- Phase 4: Finance & Returns ---
+export const getReturnsApi = () =>
+    apiClient.get<ApiResponse<any[]>>("/admin/returns/all").then((r) => r.data);
+
+export const processReturnApi = (id: string, data: { requestId: string, approve: boolean, note?: string }) =>
+    apiClient.put<ApiResponse<boolean>>(`/admin/returns/${id}/process`, data).then((r) => r.data);
+
+export const finalizeReturnApi = (id: string, data: { requestId: string, approve: boolean, deductInsurance: boolean, note?: string }) =>
+    apiClient.put<ApiResponse<boolean>>(`/admin/returns/${id}/finalize`, data).then((r) => r.data);
+
+export const getFinanceStatsApi = (range: string = "month") =>
+    apiClient.get<ApiResponse<any>>(`/admin/finance/stats?range=${range}`).then((r) => r.data);
+
+export const exportInsuranceApi = (from?: string, to?: string) =>
+    apiClient.get(`/admin/finance/insurance-export`, { 
+        params: { from, to },
+        responseType: 'blob' 
+    }).then((r) => {
+        const url = window.URL.createObjectURL(new Blob([r.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `insurance-audit-${new Date().toISOString().split('T')[0]}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    });
 
 export const adminService = {
     getPendingKycApi,
@@ -162,4 +192,27 @@ export const adminService = {
     confirmOrderApi,
     confirmOrderDecisionApi,
     recordOrderContactApi,
+    updateOrderDocumentsApi,
+    getReturnsApi,
+    processReturnApi,
+    finalizeReturnApi,
+    getFinanceStatsApi,
+    exportInsuranceApi,
+
+    // Phase 5
+    getVendorsApi: () => apiClient.get<ApiResponse<any[]>>("/admin/vendors").then(r => r.data),
+    createVendorApi: (data: any) => apiClient.post<ApiResponse<string>>("/admin/vendors", data).then(r => r.data),
+    updateVendorStatusApi: (userId: string, status: number) => apiClient.put<ApiResponse<boolean>>(`/admin/vendors/${userId}/status`, status, { headers: { "Content-Type": "application/json" } }).then(r => r.data),
+    
+    getShippersApi: () => apiClient.get<ApiResponse<any[]>>("/admin/shippers").then(r => r.data),
+    createShipperApi: (data: any) => apiClient.post<ApiResponse<string>>("/admin/shippers", data).then(r => r.data),
+    approveShipperApi: (id: string) => apiClient.put<ApiResponse<boolean>>(`/admin/shippers/${id}/approve`).then(r => r.data),
+    updateShipperStatusApi: (userId: string, status: number) => apiClient.put<ApiResponse<boolean>>(`/admin/shippers/${userId}/status`, status, { headers: { "Content-Type": "application/json" } }).then(r => r.data),
+
+    getSettingsApi: () => apiClient.get<ApiResponse<any>>("/admin/settings").then(r => r.data),
+    updateSettingsApi: (data: any) => apiClient.put<ApiResponse<boolean>>("/admin/settings", data).then(r => r.data),
+
+    getCouponsApi: () => apiClient.get<ApiResponse<any[]>>("/admin/coupons").then(r => r.data),
+    createCouponApi: (data: any) => apiClient.post<ApiResponse<string>>("/admin/coupons", data).then(r => r.data),
+    toggleCouponApi: (id: string) => apiClient.put<ApiResponse<boolean>>(`/admin/coupons/${id}/toggle`).then(r => r.data)
 };

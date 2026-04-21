@@ -112,3 +112,7 @@ export const deleteAddressApi = (id: string) =>
 
 export const setDefaultAddressApi = (id: string) =>
     apiClient.patch<ApiResponse<boolean>>(`/user/addresses/${id}/set-default`).then(r => r.data);
+
+// ── Invitation ─────────────────────────────────────────────
+export const acceptInviteApi = (data: { token: string; password: string }) =>
+    apiClient.post<ApiResponse<boolean>>("/auth/accept-invite", data).then((r) => r.data);

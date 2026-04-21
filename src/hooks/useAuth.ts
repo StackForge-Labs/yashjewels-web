@@ -27,6 +27,7 @@ import {
     enable2FaApi,
     disable2FaApi,
     loginVerify2FaApi,
+    acceptInviteApi
 } from "@/lib/auth";
 import type { AuthResponse } from "@/types/user.types";
 
@@ -368,6 +369,20 @@ export function useLoginVerify2Fa() {
                 } else {
                     router.push("/");
                 }
+            }
+        },
+    });
+}
+
+// ── Accept Invite ──────────────────────────────────────────────
+export function useAcceptInvite() {
+    const router = useRouter();
+
+    return useMutation({
+        mutationFn: acceptInviteApi,
+        onSuccess: (res) => {
+            if (res.success) {
+                router.push("/auth/login?msg=Account activated successfully. Please log in.");
             }
         },
     });

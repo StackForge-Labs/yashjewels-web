@@ -1,211 +1,237 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Eye, Download, TrendingUp, DollarSign, Clock, RefreshCw } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { 
+    DollarSign, TrendingUp, Download, PieChart, 
+    ArrowUpRight, CreditCard, Activity, Calendar, 
+    FileSpreadsheet, ShieldCheck, Filter
+} from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
-import { StatusBadge } from "../_components/ui/StatusBadge";
-import { Modal } from "../_components/ui/Modal";
-import { getFinanceOverviewApi } from "@/services/admin.service";
-import toast from "react-hot-toast";
+import { adminService } from "@/services/admin.service";
+import { toast } from "react-hot-toast";
+import { format } from "date-fns";
+import { 
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+    Tooltip, ResponsiveContainer, BarChart, Bar, Cell 
+} from "recharts";
 
-interface FinanceTransaction {
-    paymentId: string;
-    id: string; // Used in modal
-    orderNumber: string;
-    amount: number;
-    paymentMethod: string;
-    gateway: string;
-    transactionRef: string | null;
-    timestamp: string;
-    status: string;
-}
-
-interface FinanceOverview {
-    totalRevenue: number;
-    pendingSettlement: number;
-    successRate: number;
-    recentTransactions: FinanceTransaction[];
-    paymentMethodDistribution: any[]; // Keep as any[] for now as its structure isn't fully used in UI
-}
-
-export default function FinancePage() {
-    const [financeData, setFinanceData] = useState<FinanceOverview | null>(null);
+export default function FinanceHubPage() {
+    const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [selected, setSelected] = useState<FinanceTransaction | null>(null);
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
+    const [dateRange, setDateRange] = useState({ 
+        from: format(new Date().setDate(new Date().getDate() - 30), "yyyy-MM-dd"), 
+        to: format(new Date(), "yyyy-MM-dd") 
+    });
 
-    const loadFinance = async () => {
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
         setLoading(true);
         try {
-            const res = await getFinanceOverviewApi();
-            if (res.success) setFinanceData(res.data);
+            const res = await adminService.getFinanceStatsApi();
+            if (res.success) setStats(res.data);
         } catch (error) {
-            toast.error("Failed to load financial data");
+            toast.error("Failed to fetch financial stats");
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        loadFinance();
-    }, []);
+    const handleExport = async () => {
+        setExportLoading(true);
+        try {
+            await adminService.exportInsuranceApi(dateRange.from, dateRange.to);
+            toast.success("Insurance audit export started");
+        } catch (error) {
+            toast.error("Export failed");
+        } finally {
+            setExportLoading(false);
+        }
+    };
 
-    const payments = financeData?.recentTransactions || [];
-    const stats = financeData?.paymentMethodDistribution || [];
+    const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444'];
 
     return (
-        <div className="flex flex-col gap-8">
-            <PageHeader title="Financial Hub" description="Monitor payments, gateway transactions, and revenue flows."
-                actions={
-                    <button className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md">
-                        <Download className="h-4 w-4" /> Export Master Ledger
+        <div className="p-8 space-y-8 animate-in fade-in duration-700">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <PageHeader 
+                    title="Finance & Analytics Hub" 
+                    description="Monitor Yash Jewels' fiscal health, B2B insurance compliance, and revenue performance."
+                />
+                
+                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div className="flex items-center gap-2 px-3 py-2 border-r border-slate-100 dark:border-slate-800">
+                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <input 
+                            type="date" 
+                            value={dateRange.from}
+                            onChange={(e) => setDateRange({...dateRange, from: e.target.value})}
+                            className="bg-transparent border-none text-xs font-semibold focus:ring-0 outline-none" 
+                        />
+                        <span className="text-slate-300">→</span>
+                        <input 
+                            type="date" 
+                            value={dateRange.to}
+                            onChange={(e) => setDateRange({...dateRange, to: e.target.value})}
+                            className="bg-transparent border-none text-xs font-semibold focus:ring-0 outline-none" 
+                        />
+                    </div>
+                    <button 
+                        disabled={exportLoading}
+                        onClick={handleExport}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
+                    >
+                        {exportLoading ? <Activity className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                        Export B2B Insurance
                     </button>
-                }
-            />
+                </div>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { label: "Total Revenue", value: `${(financeData?.totalRevenue ?? 0).toLocaleString()} VND`, icon: DollarSign, color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400", sub: "lifetime gross volume" },
-                    { label: "Pending Settlements", value: `${(financeData?.pendingSettlement ?? 0).toLocaleString()} VND`, icon: Clock, color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400", sub: "awaiting gateway finality" },
-                    { label: "Processing Success", value: `${financeData?.successRate}%`, icon: TrendingUp, color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400", sub: "gateway health score" },
-                ].map(({ label, value, icon: Icon, color, sub }) => (
-                    <div key={label} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] dark:border-gray-800/50 dark:bg-[#111]/70">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}><Icon className="h-5 w-5" /></div>
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+                    { label: "Total Revenue", value: stats?.totalRevenue, icon: <TrendingUp />, color: "text-emerald-500", bg: "bg-emerald-50" },
+                    { label: "Pending Settlement", value: stats?.pendingSettlement, icon: <CreditCard />, color: "text-amber-500", bg: "bg-amber-50" },
+                    { label: "Success Rate", value: `${stats?.successRate}%`, icon: <PieChart />, color: "text-indigo-500", bg: "bg-indigo-50" },
+                    { label: "Insurance Claims", value: "0", icon: <ShieldCheck />, color: "text-rose-500", bg: "bg-rose-50" }
+                ].map((m, i) => (
+                    <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-indigo-500/30 transition-all">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={`p-3 rounded-2xl ${m.bg} dark:bg-slate-800 ${m.color}`}>
+                                {m.icon}
+                            </div>
+                            <div className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                <ArrowUpRight className="h-4 w-4 text-slate-400" />
+                            </div>
                         </div>
-                        <p className="font-plus-jakarta text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-                        <p className="mt-1 font-plus-jakarta text-xs font-medium text-gray-400">{sub}</p>
+                        <div className="text-sm font-semibold text-slate-500 dark:text-slate-400">{m.label}</div>
+                        <div className="text-2xl font-bold mt-1">
+                            {typeof m.value === 'number' ? `${m.value.toLocaleString()} VND` : m.value}
+                        </div>
                     </div>
                 ))}
             </div>
 
-            <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70">
-                <div className="border-b border-gray-100 px-6 py-4 dark:border-gray-800/50 flex items-center justify-between">
-                    <h2 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white">Recent Transactions</h2>
-                    <button onClick={loadFinance} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Revenue Chart */}
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="font-bold text-slate-900 dark:text-white">Revenue Performance</h3>
+                        <div className="flex gap-2">
+                             <button className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold">Month</button>
+                             <button className="px-3 py-1 text-slate-400 text-xs font-bold">Year</button>
+                        </div>
+                    </div>
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={[
+                                { name: 'Week 1', val: 4500000 },
+                                { name: 'Week 2', val: 8200000 },
+                                { name: 'Week 3', val: 6100000 },
+                                { name: 'Week 4', val: 12500000 },
+                            ]}>
+                                <defs>
+                                    <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+                                <Tooltip />
+                                <Area type="monotone" dataKey="val" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Payment Methods */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-6">Payment Distribution</h3>
+                    <div className="space-y-6">
+                        {stats?.paymentMethods?.map((pm: any, i: number) => (
+                            <div key={i} className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="font-medium text-slate-600 dark:text-slate-400 capitalize">{pm.method}</span>
+                                    <span className="font-bold">{pm.total.toLocaleString()} VND</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                        style={{ width: `${(pm.total / stats.totalRevenue) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-12 p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-600 rounded-xl text-white">
+                                <ShieldCheck className="h-5 w-5" />
+                            </div>
+                            <div className="text-xs">
+                                <div className="font-bold text-indigo-900 dark:text-indigo-200">Gateway Health: Excellent</div>
+                                <div className="text-indigo-600">Stripe production active.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Transactions Table */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <h3 className="font-bold text-slate-900 dark:text-white">Recent Transactions</h3>
+                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                        <Filter className="h-4 w-4 text-slate-400" />
                     </button>
                 </div>
                 <div className="overflow-x-auto">
-                    {loading ? (
-                        <div className="p-20 text-center font-plus-jakarta text-gray-500 animate-pulse">Auditing ledgers...</div>
-                    ) : (
-                        <table className="w-full whitespace-nowrap text-left text-sm">
-                            <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                                <tr>{["Order ID", "Amount", "Method", "Gateway", "Ref #", "Date", "Status", ""].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                                {payments.length > 0 ? payments.map((p: FinanceTransaction) => (
-                                    <tr key={p.paymentId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.orderNumber}</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.amount.toLocaleString()} VND</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500 capitalize">{p.paymentMethod.toLowerCase()}</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-600 dark:text-gray-400">{p.gateway}</td>
-                                        <td className="px-6 py-4 font-mono text-xs text-gray-400 max-w-[140px] truncate">{p.transactionRef || "N/A"}</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-xs text-gray-500">{new Date(p.timestamp).toLocaleString()}</td>
-                                        <td className="px-6 py-4"><StatusBadge status={p.status.toLowerCase() === "succeeded" ? "paid" : "pending"} label={p.status} /></td>
-                                        <td className="px-6 py-4">
-                                            <button onClick={() => { setSelected(p); setIsDetailOpen(true); }} className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-800"><Eye className="h-4 w-4" /></button>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-20 text-center font-plus-jakarta text-sm text-gray-400">No transactions found.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-                {/* Insurance Report Panel */}
-                <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 p-6">
-                    <h2 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white mb-1">Insurance Underwriting Report</h2>
-                    <p className="font-plus-jakarta text-xs text-gray-500 mb-6">Generate and export transit and full-coverage insurance ledgers for internal audit.</p>
-                    
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label className="font-plus-jakarta text-[10px] uppercase font-bold text-gray-400 mb-1 block">Start Date</label>
-                            <input type="date" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-sm dark:border-gray-700 dark:bg-gray-900" />
-                        </div>
-                        <div>
-                            <label className="font-plus-jakarta text-[10px] uppercase font-bold text-gray-400 mb-1 block">End Date</label>
-                            <input type="date" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-sm dark:border-gray-700 dark:bg-gray-900" />
-                        </div>
-                    </div>
-                    
-                    <button onClick={() => toast.success("Insurance Report CSV downloaded.")} className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-gray-800 dark:bg-white dark:text-black">
-                        <Download className="h-4 w-4" /> Export Insurance CSV
-                    </button>
-                </div>
-
-                {/* Cancellation Configuration Panel */}
-                <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 p-6">
-                    <h2 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white mb-1">Cancellation Penalty Configuration</h2>
-                    <p className="font-plus-jakarta text-xs text-gray-500 mb-6">Manage automated penalty fees triggered upon customer cancellation post-deposit.</p>
-                    
-                    <div className="space-y-4 mb-6">
-                        <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
-                            <div>
-                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Tier 1 (&lt; 20M VND)</p>
-                                <p className="font-plus-jakarta text-[10px] text-gray-400">Standard orders</p>
-                            </div>
-                            <div className="relative w-24">
-                                <input type="number" defaultValue={5} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-right font-mono text-sm font-bold dark:border-gray-700 dark:bg-black" />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 font-plus-jakarta text-xs text-gray-400">%</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
-                            <div>
-                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Tier 2 (&ge; 20M VND)</p>
-                                <p className="font-plus-jakarta text-[10px] text-gray-400">High-value acquisitions</p>
-                            </div>
-                            <div className="relative w-24">
-                                <input type="number" defaultValue={10} className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-right font-mono text-sm font-bold dark:border-gray-700 dark:bg-black" />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 font-plus-jakarta text-xs text-gray-400">%</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button onClick={() => toast.success("Cancellation policies updated globally.")} className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-3 font-plus-jakarta text-sm font-bold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
-                        Save Policy Configuration
-                    </button>
-                </div>
-            </div>
-
-            {/* Transaction Detail Modal */}
-            <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Audit Summary" size="md">
-                {selected && (
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-2">
-                             <StatusBadge status={selected.transactionRef ? "paid" : "pending"} />
-                             <span className="font-mono text-xs text-gray-400">{selected.id}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { label: "Order Number", value: selected.orderNumber },
-                                { label: "Amount Received", value: `${selected.amount.toLocaleString()} VND` },
-                                { label: "Gateway", value: selected.gateway },
-                                { label: "Method", value: selected.paymentMethod },
-                                { label: "Timestamp", value: new Date(selected.timestamp).toLocaleString() },
-                                { label: "Status", value: selected.status },
-                            ].map(({ label, value }) => (
-                                <div key={label} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
-                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">{label}</p>
-                                    <p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white capitalize">{value}</p>
-                                </div>
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs uppercase font-medium">
+                            <tr>
+                                <th className="px-6 py-4">Transaction / Date</th>
+                                <th className="px-6 py-4">Order #</th>
+                                <th className="px-6 py-4">Method</th>
+                                <th className="px-6 py-4">Amount</th>
+                                <th className="px-6 py-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                            {stats?.recentTransactions?.map((t: any) => (
+                                <tr key={t.paymentId} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-mono text-slate-400 uppercase">{t.transactionRef?.substring(0, 15)}...</div>
+                                        <div className="text-xs text-slate-500">{format(new Date(t.timestamp), "MMM dd, HH:mm")}</div>
+                                    </td>
+                                    <td className="px-6 py-4 font-bold text-indigo-600">{t.orderNumber}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-xs font-semibold">
+                                            <div className="p-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+                                                <CreditCard className="h-3 w-3" />
+                                            </div>
+                                            {t.paymentMethod}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 font-bold">{t.amount.toLocaleString()} VND</td>
+                                    <td className="px-6 py-4">
+                                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold w-fit uppercase ${
+                                            t.status === 'SUCCEEDED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                                        }`}>
+                                            {t.status}
+                                        </div>
+                                    </td>
+                                </tr>
                             ))}
-                        </div>
-                        <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400 mb-2">Gateway Reference</p>
-                            <code className="font-mono text-xs text-gray-600 dark:text-gray-400 break-all">{selected.transactionRef || "N/A"}</code>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 }
