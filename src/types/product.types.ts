@@ -108,6 +108,7 @@ export interface ProductCreateRequest {
   otherMakingCharge: number;
   vatRate: number;
   quantity: number;
+  pairs: number;
   stones?: StoneCreateRequest[];
   diamonds?: DiamondCreateRequest[];
 }

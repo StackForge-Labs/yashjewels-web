@@ -69,9 +69,18 @@ export default function OrderTimelinePage() {
 
     // Return States
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+    const [selectedReason, setSelectedReason] = useState("");
     const [returnReason, setReturnReason] = useState("");
     const [unboxingVideo, setUnboxingVideo] = useState<File | null>(null);
     const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+
+    const RETURN_REASONS = [
+        "Product defect or damaged",
+        "Item not as described",
+        "Incorrect item sent",
+        "Changed my mind",
+        "Other"
+    ];
 
     // Review States
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -147,7 +156,10 @@ export default function OrderTimelinePage() {
     };
 
     const handleSubmitReturn = async () => {
-        if (!returnReason.trim()) return toast.error("Please provide a reason.");
+        const finalReason = selectedReason === "Other" ? returnReason : selectedReason;
+        
+        if (!selectedReason) return toast.error("Please select a reason.");
+        if (selectedReason === "Other" && !returnReason.trim()) return toast.error("Please specify your reason.");
         if (!unboxingVideo) return toast.error("Unboxing video is required.");
 
         setIsSubmittingReturn(true);
@@ -178,7 +190,7 @@ export default function OrderTimelinePage() {
             // Submit URL to our API
             const res = await postSalesService.submitReturnRequest({
                 orderId,
-                reason: returnReason,
+                reason: finalReason,
                 evidenceUrl
             });
 
@@ -586,7 +598,39 @@ export default function OrderTimelinePage() {
                             <strong>Note:</strong> If the reason for return is not due to a store error (e.g., incorrect item sent, product defect...), an insurance and handling fee equivalent to <strong>2% of the order total</strong> will be deducted from your refund.
                         </p>
                     </div>
-                    <FormField label="Reason" required><textarea className={`${textareaCls} h-24`} value={returnReason} onChange={(e) => setReturnReason(e.target.value)} /></FormField>
+                    <div className="space-y-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Please select a reason *</p>
+                        <div className="grid grid-cols-1 gap-2">
+                            {RETURN_REASONS.map((reason) => (
+                                <button
+                                    key={reason}
+                                    onClick={() => setSelectedReason(reason)}
+                                    className={`flex items-center justify-between rounded-xl border p-4 text-left transition-all ${selectedReason === reason
+                                        ? "border-gold bg-gold/5 ring-1 ring-gold"
+                                        : "border-gray-100 bg-white hover:border-gray-200 dark:border-white/5 dark:bg-white/5"
+                                        }`}
+                                >
+                                    <span className={`text-xs font-medium ${selectedReason === reason ? "text-gold" : "text-gray-700 dark:text-gray-300"}`}>
+                                        {reason}
+                                    </span>
+                                    {selectedReason === reason && <CheckCircle2 size={16} className="text-gold" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {selectedReason === "Other" && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                            <FormField label="Describe your reason" required>
+                                <textarea
+                                    className={`${textareaCls} h-24`}
+                                    placeholder="Please provide more details about your return request..."
+                                    value={returnReason}
+                                    onChange={(e) => setReturnReason(e.target.value)}
+                                />
+                            </FormField>
+                        </motion.div>
+                    )}
                     <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/50">
                         {unboxingVideo ? <div className="text-center"><Video size={32} className="text-emerald-500 mx-auto" /><p className="text-xs mt-1">{unboxingVideo.name}</p></div> : <div className="text-center"><Upload size={32} className="text-gray-400 mx-auto" /><p className="text-[10px] font-bold uppercase text-gray-400">Upload Unboxing Video (Max 50MB)</p></div>}
                         <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />

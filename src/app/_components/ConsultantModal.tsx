@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Send, Phone, User, Mail, MessageSquare, ShieldCheck, Globe } from "lucide-react";
+import { X, Send, Phone, User, Mail, MessageSquare, ShieldCheck, Globe, Loader2 } from "lucide-react";
+import { vendorService } from "@/services/vendor.service";
+import { toast } from "sonner";
 
 export const ConsultantModal = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "success">("idle");
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        country: "VN"
+    });
     const [delay, setDelay] = useState(30000); // Initial 30s
 
     useEffect(() => {
@@ -42,19 +50,35 @@ export const ConsultantModal = () => {
         setDelay((prev) => prev + 10000);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setFormStatus("submitting");
-        setTimeout(() => {
-            setFormStatus("success");
-            localStorage.setItem("consultant_last_submitted", Date.now().toString());
-        }, 1500);
+        try {
+            setFormStatus("submitting");
+            const res = await vendorService.submitInquiry({
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                subject: "Luxury Consultation Request",
+                message: `Consultation request from ${formData.country}`
+            });
+
+            if (res.success) {
+                setFormStatus("success");
+                localStorage.setItem("consultant_last_submitted", Date.now().toString());
+            } else {
+                setFormStatus("idle");
+                toast.error(res.message || "Something went wrong. Please try again.");
+            }
+        } catch (error) {
+            setFormStatus("idle");
+            toast.error("An error occurred.");
+        }
     };
 
     if (!mounted || !isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={handleClose} />
 
@@ -142,6 +166,8 @@ export const ConsultantModal = () => {
                                                     type="text"
                                                     placeholder="Alex Sterling"
                                                     className="focus:border-gold focus:ring-gold/20 w-full rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
+                                                    value={formData.name}
+                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -157,6 +183,8 @@ export const ConsultantModal = () => {
                                                 <select
                                                     required
                                                     className="focus:border-gold focus:ring-gold/20 w-full appearance-none rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
+                                                    value={formData.country}
+                                                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                                                 >
                                                     <option value="US">United States</option>
                                                     <option value="UK">United Kingdom</option>
@@ -182,10 +210,11 @@ export const ConsultantModal = () => {
                                                 type="email"
                                                 placeholder="alex@luxury.com"
                                                 className="focus:border-gold focus:ring-gold/20 w-full rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             />
                                         </div>
                                     </div>
-
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                                             Phone Number (inc. area code)
@@ -200,6 +229,8 @@ export const ConsultantModal = () => {
                                                 type="tel"
                                                 placeholder="+1 234 567 890"
                                                 className="focus:border-gold focus:ring-gold/20 w-full rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                             />
                                         </div>
                                     </div>

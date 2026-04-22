@@ -212,9 +212,9 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex flex-col p-2 divide-y divide-gray-50 dark:divide-gray-800/50">
                         {[
-                            { name: "Classic Solitaire", sales: 45, rev: "$45,200", trend: "+12%" },
-                            { name: "Tennis Bracelet", sales: 28, rev: "$28,000", trend: "+5%" },
-                            { name: "Pearl Necklace", sales: 22, rev: "$11,500", trend: "-2%" },
+                            { name: "Classic Solitaire", sales: 45, rev: "1,125,000,000", trend: "+12%" },
+                            { name: "Tennis Bracelet", sales: 28, rev: "700,000,000", trend: "+5%" },
+                            { name: "Pearl Necklace", sales: 22, rev: "287,500,000", trend: "-2%" },
                         ].map((p, i) => (
                             <div key={i} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800/20 rounded-xl transition">
                                 <div>
@@ -222,7 +222,7 @@ export default function AdminDashboardPage() {
                                     <p className="font-plus-jakarta text-[10px] font-semibold text-gray-400 mt-0.5">{p.sales} units sold</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.rev}</p>
+                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{p.rev} <span className="text-[10px] text-gray-400">VND</span></p>
                                     <p className={`font-plus-jakarta text-[10px] font-bold ${p.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>{p.trend}</p>
                                 </div>
                             </div>
@@ -238,9 +238,9 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex flex-col p-2 divide-y divide-gray-50 dark:divide-gray-800/50">
                         {[
-                            { name: "James Sterling", email: "j.sterling@email.com", spent: "$32,300", orders: 12 },
-                            { name: "Eleanor Vance", email: "e.vance@email.com", spent: "$14,500", orders: 4 },
-                            { name: "Sophia Chen", email: "sophia.c@email.com", spent: "$4,850", orders: 2 },
+                            { name: "James Sterling", email: "j.sterling@email.com", spent: "805,000,000", orders: 12 },
+                            { name: "Eleanor Vance", email: "e.vance@email.com", spent: "362,500,000", orders: 4 },
+                            { name: "Sophia Chen", email: "sophia.c@email.com", spent: "121,250,000", orders: 2 },
                         ].map((c, i) => (
                             <Link key={i} href="/admin/customers" className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800/20 rounded-xl transition">
                                 <div className="flex items-center gap-3">
@@ -251,7 +251,7 @@ export default function AdminDashboardPage() {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.spent}</p>
+                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.spent} <span className="text-[10px] text-gray-400">VND</span></p>
                                     <p className="font-plus-jakarta text-[10px] font-semibold text-gray-400">{c.orders} orders</p>
                                 </div>
                             </Link>
@@ -267,20 +267,20 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex flex-col p-2 divide-y divide-gray-50 dark:divide-gray-800/50">
                         {[
-                            { name: "Premium Gems Ltd", fulfill: "98%", status: "Level 1" },
-                            { name: "Aurum Mines", fulfill: "95%", status: "Level 2" },
-                            { name: "Jade Dynasty", fulfill: "88%", status: "Pending KYC" },
+                            { name: "Diamond Guild", fulfill: "98.5%", status: "Tier 1" },
+                            { name: "Luxe Platinum", fulfill: "94.2%", status: "Tier 1" },
+                            { name: "Global Gems", fulfill: "89.0%", status: "Tier 2" },
                         ].map((v, i) => (
-                            <Link key={i} href="/admin/vendors" className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800/20 rounded-xl transition">
+                            <div key={i} className="flex justify-between items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800/20 rounded-xl transition">
                                 <div>
                                     <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{v.name}</p>
-                                    <p className={`font-plus-jakarta text-[10px] font-bold mt-0.5 ${v.status.includes('Pending') ? 'text-amber-500' : 'text-blue-500'}`}>{v.status}</p>
+                                    <p className={`font-plus-jakarta text-[10px] font-bold mt-0.5 text-blue-500`}>{v.status}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{v.fulfill}</p>
                                     <p className="font-plus-jakarta text-[10px] font-semibold text-gray-400">fulfillment</p>
                                 </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 </div>

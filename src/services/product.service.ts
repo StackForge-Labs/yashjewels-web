@@ -9,6 +9,8 @@ export interface GetProductsParams {
   searchQuery?: string;
   sortBy?: string;
   inStock?: boolean;
+  includeDeleted?: boolean;
+  onlyDeleted?: boolean;
 }
 
 export interface PaginatedResponse<T> {

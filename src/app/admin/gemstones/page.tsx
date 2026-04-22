@@ -1,22 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Filter, Edit2, Trash2, Tag, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Filter, Edit2, Trash2, Tag, Loader2 } from "lucide-react";
+import { specService, JewelrySpecItem } from "@/services/spec.service";
+import { toast } from "react-hot-toast";
 
-interface StoneQualityData {
-    id: string;
-    name: string;
-    description: string;
-    isActive: boolean;
-    productCount: number;
-}
+export default function AdminStoneQualitiesPage() {
+    const [stoneQualities, setStoneQualities] = useState<JewelrySpecItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-const mockData: StoneQualityData[] = [
-    { id: "IDX-001", name: "Ruby (Crimson)", description: "High-quality deep red pigeon blood ruby.", isActive: true, productCount: 42 },
-    { id: "IDX-002", name: "Sapphire (Royal Blue)", description: "Royal blue sapphire for premium settings.", isActive: true, productCount: 15 },
-];
-
-export default function AdminGemstonesPage() {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -24,12 +17,25 @@ export default function AdminGemstonesPage() {
     // Modal & Drawer State
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerMode, setDrawerMode] = useState<"CREATE" | "EDIT">("CREATE");
-    const [selectedItem, setSelectedItem] = useState<StoneQualityData | null>(null);
+    const [selectedItem, setSelectedItem] = useState<JewelrySpecItem | null>(null);
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    const filtered = mockData.filter(d => {
-        const matchSearch = d.name.toLowerCase().includes(search.toLowerCase());
+    const fetchData = async () => {
+        setIsLoading(true);
+        const res = await specService.stoneQualities.getAll();
+        setStoneQualities(res.data);
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = stoneQualities.filter(d => {
+        // Match both stoneType and grade
+        const text = `${d.stoneType} ${d.grade}`.toLowerCase();
+        const matchSearch = text.includes(search.toLowerCase());
         const matchStatus = filterStatus === "ALL" ? true : filterStatus === "ACTIVE" ? d.isActive : !d.isActive;
         return matchSearch && matchStatus;
     });
@@ -40,15 +46,59 @@ export default function AdminGemstonesPage() {
         setIsDrawerOpen(true);
     };
 
-    const openEdit = (item: StoneQualityData) => {
+    const openEdit = (item: JewelrySpecItem) => {
         setDrawerMode("EDIT");
         setSelectedItem(item);
         setIsDrawerOpen(true);
     };
 
-    const openDelete = (item: StoneQualityData) => {
+    const openDelete = (item: JewelrySpecItem) => {
         setSelectedItem(item);
         setIsDeleteModalOpen(true);
+    };
+
+    const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSaving(true);
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+        
+        const payload = {
+            stoneType: formData.get("stoneType") as string,
+            grade: formData.get("grade") as string,
+            description: formData.get("description") as string,
+            isActive: drawerMode === "EDIT" ? formData.get("isActive") === "on" : true,
+        };
+
+        let res;
+        if (drawerMode === "CREATE") {
+            res = await specService.stoneQualities.create(payload);
+        } else if (selectedItem) {
+            res = await specService.stoneQualities.update(selectedItem.id, payload);
+        }
+
+        setIsSaving(false);
+        if (res?.success) {
+            toast.success(res.message);
+            setIsDrawerOpen(false);
+            fetchData();
+        } else {
+            toast.error(res?.message || "Failed to save stone quality");
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!selectedItem) return;
+        setIsSaving(true);
+        const res = await specService.stoneQualities.delete(selectedItem.id);
+        setIsSaving(false);
+        if (res.success) {
+            toast.success(res.message);
+            setIsDeleteModalOpen(false);
+            fetchData();
+        } else {
+            toast.error(res.message || "Failed to delete stone quality");
+        }
     };
 
     return (
@@ -56,27 +106,26 @@ export default function AdminGemstonesPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                     <h1 className="font-serif text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Gemstone Types & Quality
+                        Stone Qualities & Grading
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Configure natural gemstones and semi-precious stones for jewelry settings.
+                        Manage quality grades (AAA, AA, etc.) for specific stone categories.
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Add Gemstone
+                    <Plus className="h-4 w-4" /> Add Quality Grade
                 </button>
             </div>
 
-            {/* Generic Toolbar */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search gemstones..."
+                        placeholder="Search stone or grade..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -114,78 +163,85 @@ export default function AdminGemstonesPage() {
                 </div>
             </div>
 
-            {/* Data Table */}
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800/50 dark:bg-[#0a0a0a]">
-                <div className="overflow-x-auto">
-                    <table className="w-full whitespace-nowrap text-left text-sm">
-                        <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
-                            <tr>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Attribute Name</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 max-w-[200px]">Description / Value</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Total References</th>
-                                <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                            {filtered.map((item) => (
-                                <tr key={item.id} className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                                                <Tag className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.name}</p>
-                                                <p className="font-mono text-[10px] text-gray-400">{item.id}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td className="px-6 py-4">
-                                        <p className="max-w-[280px] overflow-hidden text-ellipsis whitespace-nowrap font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
-                                            {item.description}
-                                        </p>
-                                    </td>
-
-                                    <td className="px-6 py-4">
-                                        {item.isActive ? (
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
-                                                Active
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
-                                                Inactive
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="inline-flex items-center gap-2">
-                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.productCount}</span>
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                            <button 
-                                                onClick={() => openEdit(item)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-blue-500/20 dark:hover:text-blue-400">
-                                                <Edit2 className="h-4 w-4" />
-                                            </button>
-                                            <button 
-                                                onClick={() => openDelete(item)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-rose-500/20 dark:hover:text-rose-400">
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </td>
+                <div className="overflow-x-auto min-h-[300px]">
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-gray-400">
+                            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+                            <p className="font-plus-jakarta text-sm">Loading stone qualities...</p>
+                        </div>
+                    ) : (
+                        <table className="w-full whitespace-nowrap text-left text-sm">
+                            <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
+                                <tr>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Stone & Grade</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Description</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
+                                {filtered.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-12 text-center text-gray-500 font-plus-jakarta text-sm">
+                                            No stone qualities found matching your filters.
+                                        </td>
+                                    </tr>
+                                ) : filtered.map((item) => (
+                                    <tr key={item.id} className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                                                    <Tag className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
+                                                        {item.stoneType} - {item.grade}
+                                                    </p>
+                                                    <p className="font-mono text-[10px] text-gray-400">ID: {item.id.substring(0, 8)}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        
+                                        <td className="px-6 py-4">
+                                            <p className="max-w-[280px] overflow-hidden text-ellipsis whitespace-nowrap font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
+                                                {item.description || "-"}
+                                            </p>
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            {item.isActive ? (
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+                                                    Active
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 font-plus-jakarta text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                                    Inactive
+                                                </span>
+                                            )}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                                <button 
+                                                    onClick={() => openEdit(item)}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-blue-500/20 dark:hover:text-blue-400">
+                                                    <Edit2 className="h-4 w-4" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => openDelete(item)}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-rose-500/20 dark:hover:text-rose-400">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 
@@ -193,13 +249,13 @@ export default function AdminGemstonesPage() {
             {isDrawerOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end">
                     <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setIsDrawerOpen(false)} />
-                    <div className="relative w-full max-w-md bg-white shadow-2xl dark:bg-[#111] flex flex-col h-full border-l border-gray-100 dark:border-gray-800">
+                    <form onSubmit={handleSave} className="relative w-full max-w-md bg-white shadow-2xl dark:bg-[#111] flex flex-col h-full border-l border-gray-100 dark:border-gray-800">
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "Create New Attribute" : "Update Attribute"}
+                                    {drawerMode === "CREATE" ? "New Quality Grade" : "Update Quality Grade"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Configure natural gemstones for jewelry settings.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Configure grading for specific stone types.</p>
                             </div>
                         </div>
 
@@ -207,48 +263,66 @@ export default function AdminGemstonesPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Attribute Name <span className="text-rose-500">*</span>
+                                        Stone Category <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
-                                        defaultValue={selectedItem?.name || ""}
-                                        placeholder="Enter name..."
+                                        name="stoneType"
+                                        required
+                                        defaultValue={selectedItem?.stoneType || ""}
+                                        placeholder="e.g. Ruby, Emerald..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Specific Description</label>
-                                    <textarea 
-                                        rows={3}
-                                        defaultValue={selectedItem?.description || ""}
-                                        placeholder="Technical details..."
+                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                                        Quality Grade <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="grade"
+                                        required
+                                        defaultValue={selectedItem?.grade || ""}
+                                        placeholder="e.g. AAA, VS, Natural..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
-                                <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">Activation Status</p>
-                                        <p className="text-xs text-gray-500">Customers will be able to see this option in filters.</p>
-                                    </div>
-                                    <label className="relative inline-flex cursor-pointer items-center">
-                                        <input type="checkbox" defaultChecked={selectedItem ? selectedItem.isActive : true} className="peer sr-only" />
-                                        <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-gray-700 dark:border-gray-600" />
-                                    </label>
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Description</label>
+                                    <textarea 
+                                        name="description"
+                                        rows={3}
+                                        defaultValue={selectedItem?.description || ""}
+                                        placeholder="Technical details about this grade..."
+                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
+                                    />
                                 </div>
+                                {drawerMode === "EDIT" && (
+                                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">Active Status</p>
+                                            <p className="text-xs text-gray-500">Enable this grade for use in product catalog.</p>
+                                        </div>
+                                        <label className="relative inline-flex cursor-pointer items-center">
+                                            <input type="checkbox" name="isActive" defaultChecked={selectedItem ? selectedItem.isActive : true} className="peer sr-only" />
+                                            <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-gray-700 dark:border-gray-600" />
+                                        </label>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="border-t border-gray-100 bg-gray-50/50 p-6 dark:border-gray-800 dark:bg-[#1a1a1a]/50">
                             <div className="flex gap-3">
-                                <button onClick={() => setIsDrawerOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
+                                <button type="button" onClick={() => setIsDrawerOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">
                                     Cancel
                                 </button>
-                                <button className="flex-1 rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95">
-                                    {drawerMode === "CREATE" ? "Create Data" : "Save Changes"}
+                                <button disabled={isSaving} type="submit" className="flex-1 rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95 disabled:opacity-50 flex justify-center items-center">
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : (drawerMode === "CREATE" ? "Create" : "Save Changes")}
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
             )}
 
@@ -261,14 +335,16 @@ export default function AdminGemstonesPage() {
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.name}?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.stoneType} {selectedItem.grade}?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                This action is high-risk. There are <strong className="text-rose-500">{selectedItem.productCount} dependent items</strong> which will be affected.
+                                This action is high-risk. Products using this quality grade will be affected.
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">
                             <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 rounded-xl border border-gray-200 bg-white py-3 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-[#111] dark:text-gray-300 dark:hover:bg-gray-800">Cancel</button>
-                            <button className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20">Confirm Delete</button>
+                            <button onClick={handleDelete} disabled={isSaving} className="flex-1 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-95 shadow-rose-500/20 flex justify-center items-center">
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Delete"}
+                            </button>
                         </div>
                     </div>
                 </div>

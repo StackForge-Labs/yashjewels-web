@@ -421,8 +421,8 @@ export default function CustomersPage() {
                 {/* Toolbar */}
                 <div className="flex flex-col gap-4 border-b border-gray-100 p-6 md:flex-row md:items-center dark:border-gray-800/50">
                     {/* Left Side: Search + Filters */}
-                    <div className="flex flex-1 flex-wrap items-center gap-3">
-                        <div className="relative flex min-w-100 items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 transition-all focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/5 dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:focus-within:border-blue-500">
+                    <div className="flex flex-1 flex-wrap items-center gap-3 w-full lg:w-auto">
+                        <div className="relative flex w-full lg:max-w-md items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 transition-all focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/5 dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:focus-within:border-blue-500">
                             <Search className="h-4 w-4 shrink-0 text-gray-400" />
                             <input
                                 type="text"
@@ -475,7 +475,7 @@ export default function CustomersPage() {
                     </div>
 
                     {/* Right Side: Actions */}
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 lg:ml-auto w-full lg:w-auto justify-end">
                         <input ref={importRef} type="file" accept=".xlsx" className="hidden"
                             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ""; }} />
                         <button onClick={() => importRef.current?.click()}
@@ -500,7 +500,7 @@ export default function CustomersPage() {
                     ) : (
                         <table className="w-full whitespace-nowrap text-left text-sm">
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                                <tr>{["Client", "Security", "KYC", "Account Status", "Joined", "Spent", "Actions"].map(h => (
+                                <tr>{["Client", "Security", "KYC", "Account Status", "Spent", "Actions"].map(h => (
                                     <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>
                                 ))}</tr>
                             </thead>
@@ -531,7 +531,6 @@ export default function CustomersPage() {
                                         <td className="px-6 py-4">
                                             <UserStatusBadge userStatus={(c as any).userStatus || (c as any).UserStatus} suspendedUntil={c.suspendedUntil} />
                                         </td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString("en-GB")}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.lifetimeValue?.toLocaleString() ?? 0} VND</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5">
@@ -562,7 +561,7 @@ export default function CustomersPage() {
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan={7} className="px-6 py-20 text-center font-plus-jakarta text-sm text-gray-400">No customers found.</td></tr>
+                                    <tr><td colSpan={6} className="px-6 py-20 text-center font-plus-jakarta text-sm text-gray-400">No customers found.</td></tr>
                                 )}
                             </tbody>
                         </table>

@@ -1,22 +1,38 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { 
-    Plus, Search, Package, Edit3, X, Gem, TrendingUp, Filter, 
-    Trash2, CheckCircle2, AlertCircle, Loader2, Save, Image as ImageIcon, 
-    LayoutGrid, List, ChevronLeft, ChevronRight, Settings2, Trash, Star, Upload, Info
+import {
+    Plus, Search, Package, Edit3, X, Gem, TrendingUp, Filter,
+    Trash2, CheckCircle2, AlertCircle, Loader2, Save, Image as ImageIcon,
+    LayoutGrid, List, ChevronLeft, ChevronRight, Settings2, Trash, Star, Upload, Info, Wand2, Lock,
+    RefreshCcw, EyeOff
 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { productService } from "@/services/product.service";
 import { categoryService } from "@/services/category.service";
 import { catalogService } from "@/services/catalog.service";
 import { specService } from "@/services/spec.service";
-import { 
-    Product, ProductCreateRequest, ProductUpdateRequest, 
-    ProductStone, ProductDiamond, StoneCreateRequest, DiamondCreateRequest 
+import { adminService } from "@/services/admin.service";
+import {
+    Product, ProductCreateRequest, ProductUpdateRequest,
+    ProductStone, ProductDiamond, StoneCreateRequest, DiamondCreateRequest
 } from "@/types/product.types";
 import { Category } from "@/types/category.types";
 import { ConfirmModal } from "../_components/ui/ConfirmModal";
+
+// ─── Utilities ──────────────────────────────────────────────────
+const slugify = (text: string) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/[^\w-]+/g, '')       // Remove all non-word chars
+        .replace(/--+/g, '-')         // Replace multiple - with single -
+        .replace(/^-+/, '')             // Trim - from start of text
+        .replace(/-+$/, '');            // Trim - from end of text
+};
 
 
 // ─── Constants ──────────────────────────────────────────────────
@@ -24,7 +40,7 @@ const STATUS_OPTIONS = [
     { value: "ACTIVE", label: "Active", color: "emerald" },
     { value: "INACTIVE", label: "Inactive", color: "gray" },
     { value: "SOLD_OUT", label: "Sold Out", color: "rose" },
-    { value: "COMING_SOON", label: "Coming Soon", color: "amber" },
+    { value: "COMING_SOON", label: "Coming Soon", color: "indigo" },
 ];
 
 // ─── Form Components ───────────────────────────────────────────
@@ -37,16 +53,16 @@ const FormLabel = ({ children, required }: FormLabelProps) => (
 );
 
 const FormInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input 
+    <input
         {...props}
-        className={`w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm transition-all focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900 ${props.className || ""}`}
+        className={`w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900 ${props.className || ""}`}
     />
 );
 
 const FormSelect = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
-    <select 
+    <select
         {...props}
-        className={`w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm transition-all focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900 ${props.className || ""}`}
+        className={`w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900 ${props.className || ""}`}
     />
 );
 
@@ -63,7 +79,8 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     const [activeTab, setActiveTab] = useState<"general" | "specs" | "components" | "gallery">("general");
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    
+    const [isSlugCustomized, setIsSlugCustomized] = useState(false);
+
     // UI Options State
     const [categories, setCategories] = useState<Category[]>([]);
     const [brands, setBrands] = useState<any[]>([]);
@@ -74,43 +91,62 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     const [diamondQualities, setDiamondQualities] = useState<any[]>([]);
     const [diamondCuts, setDiamondCuts] = useState<any[]>([]);
     const [stoneQualities, setStoneQualities] = useState<any[]>([]);
+    const [stoneTypes, setStoneTypes] = useState<any[]>([]);
 
     // Form State
-    const [formData, setFormData] = useState<ProductCreateRequest & { status?: string }>({
+    const [formData, setFormData] = useState<ProductCreateRequest & { status?: string, otherMakingCharge?: number }>({
         styleCode: "", name: "", slug: "", description: "", prodQuality: "High Premium",
-        vendorId: "00000000-0000-0000-0000-000000000000", brandId: "", categoryId: "",
+        vendorId: "", brandId: "", categoryId: "",
         productTypeId: "", jewelTypeId: "", goldKaratId: "", certificationId: "",
-        goldWeightGm: 0, stoneWeightGm: 0, netGoldGm: 0, wastagePct: 5, wastageGm: 0, totalGrossWeightGm: 0,
-        goldMakingCharge: 0, stoneMakingCharge: 0, otherMakingCharge: 0, vatRate: 10,
-        quantity: 1, status: "ACTIVE",
+        goldWeightGm: 0, stoneWeightGm: 0, diamondWeightCts: 0, netGoldGm: 0, wastagePct: 5, wastageGm: 0, totalGrossWeightGm: 0,
+        goldMakingCharge: 0, stoneMakingCharge: 0, diamondMakingCharge: 0, otherMakingCharge: 0, vatRate: 10,
+        quantity: 1, pairs: 1, status: "ACTIVE",
         stones: [], diamonds: []
-    });
+    } as any);
 
     const [productImages, setProductImages] = useState<any[]>([]);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+    const TABS: { id: "general" | "specs" | "components" | "gallery", label: string }[] = [
+        { id: "general", label: "General Info" },
+        { id: "specs", label: "Technical Specs" },
+        { id: "components", label: "Stones & Diamonds" },
+        { id: "gallery", label: "Image Gallery" }
+    ];
 
     // Load Metadata
     useEffect(() => {
         const loadMetadata = async () => {
-            const [cats, brs, pts, jts, kts, crs, dq, dc, sq] = await Promise.all([
-                categoryService.getAll(),
-                catalogService.brands.getAll(),
-                catalogService.productTypes.getAll(),
-                catalogService.jewelTypes.getAll(),
-                specService.goldKarats.getAll(),
-                specService.certifications.getAll(),
-                specService.diamondQualities.getAll(),
-                specService.diamondSubTypes.getAll(),
-                specService.stoneQualities.getAll(),
-            ]);
-            setCategories(cats);
-            setBrands(brs.data);
-            setProductTypes(pts.data);
-            setJewelTypes(jts.data);
-            setKarats(kts.data);
-            setCerts(crs.data);
-            setDiamondQualities(dq.data);
-            setDiamondCuts(dc.data);
-            setStoneQualities(sq.data);
+            try {
+                const [cats, brs, pts, jts, kts, crs, dq, dc, sq, st] = await Promise.all([
+                    categoryService.getAll(),
+                    catalogService.brands.getAll(),
+                    catalogService.productTypes.getAll(),
+                    catalogService.jewelTypes.getAll(),
+                    specService.goldKarats.getAll(),
+                    specService.certifications.getAll(),
+                    specService.diamondQualities.getAll(),
+                    specService.diamondSubTypes.getAll(),
+                    specService.stoneQualities.getAll(),
+                    specService.stoneTypes.getAll(),
+                ]);
+
+                setCategories(cats || []);
+                setBrands(brs?.data || []);
+                setProductTypes(pts?.data || []);
+                setJewelTypes(jts?.data || []);
+                setKarats(kts?.data || []);
+                setCerts(crs?.data || []);
+                setDiamondQualities(dq?.data || []);
+                setDiamondCuts(dc?.data || []);
+                setStoneQualities(sq?.data || []);
+                setStoneTypes(st?.data || []);
+            } catch (error) {
+                console.error("Metadata sync failed:", error);
+                toast.error("Failed to load catalog metadata");
+            } finally {
+                setLoading(false);
+            }
         };
         loadMetadata();
     }, []);
@@ -133,7 +169,8 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                             certificationId: data.certificationId || "",
                             status: data.status,
                             stones: data.stones.map(s => ({ ...s })),
-                            diamonds: data.diamonds.map(d => ({ ...d }))
+                            diamonds: data.diamonds.map(d => ({ ...d })),
+                            diamondWeightCts: data.diamonds?.reduce((sum, d) => sum + (d.weightCts || 0), 0) || 0
                         } as any);
                         setProductImages(data.images || []);
                     }
@@ -157,29 +194,90 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         const val = type === "number" ? parseFloat(value) || 0 : value;
-        setFormData(prev => ({ ...prev, [name]: val }));
+
+        setFormData(prev => {
+            const next = { ...prev, [name]: val };
+            // Auto-generate slug from name if not manually customized and not in edit mode
+            if (name === "name" && !isSlugCustomized && !isEdit) {
+                next.slug = slugify(value);
+            }
+            // If user manually edits slug, stop auto-sync
+            if (name === "slug") {
+                setIsSlugCustomized(true);
+            }
+
+            // ─── Auto-Calculation Logic ───
+            // 1. Update Total Gross Weight (1 Carat = 0.2 Grams)
+            if (name === "goldWeightGm" || name === "stoneWeightGm" || name === "diamondWeightCts") {
+                const diamondInGm = (next as any).diamondWeightCts * 0.2 || 0;
+                next.totalGrossWeightGm = Number((next.goldWeightGm + next.stoneWeightGm + diamondInGm).toFixed(3));
+                next.netGoldGm = next.goldWeightGm;
+            }
+            // 2. Update Wastage Grams based on Pct
+            if (name === "goldWeightGm" || name === "wastagePct") {
+                next.wastageGm = Number(((next.goldWeightGm * next.wastagePct) / 100).toFixed(3));
+            }
+
+            return next;
+        });
     };
 
     const handleComponentAction = (type: "stone" | "diamond", action: "add" | "remove", index?: number) => {
+        let nextStones = [...(formData.stones || [])];
+        let nextDiamonds = [...(formData.diamonds || [])];
+
         if (action === "add") {
-            if (type === "stone") setFormData(p => ({ ...p, stones: [...(p.stones || []), { name: "New Stone", stoneQuality: "", quantity: 1, weightGm: 0, ratePerGm: 0 }] }));
-            else setFormData(p => ({ ...p, diamonds: [...(p.diamonds || []), { diamondQuality: "", diamondCut: "", quantity: 1, weightCts: 0, ratePerCt: 0 }] }));
+            if (type === "stone") nextStones.push({ name: "New Stone", stoneQuality: "", quantity: 1, weightGm: 0, ratePerGm: 0 });
+            else nextDiamonds.push({ diamondQuality: "", diamondCut: "", quantity: 1, weightCts: 0, ratePerCt: 0 });
         } else if (index !== undefined) {
-            if (type === "stone") setFormData(p => ({ ...p, stones: p.stones?.filter((_, i) => i !== index) }));
-            else setFormData(p => ({ ...p, diamonds: p.diamonds?.filter((_, i) => i !== index) }));
+            if (type === "stone") nextStones = nextStones.filter((_, i) => i !== index);
+            else nextDiamonds = nextDiamonds.filter((_, i) => i !== index);
         }
+
+        // Auto-aggregate weights
+        const totalStoneGm = nextStones.reduce((sum, s) => sum + (s.weightGm || 0), 0);
+        const totalDiamondCts = nextDiamonds.reduce((sum, d) => sum + (d.weightCts || 0), 0);
+
+        setFormData(prev => {
+            const next = { ...prev, stones: nextStones, diamonds: nextDiamonds, stoneWeightGm: totalStoneGm, diamondWeightCts: totalDiamondCts };
+            const diamondInGm = totalDiamondCts * 0.2;
+            next.totalGrossWeightGm = Number((next.goldWeightGm + totalStoneGm + diamondInGm).toFixed(3));
+            return next;
+        });
     };
 
     const handleComponentChange = (type: "stone" | "diamond", index: number, field: string, value: any) => {
+        const nextStones = [...(formData.stones || [])];
+        const nextDiamonds = [...(formData.diamonds || [])];
+
         if (type === "stone") {
-            const newStones = [...(formData.stones || [])];
-            (newStones[index] as any)[field] = field === "name" || field === "stoneQuality" ? value : parseFloat(value) || 0;
-            setFormData(p => ({ ...p, stones: newStones }));
+            (nextStones[index] as any)[field] = field === "name" || field === "stoneQuality" ? value : parseFloat(value) || 0;
         } else {
-            const newDiamonds = [...(formData.diamonds || [])];
-            (newDiamonds[index] as any)[field] = field === "diamondQuality" || field === "diamondCut" ? value : parseFloat(value) || 0;
-            setFormData(p => ({ ...p, diamonds: newDiamonds }));
+            (nextDiamonds[index] as any)[field] = field === "diamondQuality" || field === "diamondCut" ? value : parseFloat(value) || 0;
         }
+
+        // Auto-aggregate weights
+        const totalStoneGm = nextStones.reduce((sum, s) => sum + (s.weightGm || 0), 0);
+        const totalDiamondCts = nextDiamonds.reduce((sum, d) => sum + (d.weightCts || 0), 0);
+
+        setFormData(prev => {
+            const next = { ...prev, stones: nextStones, diamonds: nextDiamonds, stoneWeightGm: totalStoneGm, diamondWeightCts: totalDiamondCts };
+            const diamondInGm = totalDiamondCts * 0.2;
+            next.totalGrossWeightGm = Number((next.goldWeightGm + totalStoneGm + diamondInGm).toFixed(3));
+            return next;
+        });
+    };
+
+    const generateSKU = () => {
+        const prefix = "YJ";
+        const categoryName = categories.find(c => c.id === formData.categoryId)?.name || "GEN";
+        const catCode = categoryName.substring(0, 3).toUpperCase();
+        const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const timestamp = Date.now().toString().slice(-4);
+
+        const newSKU = `${prefix}-${catCode}-${randomStr}${timestamp}`;
+        setFormData(prev => ({ ...prev, styleCode: newSKU }));
+        toast.success("Unique SKU Generated");
     };
 
     const handleSubmit = async () => {
@@ -188,6 +286,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
         if (!formData.styleCode) return toast.error("Style code is required");
         if (!formData.categoryId) return toast.error("Category is required");
         if (!formData.productTypeId) return toast.error("Product type is required");
+        if (!formData.slug) return toast.error("Slug is required for SEO routing");
         if (formData.goldWeightGm <= 0) return toast.error("Gold weight must be greater than 0");
 
         setSubmitting(true);
@@ -202,7 +301,12 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
             } else {
                 const res = await productService.create(formData);
                 if (res.success) {
-                    toast.success("Product created! Now you can upload images.");
+                    const newId = res.data?.id || res.data.id; // Support different response formats
+                    if (newId && selectedFiles.length > 0) {
+                        toast.loading("Uploading staged images...");
+                        await productService.uploadImages(newId, selectedFiles as any);
+                    }
+                    toast.success("Product created successfully with orchestrated images!");
                     onSuccess();
                     onClose();
                 } else toast.error(res.message);
@@ -243,7 +347,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                             <button
                                 key={t.id}
                                 onClick={() => setActiveTab(t.id as any)}
-                                className={`flex items-center gap-2 border-b-2 py-4 font-plus-jakarta text-xs font-bold uppercase tracking-widest transition-all ${activeTab === t.id ? "border-amber-600 text-amber-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+                                className={`flex items-center gap-2 border-b-2 py-4 font-plus-jakarta text-xs font-bold uppercase tracking-widest transition-all ${activeTab === t.id ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}
                             >
                                 <t.icon className="h-3.5 w-3.5" /> {t.label}
                             </button>
@@ -254,7 +358,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                     <div className="flex-1 overflow-y-auto p-10">
                         {loading ? (
                             <div className="flex h-full flex-col items-center justify-center text-gray-400">
-                                <Loader2 className="h-10 w-10 animate-spin text-amber-600" />
+                                <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
                                 <p className="mt-4 font-plus-jakarta text-sm">Synchronizing master data...</p>
                             </div>
                         ) : (
@@ -267,7 +371,19 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <FormLabel required>Style Code (SKU)</FormLabel>
-                                            <FormInput name="styleCode" value={formData.styleCode} onChange={handleChange} placeholder="YJ-DR-18K-001" disabled={isEdit} />
+                                            <div className="relative">
+                                                <FormInput name="styleCode" value={formData.styleCode} onChange={handleChange} placeholder="YJ-DR-18K-001" disabled={isEdit} />
+                                                {!isEdit && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={generateSKU}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-blue-600 transition-all hover:bg-blue-50 rounded-lg dark:hover:bg-blue-500/10"
+                                                        title="Smart Generate SKU"
+                                                    >
+                                                        <Wand2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <FormLabel required>Slug (URL Identifier)</FormLabel>
@@ -301,11 +417,24 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                 {jewelTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                             </FormSelect>
                                         </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <FormLabel required>Product Quality</FormLabel>
+                                            <FormSelect name="prodQuality" value={formData.prodQuality} onChange={handleChange}>
+                                                <option value="Standard">Standard</option>
+                                                <option value="Premium">Premium</option>
+                                                <option value="High Premium">High Premium</option>
+                                                <option value="Luxury">Luxury</option>
+                                            </FormSelect>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <FormLabel required>Unit (Pairs/Pieces)</FormLabel>
+                                            <FormInput type="number" name="pairs" value={formData.pairs} onChange={handleChange} min={1} />
+                                        </div>
                                         <div className="col-span-2 flex flex-col gap-1.5">
                                             <FormLabel>Professional Description</FormLabel>
-                                            <textarea 
-                                                name="description" value={formData.description || ""} onChange={handleChange} 
-                                                rows={4} className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 font-plus-jakarta text-sm focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900"
+                                            <textarea
+                                                name="description" value={formData.description || ""} onChange={handleChange}
+                                                rows={4} className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 font-plus-jakarta text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900"
                                                 placeholder="Enter technical details, craftsmanship notes, or story..."
                                             />
                                         </div>
@@ -332,25 +461,51 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                         </div>
 
                                         <div className="rounded-2xl border border-gray-100 bg-gray-50/30 p-6 dark:border-gray-800/50">
-                                            <h3 className="mb-6 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-amber-600">Weight & Mass (Grams)</h3>
-                                            <div className="grid grid-cols-3 gap-6">
+                                            <h3 className="mb-6 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-blue-600">Weight & Mass (Grams)</h3>
+                                            <div className="grid grid-cols-4 gap-6">
                                                 <div className="flex flex-col gap-1.5">
-                                                    <FormLabel required>Gold Weight</FormLabel>
+                                                    <FormLabel required>Gold Weight (Gm)</FormLabel>
                                                     <FormInput type="number" name="goldWeightGm" value={formData.goldWeightGm} onChange={handleChange} step="0.01" />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
-                                                    <FormLabel required>Stone Weight</FormLabel>
+                                                    <FormLabel>Stone Weight (Gm)</FormLabel>
                                                     <FormInput type="number" name="stoneWeightGm" value={formData.stoneWeightGm} onChange={handleChange} step="0.01" />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
+                                                    <FormLabel>Diamond Weight (Cts)</FormLabel>
+                                                    <div className="relative">
+                                                        <FormInput
+                                                            type="number"
+                                                            name="diamondWeightCts"
+                                                            value={(formData as any).diamondWeightCts || 0}
+                                                            onChange={handleChange}
+                                                            step="0.01"
+                                                        />
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500">
+                                                            <Gem className="h-3 w-3" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col gap-1.5">
                                                     <FormLabel required>Total Gross Weight</FormLabel>
-                                                    <FormInput type="number" name="totalGrossWeightGm" value={formData.totalGrossWeightGm} onChange={handleChange} step="0.01" />
+                                                    <div className="relative">
+                                                        <FormInput
+                                                            type="number"
+                                                            name="totalGrossWeightGm"
+                                                            value={formData.totalGrossWeightGm}
+                                                            disabled
+                                                            className="bg-gray-100/80 cursor-not-allowed dark:bg-gray-800/80"
+                                                        />
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                            <Lock className="h-3 w-3" />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="rounded-2xl border border-gray-100 bg-gray-50/30 p-6 dark:border-gray-800/50">
-                                            <h3 className="mb-6 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-amber-600">Pricing & Commercials (VND)</h3>
+                                            <h3 className="mb-6 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-blue-600">Pricing & Commercials (VND)</h3>
                                             <div className="grid grid-cols-2 gap-6">
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel required>Gold Making Charge</FormLabel>
@@ -361,25 +516,32 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                     <FormInput type="number" name="stoneMakingCharge" value={formData.stoneMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
-                                                    <FormLabel required>Wastage (%)</FormLabel>
-                                                    <FormInput type="number" name="wastagePct" value={formData.wastagePct} onChange={handleChange} />
+                                                    <FormLabel>Diamond Making Charge</FormLabel>
+                                                    <FormInput type="number" name="diamondMakingCharge" value={(formData as any).diamondMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
-                                                    <FormLabel required>VAT Rate (%)</FormLabel>
+                                                    <FormLabel>Other Charge</FormLabel>
+                                                    <FormInput type="number" name="otherMakingCharge" value={formData.otherMakingCharge} onChange={handleChange} />
+                                                </div>
+                                                <div className="flex flex-col gap-1.5">
+                                                    <FormLabel>VAT Rate (%)</FormLabel>
                                                     <FormInput type="number" name="vatRate" value={formData.vatRate} onChange={handleChange} />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-3 gap-6">
                                             <div className="flex flex-col gap-1.5">
-                                                <FormLabel required>Inventory Quantity</FormLabel>
-                                                <FormInput type="number" name="quantity" value={formData.quantity} onChange={handleChange} />
+                                                <FormLabel required>Initial Quantity</FormLabel>
+                                                <FormInput type="number" name="quantity" value={formData.quantity} onChange={handleChange} min={1} />
                                             </div>
                                             <div className="flex flex-col gap-1.5">
-                                                <FormLabel required>Product Status</FormLabel>
+                                                <FormLabel required>Listing Status</FormLabel>
                                                 <FormSelect name="status" value={formData.status} onChange={handleChange}>
-                                                    {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                                    <option value="ACTIVE">Active (Live)</option>
+                                                    <option value="INACTIVE">Inactive (Hidden)</option>
+                                                    <option value="COMING_SOON">Coming Soon</option>
+                                                    <option value="SOLD_OUT">Sold Out</option>
                                                 </FormSelect>
                                             </div>
                                         </div>
@@ -402,10 +564,13 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                             <div className="space-y-4">
                                                 {formData.stones?.length === 0 && <p className="py-4 text-center text-xs italic text-gray-400">No additional stones configured.</p>}
                                                 {formData.stones?.map((s, i) => (
-                                                    <div key={i} className="group relative grid grid-cols-5 gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all hover:border-amber-200 dark:border-gray-800 dark:bg-gray-900/40">
+                                                    <div key={i} className="group relative grid grid-cols-5 gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all hover:border-blue-200 dark:border-gray-800 dark:bg-gray-900/40">
                                                         <div className="col-span-2">
-                                                            <FormLabel>Stone Name</FormLabel>
-                                                            <FormInput value={s.name} onChange={(e) => handleComponentChange("stone", i, "name", e.target.value)} />
+                                                            <FormLabel required>Stone Name</FormLabel>
+                                                            <FormSelect value={s.name} onChange={(e) => handleComponentChange("stone", i, "name", e.target.value)}>
+                                                                <option value="">Select Stone</option>
+                                                                {stoneTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                                                            </FormSelect>
                                                         </div>
                                                         <div>
                                                             <FormLabel>Quality</FormLabel>
@@ -448,7 +613,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                             <div className="space-y-4">
                                                 {formData.diamonds?.length === 0 && <p className="py-4 text-center text-xs italic text-gray-400">No diamonds configured for this master entry.</p>}
                                                 {formData.diamonds?.map((d, i) => (
-                                                    <div key={i} className="group relative grid grid-cols-4 gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all hover:border-amber-200 dark:border-gray-800 dark:bg-gray-900/40">
+                                                    <div key={i} className="group relative grid grid-cols-4 gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all hover:border-blue-200 dark:border-gray-800 dark:bg-gray-900/40">
                                                         <div>
                                                             <FormLabel>Quality</FormLabel>
                                                             <FormSelect value={d.diamondQuality} onChange={(e) => handleComponentChange("diamond", i, "diamondQuality", e.target.value)}>
@@ -486,15 +651,38 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                 {activeTab === "gallery" && (
                                     <div className="flex flex-col gap-8">
                                         {!isEdit ? (
-                                            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 dark:border-gray-800">
-                                                <ImageIcon className="h-12 w-12 text-gray-200" />
-                                                <p className="mt-4 font-plus-jakarta text-sm font-bold text-gray-400 text-center">Save product first to enable image orchestration.</p>
-                                                <p className="mt-1 font-plus-jakarta text-xs text-gray-400 px-12 text-center text-gray-300">Authentication and ID anchoring required before file system linkage.</p>
+                                            <div className="space-y-6">
+                                                <div className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 transition-all hover:border-blue-400 hover:bg-blue-50/30 dark:border-gray-800">
+                                                    <Upload className="h-8 w-8 text-blue-600" />
+                                                    <p className="mt-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:text-gray-300">Stage Photography for Upload</p>
+                                                    <p className="font-plus-jakarta text-xs text-gray-400 mt-1 text-center">Selected images will be uploaded once you establish the entry.</p>
+                                                    <input type="file" multiple className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => {
+                                                        if (e.target.files?.length) {
+                                                            setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                                        }
+                                                    }} />
+                                                </div>
+
+                                                {selectedFiles.length > 0 && (
+                                                    <div className="grid grid-cols-4 gap-4">
+                                                        {selectedFiles.map((file, i) => (
+                                                            <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
+                                                                <img src={URL.createObjectURL(file)} className="h-full w-full object-cover" alt="Preview" />
+                                                                <button
+                                                                    onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                                                    className="absolute right-1 top-1 rounded-full bg-rose-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                                                >
+                                                                    <X className="h-3 w-3" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/30 p-12 transition-all hover:border-amber-400 hover:bg-amber-50/30 dark:border-gray-800">
-                                                    <Upload className="h-8 w-8 text-amber-600" />
+                                                <div className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/30 p-12 transition-all hover:border-blue-400 hover:bg-blue-50/30 dark:border-gray-800">
+                                                    <Upload className="h-8 w-8 text-blue-600" />
                                                     <p className="mt-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:text-gray-300">Master Photography Upload</p>
                                                     <p className="font-plus-jakarta text-xs text-gray-400 mt-1">Accepts high-res PNG, JPG (Max 5MB/file)</p>
                                                     <input type="file" multiple className="absolute inset-0 cursor-pointer opacity-0" onChange={async (e) => {
@@ -513,7 +701,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                         <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-800">
                                                             <img src={img.imageUrl} className="h-full w-full object-cover transition-transform group-hover:scale-110" alt="Product" />
                                                             <div className="absolute inset-x-0 bottom-0 flex h-10 translate-y-full items-center justify-between bg-black/60 px-3 transition-all group-hover:translate-y-0">
-                                                                <button onClick={async () => { await productService.setPrimaryImage(productId!, img.id); refreshImages(); }} className={`text-white transition-colors ${img.isPrimary ? 'text-amber-400' : 'hover:text-amber-400'}`}>
+                                                                <button onClick={async () => { await productService.setPrimaryImage(productId!, img.id); refreshImages(); }} className={`text-white transition-colors ${img.isPrimary ? 'text-blue-400' : 'hover:text-blue-400'}`}>
                                                                     <Star className={`h-4 w-4 ${img.isPrimary ? 'fill-current' : ''}`} />
                                                                 </button>
                                                                 <button onClick={async () => { await productService.deleteImage(productId!, img.id); refreshImages(); }} className="text-white hover:text-rose-400">
@@ -521,7 +709,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                                 </button>
                                                             </div>
                                                             {img.isPrimary && (
-                                                                <div className="absolute left-2 top-2 rounded-lg bg-amber-600 px-2 py-0.5 font-plus-jakarta text-[8px] font-bold uppercase text-white shadow-xl">Thumbnail</div>
+                                                                <div className="absolute left-2 top-2 rounded-lg bg-blue-600 px-2 py-0.5 font-plus-jakarta text-[8px] font-bold uppercase text-white shadow-xl">Thumbnail</div>
                                                             )}
                                                         </div>
                                                     ))}
@@ -536,18 +724,51 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex gap-4 border-t border-gray-100 px-8 py-6 dark:border-gray-800">
-                        <button onClick={onClose} className="flex-1 rounded-xl border border-gray-200 py-3 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-gray-500 transition-all hover:bg-gray-50 dark:border-gray-700">
-                            Close
-                        </button>
-                        <button 
-                            onClick={handleSubmit} 
-                            disabled={submitting}
-                            className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-amber-600 py-3 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-white shadow-lg transition-all hover:bg-amber-700 active:scale-95 disabled:opacity-50"
-                        >
-                            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            {isEdit ? "Update Master Records" : "Establish New Entry"}
-                        </button>
+                    <div className="flex items-center gap-3 border-t border-gray-100 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                        {(!isEdit && activeTab !== "general") && (
+                            <button
+                                onClick={() => {
+                                    const currentIndex = TABS.findIndex(t => t.id === activeTab);
+                                    setActiveTab(TABS[currentIndex - 1].id);
+                                }}
+                                className="flex-1 rounded-xl border border-gray-200 py-3 font-plus-jakarta text-sm font-bold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800"
+                            >
+                                Back
+                            </button>
+                        )}
+
+                        {(isEdit || activeTab === "gallery") ? (
+                            <button
+                                onClick={handleSubmit}
+                                disabled={submitting || (!isEdit && selectedFiles.length === 0)}
+                                className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 disabled:opacity-50"
+                            >
+                                {submitting ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Securing Entry...</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Save className="h-4 w-4" />
+                                        <span>{isEdit ? "Update Master Record" : "Establish New Entry"}</span>
+                                    </div>
+                                )}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    const currentIndex = TABS.findIndex(t => t.id === activeTab);
+                                    setActiveTab(TABS[currentIndex + 1].id);
+                                }}
+                                className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-blue-700"
+                            >
+                                <div className="flex items-center justify-center gap-2">
+                                    <span>Continue to {TABS[TABS.findIndex(t => t.id === activeTab) + 1].label}</span>
+                                    <ChevronRight className="h-4 w-4" />
+                                </div>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -565,10 +786,15 @@ export default function AdminProductsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [categories, setCategories] = useState<Category[]>([]);
+    const [showDeleted, setShowDeleted] = useState(false);
+
+    // Modals
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [selectedProductId, setSelectedProductId] = useState<string>();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [restoreLoading, setRestoreLoading] = useState(false);
+    const [selectedProductId, setSelectedProductId] = useState<string | undefined>();
 
 
     const fetchProducts = useCallback(async () => {
@@ -577,7 +803,8 @@ export default function AdminProductsPage() {
             page,
             pageSize: 10,
             searchQuery: searchQuery || undefined,
-            categoryId: categoryId || undefined
+            categoryId: categoryId || undefined,
+            onlyDeleted: showDeleted
         };
         const res = await productService.getAll(params);
         if (res) {
@@ -585,7 +812,7 @@ export default function AdminProductsPage() {
             setTotalCount(res.totalCount);
         }
         setLoading(false);
-    }, [page, searchQuery, categoryId]);
+    }, [page, searchQuery, categoryId, showDeleted]);
 
     useEffect(() => {
         fetchProducts();
@@ -598,7 +825,7 @@ export default function AdminProductsPage() {
         try {
             const res = await productService.delete(selectedProductId);
             if (res.success) {
-                toast.success("Design permanently removed from vault.");
+                toast.success("Design moved to archive vault.");
                 setIsDeleteModalOpen(false);
                 setSelectedProductId(undefined);
                 fetchProducts();
@@ -610,23 +837,41 @@ export default function AdminProductsPage() {
         }
     };
 
+    const handleRestore = async () => {
+        if (!selectedProductId) return;
+        setRestoreLoading(true);
+        try {
+            const res = await productService.restore(selectedProductId);
+            if (res.success) {
+                toast.success("Design restored to active catalog.");
+                setIsRestoreModalOpen(false);
+                setSelectedProductId(undefined);
+                fetchProducts();
+            } else toast.error(res.message);
+        } catch (e) {
+            toast.error("Restoration failed");
+        } finally {
+            setRestoreLoading(false);
+        }
+    };
+
 
     const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-full">
             {isDrawerOpen && (
-                <ProductDrawer 
-                    productId={selectedProductId} 
-                    onClose={() => { setIsDrawerOpen(false); setSelectedProductId(undefined); }} 
-                    onSuccess={fetchProducts} 
+                <ProductDrawer
+                    productId={selectedProductId}
+                    onClose={() => { setIsDrawerOpen(false); setSelectedProductId(undefined); }}
+                    onSuccess={fetchProducts}
                 />
             )}
 
             {/* Header Area */}
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                    <div className="flex items-center gap-2 text-amber-600 mb-1">
+                    <div className="flex items-center gap-2 text-blue-600 mb-1">
                         <Package className="h-4 w-4" />
                         <span className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em]">Inventory Infrastructure</span>
                     </div>
@@ -634,9 +879,9 @@ export default function AdminProductsPage() {
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500">Orchestrating {totalCount} high-end jewelry specifications across storefront systems.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         onClick={() => { setSelectedProductId(undefined); setIsDrawerOpen(true); }}
-                        className="flex items-center gap-2 rounded-2xl bg-amber-600 px-6 py-3 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-amber-600/20 transition-all hover:bg-amber-700 hover:shadow-amber-700/30 active:scale-95"
+                        className="flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-700/30 active:scale-95"
                     >
                         <Plus className="h-4 w-4" /> Establish New Entry
                     </button>
@@ -667,15 +912,15 @@ export default function AdminProductsPage() {
             <div className="flex flex-col gap-4 rounded-3xl border border-gray-100 bg-white/50 p-4 backdrop-blur-xl dark:border-gray-800/50 dark:bg-[#0a0a0a]/50 lg:flex-row lg:items-center">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input 
+                    <input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search by Product Name, Style Code, or SKU..." 
-                        className="w-full rounded-2xl border border-gray-100 bg-white px-11 py-3 font-plus-jakarta text-sm transition-all focus:border-amber-500 focus:outline-none dark:border-gray-800 dark:bg-[#111]"
+                        placeholder="Search by Product Name, Style Code, or SKU..."
+                        className="w-full rounded-2xl border border-gray-100 bg-white px-11 py-3 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:outline-none dark:border-gray-800 dark:bg-[#111]"
                     />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <select 
+                    <select
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
                         className="rounded-2xl border border-gray-100 bg-white px-4 py-3 font-plus-jakarta text-xs font-bold text-gray-600 outline-none dark:border-gray-800 dark:bg-[#111] dark:text-gray-400"
@@ -683,10 +928,24 @@ export default function AdminProductsPage() {
                         <option value="">All Categories</option>
                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
-                    <button className="flex items-center gap-2 rounded-2xl bg-gray-100 px-4 py-3 font-plus-jakarta text-xs font-bold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400">
+                    <button
+                        onClick={() => setShowDeleted(!showDeleted)}
+                        className={`flex items-center gap-2 rounded-2xl px-4 py-3 font-plus-jakarta text-xs font-bold transition-all ${showDeleted
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                            }`}
+                        title={showDeleted ? "Hide archived designs" : "Show archived designs"}
+                    >
+                        {showDeleted ? <Package className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        {showDeleted ? "Viewing Archive" : "Show Archive"}
+                    </button>
+                    <button
+                        onClick={() => toast.info("Advanced filtering coming soon in the next update!")}
+                        className="flex items-center gap-2 rounded-2xl bg-gray-100 px-4 py-3 font-plus-jakarta text-xs font-bold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                    >
                         <Filter className="h-4 w-4" /> Advance Filters
                     </button>
-                    <button onClick={fetchProducts} className="rounded-2xl bg-amber-50 p-3 text-amber-600 transition-all hover:bg-amber-100 dark:bg-amber-500/10">
+                    <button onClick={fetchProducts} className="rounded-2xl bg-blue-50 p-3 text-blue-600 transition-all hover:bg-blue-100 dark:bg-blue-500/10">
                         <TrendingUp className="h-4 w-4" />
                     </button>
                 </div>
@@ -724,7 +983,7 @@ export default function AdminProductsPage() {
                                     </td>
                                 </tr>
                             ) : products.map(p => (
-                                <tr key={p.id} className="group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/10">
+                                <tr key={p.id} className={`group transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-800/10 ${p.deletedAt ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                                     <td className="px-3 py-5">
                                         <div className="flex items-center gap-4 overflow-hidden">
                                             <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
@@ -735,7 +994,7 @@ export default function AdminProductsPage() {
                                                 )}
                                             </div>
                                             <div className="min-w-0">
-                                                <h5 className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors truncate" title={p.name}>{p.name}</h5>
+                                                <h5 className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors truncate" title={p.name}>{p.name}</h5>
                                                 <p className="font-mono text-[10px] text-gray-400 mt-0.5 truncate">{p.styleCode}</p>
                                             </div>
                                         </div>
@@ -746,7 +1005,7 @@ export default function AdminProductsPage() {
                                                 <LayoutGrid className="h-2.5 w-2.5" /> {p.categoryName || "Uncat."}
                                             </span>
                                             <span className="font-plus-jakarta text-[9px] text-gray-400 flex items-center gap-1 truncate">
-                                                <CheckCircle2 className="h-2.5 w-2.5 text-amber-500" /> {p.brandName || "Generic"}
+                                                <CheckCircle2 className="h-2.5 w-2.5 text-blue-500" /> {p.brandName || "Generic"}
                                             </span>
                                         </div>
                                     </td>
@@ -775,7 +1034,11 @@ export default function AdminProductsPage() {
                                         </div>
                                     </td>
                                     <td className="px-2 py-5">
-                                        {(() => {
+                                        {p.deletedAt ? (
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2 py-0.5 font-plus-jakarta text-[9px] font-bold text-rose-700 dark:bg-rose-500/20 dark:text-rose-400">
+                                                ARCHIVED
+                                            </span>
+                                        ) : (() => {
                                             const status = STATUS_OPTIONS.find(s => s.value === p.status);
                                             return (
                                                 <span className={`inline-flex items-center gap-1.5 rounded-full bg-${status?.color}-50 px-2 py-0.5 font-plus-jakarta text-[9px] font-bold text-${status?.color}-600 dark:bg-${status?.color}-500/10 dark:text-${status?.color}-400`}>
@@ -786,20 +1049,32 @@ export default function AdminProductsPage() {
                                     </td>
                                     <td className="px-3 py-5 text-right w-[80px]">
                                         <div className="flex items-center justify-end gap-1.5 overflow-visible">
-                                            <button 
-                                                onClick={() => { setSelectedProductId(p.id); setIsDrawerOpen(true); }}
-                                                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-amber-200 hover:text-amber-600 dark:border-gray-800 dark:bg-[#111]"
-                                                title="Edit Master"
-                                            >
-                                                <Settings2 className="h-3.5 w-3.5" />
-                                            </button>
-                                            <button 
-                                                onClick={() => { setSelectedProductId(p.id); setIsDeleteModalOpen(true); }}
-                                                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-rose-100 hover:text-rose-600 dark:border-gray-800 dark:bg-[#111]"
-                                                title="Delete Master"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </button>
+                                            {p.deletedAt ? (
+                                                <button
+                                                    onClick={() => { setSelectedProductId(p.id); setIsRestoreModalOpen(true); }}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-emerald-600 transition-all hover:border-emerald-200 hover:bg-emerald-50 dark:border-gray-800 dark:bg-[#111]"
+                                                    title="Restore to Catalog"
+                                                >
+                                                    <RefreshCcw className="h-3.5 w-3.5" />
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => { setSelectedProductId(p.id); setIsDrawerOpen(true); }}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-blue-200 hover:text-blue-600 dark:border-gray-800 dark:bg-[#111]"
+                                                        title="Edit Master"
+                                                    >
+                                                        <Settings2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setSelectedProductId(p.id); setIsDeleteModalOpen(true); }}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:border-rose-100 hover:text-rose-600 dark:border-gray-800 dark:bg-[#111]"
+                                                        title="Archive Master"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
 
@@ -813,15 +1088,15 @@ export default function AdminProductsPage() {
                 <div className="flex items-center justify-between border-t border-gray-100 px-8 py-5 dark:border-gray-800">
                     <p className="font-plus-jakarta text-xs text-gray-400">Displaying {products.length} of {totalCount} master entries</p>
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             disabled={page === 1}
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:bg-gray-50 disabled:opacity-30 dark:border-gray-800 dark:bg-[#111]"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
-                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600 font-plus-jakarta text-xs font-bold text-white">{page}</span>
-                        <button 
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-plus-jakarta text-xs font-bold text-white">{page}</span>
+                        <button
                             disabled={page * 10 >= totalCount}
                             onClick={() => setPage(p => p + 1)}
                             className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 transition-all hover:bg-gray-50 disabled:opacity-30 dark:border-gray-800 dark:bg-[#111]"
@@ -832,15 +1107,26 @@ export default function AdminProductsPage() {
                 </div>
             </div>
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => { setIsDeleteModalOpen(false); setSelectedProductId(undefined); }}
                 onConfirm={handleDelete}
                 loading={deleteLoading}
-                title="De-catalog Master Item?"
-                description="This action will permanently withdraw this design from all storefronts and catalog indexes. Historical order data will remain preserved."
-                confirmText="Permanently Delete"
+                title="Archive Master Item?"
+                description="This action will withdraw this design from all storefronts and catalog indexes. It will be moved to the archive vault and can be restored later."
+                confirmText="Archive Design"
                 type="danger"
+            />
+
+            <ConfirmModal
+                isOpen={isRestoreModalOpen}
+                onClose={() => { setIsRestoreModalOpen(false); setSelectedProductId(undefined); }}
+                onConfirm={handleRestore}
+                loading={restoreLoading}
+                title="Restore Master Item?"
+                description="This will restore the design to the active catalog and make it visible on storefronts again."
+                confirmText="Restore Design"
+                type="info"
             />
         </div>
 

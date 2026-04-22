@@ -12,7 +12,7 @@ import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
 import { Drawer } from "../_components/ui/Drawer";
 import { adminService } from "@/services/admin.service";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 
 export default function ReturnsManagementPage() {
@@ -220,7 +220,7 @@ export default function ReturnsManagementPage() {
                                     <td className="px-6 py-5 text-right">
                                         <button
                                             onClick={() => handleViewDetail(req)}
-                                            className="px-4 py-2 bg-gray-900 dark:bg-white dark:text-black text-white text-xs font-bold rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white transition-all shadow-sm"
+                                            className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
                                         >
                                             Manage
                                         </button>

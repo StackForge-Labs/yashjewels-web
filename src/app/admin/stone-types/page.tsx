@@ -5,8 +5,8 @@ import { Search, Plus, Filter, Edit2, Trash2, Tag, Loader2 } from "lucide-react"
 import { specService, JewelrySpecItem } from "@/services/spec.service";
 import { toast } from "react-hot-toast";
 
-export default function AdminDiamondQualitiesPage() {
-    const [diamondQualities, setDiamondQualities] = useState<JewelrySpecItem[]>([]);
+export default function AdminStoneTypesPage() {
+    const [stoneTypes, setStoneTypes] = useState<JewelrySpecItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -23,8 +23,8 @@ export default function AdminDiamondQualitiesPage() {
 
     const fetchData = async () => {
         setIsLoading(true);
-        const res = await specService.diamondQualities.getAll();
-        setDiamondQualities(res.data);
+        const res = await specService.stoneTypes.getAll();
+        setStoneTypes(res.data);
         setIsLoading(false);
     };
 
@@ -32,8 +32,8 @@ export default function AdminDiamondQualitiesPage() {
         fetchData();
     }, []);
 
-    const filtered = diamondQualities.filter(d => {
-        const name = d.gradeCode || "";
+    const filtered = stoneTypes.filter(d => {
+        const name = d.name || "";
         const matchSearch = name.toLowerCase().includes(search.toLowerCase());
         const matchStatus = filterStatus === "ALL" ? true : filterStatus === "ACTIVE" ? d.isActive : !d.isActive;
         return matchSearch && matchStatus;
@@ -63,16 +63,16 @@ export default function AdminDiamondQualitiesPage() {
         const formData = new FormData(form);
         
         const payload = {
-            gradeCode: formData.get("gradeCode") as string,
+            name: formData.get("name") as string,
             description: formData.get("description") as string,
-            isActive: drawerMode === "EDIT" ? formData.get("isActive") === "on" : undefined,
+            isActive: drawerMode === "EDIT" ? formData.get("isActive") === "on" : true,
         };
 
         let res;
         if (drawerMode === "CREATE") {
-            res = await specService.diamondQualities.create(payload);
+            res = await specService.stoneTypes.create(payload);
         } else if (selectedItem) {
-            res = await specService.diamondQualities.update(selectedItem.id, payload);
+            res = await specService.stoneTypes.update(selectedItem.id, payload);
         }
 
         setIsSaving(false);
@@ -81,21 +81,21 @@ export default function AdminDiamondQualitiesPage() {
             setIsDrawerOpen(false);
             fetchData();
         } else {
-            toast.error(res?.message || "Failed to save grading");
+            toast.error(res?.message || "Failed to save stone type");
         }
     };
 
     const handleDelete = async () => {
         if (!selectedItem) return;
         setIsSaving(true);
-        const res = await specService.diamondQualities.delete(selectedItem.id);
+        const res = await specService.stoneTypes.delete(selectedItem.id);
         setIsSaving(false);
         if (res.success) {
             toast.success(res.message);
             setIsDeleteModalOpen(false);
             fetchData();
         } else {
-            toast.error(res.message || "Failed to delete grading");
+            toast.error(res.message || "Failed to delete stone type");
         }
     };
 
@@ -104,16 +104,16 @@ export default function AdminDiamondQualitiesPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                     <h1 className="font-serif text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Diamond Grading (4Cs)
+                        Stone Types Catalog
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Manage diamond quality attributes based on GIA&apos;s 4Cs standards.
+                        Manage the central catalog of gemstones (Ruby, Emerald, Sapphire, etc.) used in products.
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Add Grading
+                    <Plus className="h-4 w-4" /> Add Stone Type
                 </button>
             </div>
 
@@ -123,7 +123,7 @@ export default function AdminDiamondQualitiesPage() {
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search grading levels..."
+                        placeholder="Search stone types..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -152,7 +152,7 @@ export default function AdminDiamondQualitiesPage() {
                                             : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                         }`}
                                     >
-                                        {status === "ALL" ? "All Grades" : status === "ACTIVE" ? "Active Only" : "Inactive Only"}
+                                        {status === "ALL" ? "All Types" : status === "ACTIVE" ? "Active Only" : "Inactive Only"}
                                     </button>
                                 ))}
                             </div>
@@ -166,13 +166,13 @@ export default function AdminDiamondQualitiesPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center p-12 text-gray-400">
                             <Loader2 className="h-8 w-8 animate-spin mb-4" />
-                            <p className="font-plus-jakarta text-sm">Loading grading levels...</p>
+                            <p className="font-plus-jakarta text-sm">Loading stone types...</p>
                         </div>
                     ) : (
                         <table className="w-full whitespace-nowrap text-left text-sm">
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                                 <tr>
-                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Grading Category</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Stone Name</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Description</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
@@ -182,7 +182,7 @@ export default function AdminDiamondQualitiesPage() {
                                 {filtered.length === 0 ? (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-12 text-center text-gray-500 font-plus-jakarta text-sm">
-                                            No grades found matching your filters.
+                                            No stone types found matching your filters.
                                         </td>
                                     </tr>
                                 ) : filtered.map((item) => (
@@ -193,7 +193,7 @@ export default function AdminDiamondQualitiesPage() {
                                                     <Tag className="h-4 w-4" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.gradeCode}</p>
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.name}</p>
                                                     <p className="font-mono text-[10px] text-gray-400">ID: {item.id.substring(0, 8)}</p>
                                                 </div>
                                             </div>
@@ -249,9 +249,9 @@ export default function AdminDiamondQualitiesPage() {
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "New Grade Level" : "Update Grade Level"}
+                                    {drawerMode === "CREATE" ? "New Stone Type" : "Update Stone Type"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Manage 4Cs grading specification.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Configure stone names for product components.</p>
                             </div>
                         </div>
 
@@ -259,24 +259,24 @@ export default function AdminDiamondQualitiesPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Grade Level Code <span className="text-rose-500">*</span>
+                                        Stone Name <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
-                                        name="gradeCode"
+                                        name="name"
                                         required
-                                        defaultValue={selectedItem?.gradeCode || ""}
-                                        placeholder="Enter grade (e.g. VVS2)..."
+                                        defaultValue={selectedItem?.name || ""}
+                                        placeholder="Enter stone name (e.g. Ruby)..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Technical Description</label>
+                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">Description</label>
                                     <textarea 
                                         name="description"
                                         rows={3}
                                         defaultValue={selectedItem?.description || ""}
-                                        placeholder="Clarification and color details..."
+                                        placeholder="Add any notes about this stone type..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
@@ -284,7 +284,7 @@ export default function AdminDiamondQualitiesPage() {
                                     <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
                                         <div>
                                             <p className="text-sm font-bold text-gray-900 dark:text-white">Active Status</p>
-                                            <p className="text-xs text-gray-500">Enable this standard for use in catalog.</p>
+                                            <p className="text-xs text-gray-500">Allow this stone type to be selected in forms.</p>
                                         </div>
                                         <label className="relative inline-flex cursor-pointer items-center">
                                             <input type="checkbox" name="isActive" defaultChecked={selectedItem ? selectedItem.isActive : true} className="peer sr-only" />
@@ -318,9 +318,9 @@ export default function AdminDiamondQualitiesPage() {
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.gradeCode}?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.name}?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                This action is high-risk and will affect products tied to this specific quality grade.
+                                This action will remove this stone type from the catalog. Existing products using this stone will not be deleted but may show as missing if edited.
                             </p>
                         </div>
                         <div className="mt-6 flex gap-3">

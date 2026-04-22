@@ -12,6 +12,9 @@ export interface JewelrySpecItem {
     certCode?: string; 
     description?: string;
     karatValue?: number;
+    stoneType?: string;
+    grade?: string;
+    gradeCode?: string;
 }
 
 const createSpecCrudService = (endpoint: string) => ({
@@ -54,6 +57,7 @@ export const specService = {
     diamondQualities: createSpecCrudService("/jewelry-specs/diamond-qualities"),
     diamondSubTypes: createSpecCrudService("/jewelry-specs/diamond-sub-types"),
     stoneQualities: createSpecCrudService("/jewelry-specs/stone-qualities"),
+    stoneTypes: createSpecCrudService("/jewelry-specs/stone-types"),
     certifications: createSpecCrudService("/jewelry-specs/certifications"),
     jewelTypes: createSpecCrudService("/jewel-types"),
 };

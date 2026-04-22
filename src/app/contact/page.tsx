@@ -1,10 +1,12 @@
 "use client";
 import { PageHero } from "../_components/PageHero";
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Loader2 } from "lucide-react";
 import { Instagram } from "../_components/icon/Instagram";
 import { Facebook } from "../_components/icon/Facebook";
 import { Youtube } from "../_components/icon/Youtube";
 import { useState } from "react";
+import { vendorService } from "@/services/vendor.service";
+import { toast } from "sonner";
 
 export default function ContactPage() {
     const [formData, setFormData] = useState({
@@ -16,9 +18,38 @@ export default function ContactPage() {
         message: "",
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        alert("Thank you for your inquiry. Our experts will contact you shortly.");
+        try {
+            setIsSubmitting(true);
+            const res = await vendorService.submitInquiry({
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                subject: formData.subject,
+                message: formData.message
+            });
+
+            if (res.success) {
+                toast.success("Thank you! Your inquiry has been sent to our experts.");
+                setFormData({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    city: "",
+                    subject: "General Inquiry",
+                    message: "",
+                });
+            } else {
+                toast.error(res.message || "Failed to send inquiry. Please try again.");
+            }
+        } catch (error) {
+            toast.error("An error occurred. Please try again later.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -127,10 +158,17 @@ export default function ContactPage() {
 
                                 <button
                                     type="submit"
-                                    className="bg-gold group shadow-gold/20 flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-xs font-bold tracking-[0.3em] text-white uppercase shadow-lg transition-all hover:brightness-110 active:scale-[0.98]"
+                                    disabled={isSubmitting}
+                                    className="bg-gold group shadow-gold/20 flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-xs font-bold tracking-[0.3em] text-white uppercase shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
                                 >
-                                    Send Message
-                                    <Send size={16} className="transition-transform group-hover:translate-x-1" />
+                                    {isSubmitting ? (
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            Send Message
+                                            <Send size={16} className="transition-transform group-hover:translate-x-1" />
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         </div>

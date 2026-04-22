@@ -7,16 +7,19 @@ import { useVendorGuard } from "@/hooks/useAuthGuard";
 
 export default function VendorLayout({ children }: { children: ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const { isLoading, profile, isError } = useVendorGuard();
 
     if (isLoading || !profile || isError) return null;
 
     return (
         <div className="flex min-h-screen w-full bg-[#fafaf8] text-gray-900 antialiased selection:bg-amber-500/30 dark:bg-[#0a0a0a] dark:text-gray-100 transition-colors duration-300">
-            <VendorSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
-            <div className="flex flex-1 flex-col transition-all duration-300 md:pl-[260px]">
+            <VendorSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} isCollapsed={isCollapsed} />
+            <div className={`flex flex-1 flex-col transition-all duration-300 ${isCollapsed ? "md:pl-[80px]" : "md:pl-[280px]"}`}>
                 <VendorHeader
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+                    isCollapsed={isCollapsed}
                     storeName={profile?.fullName ?? "Vendor"}
                 />
                 <main className="flex-1 p-4 md:p-6 lg:p-8">

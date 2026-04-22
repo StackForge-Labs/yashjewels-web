@@ -225,7 +225,7 @@ export default function OrdersPage() {
                                     <td className="px-6 py-4">
                                         <button 
                                             onClick={() => handleViewDetail(order.orderId)}
-                                            className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/20 dark:bg-white dark:text-black dark:hover:bg-blue-500 dark:hover:text-white"
+                                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/20 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
                                         >
                                             <Eye className="h-3.5 w-3.5" /> Manage
                                         </button>

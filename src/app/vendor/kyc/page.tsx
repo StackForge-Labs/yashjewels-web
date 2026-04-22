@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { CheckCircle2, XCircle, Eye, Search, Clock, Loader2, AlertCircle } from "lucide-react";
-import { PageHeader } from "../_components/ui/PageHeader";
-import { StatusBadge } from "../_components/ui/StatusBadge";
-import { Modal } from "../_components/ui/Modal";
-import { usePendingKyc, useApproveKyc, useRejectKyc } from "@/hooks/useAdmin";
+import { PageHeader } from "../../admin/_components/ui/PageHeader";
+import { StatusBadge } from "../../admin/_components/ui/StatusBadge";
+import { Modal } from "../../admin/_components/ui/Modal";
+import { useApproveKyc, useRejectKyc } from "@/hooks/useAdmin";
+import { useVendorPendingKyc } from "@/hooks/useVendor";
 import { PendingKycDto } from "@/types/user.types";
 import { getErrorMessage } from "@/lib/api-client";
 
-export default function KYCVerificationsPage() {
-    const { data: res, isLoading, isError, error } = usePendingKyc();
+export default function VendorKYCPage() {
+    const { data: res, isLoading, isError, error } = useVendorPendingKyc();
     const approveKyc = useApproveKyc();
     const rejectKyc = useRejectKyc();
 
@@ -51,7 +52,7 @@ export default function KYCVerificationsPage() {
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-gold" />
+                <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
             </div>
         );
     }
@@ -62,7 +63,7 @@ export default function KYCVerificationsPage() {
                 <AlertCircle className="mx-auto mb-4 h-12 w-12 text-rose-500" />
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Failed to load KYC records</h3>
                 <p className="mt-2 text-sm text-gray-500">{getErrorMessage(error)}</p>
-                <button onClick={() => window.location.reload()} className="bg-rose-600 mt-6 rounded-xl px-8 py-3 text-xs font-bold tracking-widest text-white uppercase transition-all">Retry</button>
+                <button onClick={() => window.location.reload()} className="bg-rose-600 mt-6 rounded-xl px-8 py-3 text-xs font-bold tracking-widest text-white uppercase transition-all hover:bg-rose-700">Retry</button>
             </div>
         );
     }
@@ -84,7 +85,7 @@ export default function KYCVerificationsPage() {
                             placeholder="Search by name or email..." 
                             value={search} 
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-11 pr-4 py-2.5 font-plus-jakarta text-sm font-medium placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:text-gray-100" 
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-11 pr-4 py-2.5 font-plus-jakarta text-sm font-medium placeholder:text-gray-400 focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:text-gray-100" 
                         />
                     </div>
                 </div>
@@ -117,7 +118,7 @@ export default function KYCVerificationsPage() {
                                         <td className="px-6 py-4">
                                             <button 
                                                 onClick={() => { setSelected(r); setIsReviewOpen(true); }} 
-                                                className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400"
+                                                className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 font-plus-jakarta text-xs font-bold text-amber-600 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400"
                                             >
                                                 <Eye className="h-3.5 w-3.5" /> Review
                                             </button>
@@ -142,14 +143,14 @@ export default function KYCVerificationsPage() {
                         <button 
                             onClick={handleReject} 
                             disabled={rejectKyc.isPending || approveKyc.isPending}
-                            className="rounded-xl bg-gray-100 px-6 py-2.5 font-plus-jakarta text-sm font-bold text-gray-600 transition-all hover:bg-rose-50 hover:text-rose-500 dark:bg-white/5 dark:text-gray-400"
+                            className="rounded-xl bg-gray-100 px-6 py-2.5 font-plus-jakarta text-sm font-bold text-gray-600 transition-all hover:bg-rose-50 hover:text-rose-500 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                         >
                             {rejectKyc.isPending ? <Loader2 size={18} className="animate-spin" /> : "Reject Request"}
                         </button>
                         <button 
                             onClick={handleApprove} 
                             disabled={rejectKyc.isPending || approveKyc.isPending}
-                            className="rounded-xl bg-blue-600 px-8 py-2.5 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-blue-700 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
+                            className="rounded-xl bg-amber-600 px-8 py-2.5 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-amber-700 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-500"
                         >
                             {approveKyc.isPending ? <Loader2 size={18} className="animate-spin" /> : "Approve Customer"}
                         </button>

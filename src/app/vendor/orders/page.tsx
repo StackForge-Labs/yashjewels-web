@@ -1,7 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, CheckCircle2, Package, Truck, ChevronRight, Upload, AlertCircle, X, Loader2, XCircle } from "lucide-react";
+import { 
+    Clock, 
+    CheckCircle2, 
+    Package, 
+    Truck, 
+    ChevronRight, 
+    Upload, 
+    AlertCircle, 
+    X, 
+    Loader2, 
+    XCircle,
+    LayoutGrid,
+    List,
+    Search,
+    Filter,
+    ArrowUpRight,
+    ShoppingBag,
+    Coins
+} from "lucide-react";
 import { vendorService } from "@/services/vendor.service";
 import toast from "react-hot-toast";
 
@@ -9,10 +27,10 @@ import toast from "react-hot-toast";
 type OrderStatus = "DEPOSIT_PAID" | "CONFIRMED" | "PREPARING" | "SHIP_PENDING";
 
 const columns: { status: OrderStatus; label: string; icon: typeof Clock; color: string; badgeColor: string }[] = [
-    { status: "DEPOSIT_PAID", label: "Chờ Duyệt", icon: Clock, color: "border-amber-200 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10", badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" },
-    { status: "CONFIRMED", label: "Đã Xác Nhận", icon: CheckCircle2, color: "border-blue-200 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-900/10", badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300" },
-    { status: "PREPARING", label: "Đang Đóng Gói", icon: Package, color: "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800/30 dark:bg-indigo-900/10", badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300" },
-    { status: "SHIP_PENDING", label: "Chờ Shipper Nhận Và Giao Đơn", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
+    { status: "DEPOSIT_PAID", label: "Awaiting Approval", icon: Clock, color: "border-amber-200 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10", badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" },
+    { status: "CONFIRMED", label: "Confirmed", icon: CheckCircle2, color: "border-blue-200 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-900/10", badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300" },
+    { status: "PREPARING", label: "Preparing", icon: Package, color: "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800/30 dark:bg-indigo-900/10", badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300" },
+    { status: "SHIP_PENDING", label: "Awaiting Pickup", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
 ];
 
 function formatVnd(n: number) {
@@ -22,10 +40,10 @@ function formatVnd(n: number) {
 function getDaysLeft(deadline?: string): { text: string; urgent: boolean } {
     if (!deadline) return { text: "", urgent: false };
     const diff = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
-    if (diff < 0) return { text: "Quá hạn!", urgent: true };
-    if (diff === 0) return { text: "Hết hạn hôm nay!", urgent: true };
-    if (diff === 1) return { text: "Còn 1 ngày", urgent: true };
-    return { text: `Còn ${diff} ngày`, urgent: false };
+    if (diff < 0) return { text: "Overdue!", urgent: true };
+    if (diff === 0) return { text: "Due today!", urgent: true };
+    if (diff === 1) return { text: "1 day left", urgent: true };
+    return { text: `${diff} days left`, urgent: false };
 }
 
 // ─── Modals ───────────────────────────────────────────────
@@ -47,32 +65,32 @@ function RejectModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose:
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Từ Chối Đơn Hàng</h3>
+                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Reject Order</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Vui lòng nhập lý do từ chối. Hệ thống sẽ huỷ đơn và tự động hoàn trả thanh toán cho khách hàng (nếu có).
+                    Please enter the rejection reason. The system will cancel the order and automatically refund the customer (if applicable).
                 </p>
 
                 <textarea
                     className="w-full rounded-xl border border-gray-300 bg-gray-50 p-4 text-sm focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-white mb-6 resize-none"
                     rows={4}
-                    placeholder="Lý do từ chối..."
+                    placeholder="Rejection reason..."
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                 ></textarea>
 
                 <div className="flex gap-3">
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
-                        Hủy Bỏ
+                        Cancel
                     </button>
                     <button
                         onClick={async () => {
                             if (!reason.trim()) {
-                                toast.error("Vui lòng nhập lý do.");
+                                toast.error("Please enter a reason.");
                                 return;
                             }
                             setIsSubmitting(true);
@@ -82,7 +100,7 @@ function RejectModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose:
                         disabled={!reason.trim() || isSubmitting}
                         className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm tracking-wide hover:bg-red-700 transition-colors disabled:opacity-50"
                     >
-                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Xác Nhận Từ Chối"}
+                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Rejection"}
                     </button>
                 </div>
             </div>
@@ -156,7 +174,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
             onClose();
         } catch (err: any) {
             console.error("Cloudinary upload error:", err);
-            toast.error(err.message || "Lỗi khi tải tệp lên Cloudinary");
+            toast.error(err.message || "Error uploading files to Cloudinary");
         } finally {
             setIsUploading(false);
         }
@@ -168,14 +186,14 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Bằng Chứng Xuất Kho</h3>
+                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Dispatch Evidence</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    Bắt buộc tải lên ảnh niêm phong sản phẩm và video đóng gói (nếu có). Có thể chọn nhiều tệp cùng lúc.
+                    Uploading product seal photos and packing videos (if any) is required. Multiple files can be selected.
                 </p>
 
                 <div className="mb-6 max-h-[300px] overflow-y-auto">
@@ -199,7 +217,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                         <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-xl cursor-pointer border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 transition-colors">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                                 <Upload className="w-8 h-8 mb-3 text-indigo-500" />
-                                <p className="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Thêm Tệp Đính Kèm</p>
+                                <p className="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Add Attachment</p>
                             </div>
                             <input type="file" multiple className="hidden" accept="image/*,video/*" capture="environment" onChange={handleFileChange} />
                         </label>
@@ -208,14 +226,14 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
 
                 <div className="flex gap-3 mt-4">
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
-                        Hủy Bỏ
+                        Cancel
                     </button>
                     <button
                         onClick={handleUpload}
                         disabled={files.length === 0 || isUploading}
                         className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm tracking-wide hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Xác Nhận Xuất Kho"}
+                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Dispatch"}
                     </button>
                 </div>
             </div>
@@ -233,7 +251,7 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
     const days = getDaysLeft(deadlineStr);
 
     // Map backend status to Kanban column mapping if needed, else directly use
-    const displayProduct = order.items && order.items.length > 0 ? order.items[0].productName + (order.items.length > 1 ? ` (+${order.items.length - 1} sp)` : "") : "Không có SP";
+    const displayProduct = order.items && order.items.length > 0 ? order.items[0].productName + (order.items.length > 1 ? ` (+${order.items.length - 1} items)` : "") : "No products";
 
     return (
         <div className="group flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-[#161616]">
@@ -266,22 +284,22 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
                         className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 px-2 py-2 font-plus-jakarta text-xs font-bold transition-all hover:bg-red-100 active:scale-95 dark:bg-red-500/10 dark:border-red-900/50 dark:text-red-400"
                     >
                         <XCircle className="h-3.5 w-3.5" />
-                        Từ Chối
+                        Reject
                     </button>
                     <button
                         onClick={() => onConfirm(order.orderId)}
                         className="flex-[2] flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-amber-700 active:scale-95"
                     >
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        Xác Nhận
+                        Confirm
                     </button>
                 </div>
             )}
             {["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(order.status) && (
                 <div className="flex w-full items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-blue-700 dark:border-blue-800/30 dark:bg-blue-500/10 dark:text-blue-300">
-                    {order.status === "CONFIRMED" ? "Đã Xác Nhận (Chờ hệ thống định tuyến)" :
-                        order.status === "AWAITING_FULL_PAYMENT" ? "Đang Chờ Khách Trả Nốt Gói" :
-                            "Đã Thanh Toán Đủ"}
+                    {order.status === "CONFIRMED" ? "Confirmed (Awaiting system routing)" :
+                        order.status === "AWAITING_FULL_PAYMENT" ? "Awaiting Customer Final Payment" :
+                            "Fully Paid"}
                 </div>
             )}
             {order.status === "PREPARING" && (
@@ -290,7 +308,7 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-indigo-700 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-800/30 dark:bg-indigo-500/10 dark:text-indigo-300"
                 >
                     <Upload className="h-3.5 w-3.5" />
-                    Upload Ảnh Xuất Kho
+                    Upload Dispatch Photo
                 </button>
             )}
         </div>
@@ -303,6 +321,8 @@ export default function VendorOrdersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
+    const [searchQuery, setSearchQuery] = useState("");
 
     const loadOrders = async () => {
         try {
@@ -313,7 +333,7 @@ export default function VendorOrdersPage() {
             }
         } catch (error) {
             console.error("Failed to load orders", error);
-            toast.error("Không thể tải đơn hàng");
+            toast.error("Failed to load orders");
         } finally {
             setIsLoading(false);
         }
@@ -325,16 +345,16 @@ export default function VendorOrdersPage() {
 
     const handleConfirm = async (id: string) => {
         try {
-            const toastId = toast.loading("Đang xác nhận...");
+            const toastId = toast.loading("Confirming...");
             const res = await vendorService.makeDecision(id, true);
             if (res.success) {
-                toast.success("Đã xác nhận đơn hàng!", { id: toastId });
+                toast.success("Order confirmed!", { id: toastId });
                 loadOrders(); // Refresh
             } else {
-                toast.error(res.message || "Lỗi", { id: toastId });
+                toast.error(res.message || "Error", { id: toastId });
             }
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Lỗi ngoại lệ");
+            toast.error(error?.response?.data?.message || "Unexpected error");
         }
     };
 
@@ -349,17 +369,17 @@ export default function VendorOrdersPage() {
     const handleRejectSubmit = async (reason: string) => {
         if (!rejectOrderId) return;
         try {
-            const toastId = toast.loading("Đang từ chối đơn...");
+            const toastId = toast.loading("Rejecting order...");
             const res = await vendorService.makeDecision(rejectOrderId, false, reason);
             if (res.success) {
-                toast.success("Đã từ chối đơn hàng!", { id: toastId });
+                toast.success("Order rejected!", { id: toastId });
                 setRejectOrderId(null);
                 loadOrders(); // Refresh
             } else {
-                toast.error(res.message || "Lỗi", { id: toastId });
+                toast.error(res.message || "Error", { id: toastId });
             }
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Lỗi ngoại lệ");
+            toast.error(error?.response?.data?.message || "Unexpected error");
         }
     };
 
@@ -368,102 +388,245 @@ export default function VendorOrdersPage() {
         try {
             const res = await vendorService.dispatchOrder(selectedOrderId, photoUrls);
             if (res.success) {
-                toast.success("Xuất kho thành công! Đã gửi QR cho khách.");
+                toast.success("Dispatch successful! QR code sent to customer.");
                 loadOrders();
             } else {
-                toast.error(res.message || "Lỗi upload");
+                toast.error(res.message || "Upload error");
             }
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Lỗi kết nối");
+            toast.error(error?.response?.data?.message || "Connection error");
         }
     };
 
+    // Calculate Stats
+    const stats = {
+        pendingApproval: orders.filter(o => o.status === "DEPOSIT_PAID").length,
+        processing: orders.filter(o => ["CONFIRMED", "PREPARING"].includes(o.status)).length,
+        readyToShip: orders.filter(o => o.status === "SHIP_PENDING").length,
+        totalValue: orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+    };
+
     return (
-        <div className="flex flex-col gap-6">
-            {/* Header */}
-            <div>
-                <h1 className="font-plus-jakarta text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    Quản Lý Đơn Hàng
-                </h1>
-                <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                    Bảng điều khiển trạng thái tiến trình chuẩn bị hàng (Real-time).
-                </p>
+        <div className="flex flex-col gap-8 pb-10">
+            {/* Header & Stats Section */}
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                    <h1 className="font-plus-jakarta text-2xl font-bold tracking-tight text-gray-900 dark:text-white text-gradient-amber">
+                        Order Management Center
+                    </h1>
+                    <p className="font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
+                        Monitor, approve and track your store's fulfillment process
+                    </p>
+                </div>
+
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {[
+                        { label: "Pending Approval", value: stats.pendingApproval, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+                        { label: "In Preparation", value: stats.processing, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
+                        { label: "Ready to Ship", value: stats.readyToShip, icon: Truck, color: "text-emerald-600", bg: "bg-emerald-50" },
+                        { label: "Total Volume", value: formatVnd(stats.totalValue), icon: Coins, color: "text-indigo-600", bg: "bg-indigo-50" }
+                    ].map((card, i) => (
+                        <div key={i} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/70 p-5 shadow-sm backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 transition-all hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.bg} dark:bg-opacity-10`}>
+                                    <card.icon className={`h-5 w-5 ${card.color}`} />
+                                </div>
+                                <ArrowUpRight className="h-4 w-4 text-gray-300" />
+                            </div>
+                            <div>
+                                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                                    {card.label}
+                                </p>
+                                <p className="mt-1 font-plus-jakarta text-2xl font-bold text-gray-900 dark:text-white">
+                                    {card.value}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            {/* Kanban Board */}
+            {/* Controls Bar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search order ID, customer name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full rounded-xl border border-gray-100 bg-white/70 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm backdrop-blur-md focus:border-amber-500 focus:outline-none dark:border-gray-800/50 dark:bg-[#111]/70"
+                    />
+                </div>
+                
+                <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white/50 p-1 dark:border-gray-800/50 dark:bg-[#111]/50">
+                    <button
+                        onClick={() => setViewMode("kanban")}
+                        className={`flex items-center gap-2 rounded-lg px-4 py-2 font-plus-jakarta text-xs font-bold transition-all ${viewMode === "kanban" ? "bg-amber-600 text-white shadow-md shadow-amber-200" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+                    >
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        Kanban
+                    </button>
+                    <button
+                        onClick={() => setViewMode("table")}
+                        className={`flex items-center gap-2 rounded-lg px-4 py-2 font-plus-jakarta text-xs font-bold transition-all ${viewMode === "table" ? "bg-amber-600 text-white shadow-md shadow-amber-200" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+                    >
+                        <List className="h-3.5 w-3.5" />
+                        Table
+                    </button>
+                </div>
+            </div>
+
+            {/* Main Content Area */}
             {isLoading ? (
-                <div className="flex items-center justify-center p-20">
-                    <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                <div className="flex h-64 items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="h-10 w-10 animate-spin text-amber-600" />
+                        <p className="font-plus-jakarta text-sm font-medium text-gray-500 animate-pulse">Synchronizing order data...</p>
+                    </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 lg:grid-cols-2">
-                    {columns.map((col) => {
-                        const colOrders = orders.filter((o) => {
-                            if (col.status === "CONFIRMED") {
-                                return ["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(o.status);
-                            }
-                            if (col.status === "SHIP_PENDING") {
-                                return ["SHIP_PENDING", "SHIPPED"].includes(o.status);
-                            }
-                            return o.status === col.status;
-                        });
-                        const ColIcon = col.icon;
-                        return (
-                            <div key={col.status} className={`flex flex-col gap-3 rounded-2xl border p-4 ${col.color}`}>
-                                {/* Column Header */}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <ColIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                                        <span className="font-plus-jakarta text-sm font-bold text-gray-700 dark:text-gray-300">
-                                            {col.label}
-                                        </span>
-                                    </div>
-                                    <span className={`rounded-full px-2 py-0.5 font-plus-jakarta text-xs font-bold ${col.badgeColor}`}>
-                                        {colOrders.length}
-                                    </span>
-                                </div>
+                <div className="transition-all duration-300">
+                    {viewMode === "kanban" ? (
+                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-4 lg:grid-cols-2">
+                            {columns.map((col) => {
+                                const colOrders = orders.filter((o) => {
+                                    const matchesSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                                       o.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+                                    if (!matchesSearch) return false;
 
-                                {/* Order Cards */}
-                                <div className="flex flex-col gap-3 min-h-[120px]">
-                                    {colOrders.length === 0 ? (
-                                        <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-10 dark:border-gray-700 bg-white/40 dark:bg-black/20">
-                                            <p className="font-plus-jakarta text-xs text-gray-400">Trống</p>
+                                    if (col.status === "CONFIRMED") {
+                                        return ["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(o.status);
+                                    }
+                                    if (col.status === "SHIP_PENDING") {
+                                        return ["SHIP_PENDING", "SHIPPED"].includes(o.status);
+                                    }
+                                    return o.status === col.status;
+                                });
+                                const ColIcon = col.icon;
+                                return (
+                                    <div key={col.status} className={`flex flex-col gap-4 rounded-2xl border p-5 bg-opacity-40 backdrop-blur-sm ${col.color}`}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg bg-white shadow-sm dark:bg-gray-900`}>
+                                                    <ColIcon className="h-4 w-4 text-amber-600" />
+                                                </div>
+                                                <span className="font-plus-jakarta text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                    {col.label}
+                                                </span>
+                                            </div>
+                                            <span className={`rounded-full px-2.5 py-0.5 font-plus-jakarta text-[10px] font-bold ${col.badgeColor}`}>
+                                                {colOrders.length}
+                                            </span>
                                         </div>
-                                    ) : (
-                                        colOrders.map((order) => (
-                                            <OrderCard
-                                                key={order.orderId}
-                                                order={order}
-                                                onConfirm={handleConfirm}
-                                                onPrepare={handlePrepareClick}
-                                                onReject={handleRejectClick}
-                                            />
-                                        ))
-                                    )}
-                                </div>
+
+                                        <div className="flex flex-col gap-4 min-h-[200px]">
+                                            {colOrders.length === 0 ? (
+                                                <div className="flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200/50 py-12 dark:border-gray-800/50">
+                                                    <ShoppingBag className="h-8 w-8 text-gray-200 mb-2" />
+                                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-300">No active orders</p>
+                                                </div>
+                                            ) : (
+                                                colOrders.map((order) => (
+                                                    <OrderCard
+                                                        key={order.orderId}
+                                                        order={order}
+                                                        onConfirm={handleConfirm}
+                                                        onPrepare={handlePrepareClick}
+                                                        onReject={handleRejectClick}
+                                                    />
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        /* Table View Implementation */
+                        <div className="rounded-2xl border border-gray-100 bg-white/70 shadow-sm backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full whitespace-nowrap text-left text-sm">
+                                    <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
+                                        <tr>
+                                            {["Order Details", "Client", "Fulfillment Status", "Financials", "Created At", ""].map((h) => (
+                                                <th key={h} className="px-8 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
+                                        {orders.filter(o => 
+                                            o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            o.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ).map((order) => (
+                                            <tr key={order.orderId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                                                <td className="px-8 py-5">
+                                                    <p className="font-plus-jakarta text-sm font-bold text-amber-600">{order.orderNumber}</p>
+                                                    <p className="mt-1 font-plus-jakarta text-xs text-gray-400">
+                                                        {order.items?.length || 0} items in order
+                                                    </p>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{order.customerName}</p>
+                                                    <p className="mt-1 font-plus-jakarta text-xs text-gray-500">{order.shippingPhone}</p>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    {/* Using the same status logic as Kanban but in table format */}
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`h-2 w-2 rounded-full ${
+                                                            order.status === "DEPOSIT_PAID" ? "bg-amber-500" :
+                                                            order.status === "SHIP_PENDING" ? "bg-emerald-500" : "bg-blue-500"
+                                                        } animate-pulse`} />
+                                                        <span className="font-plus-jakarta text-xs font-bold text-gray-700 dark:text-gray-300">{order.status}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatVnd(order.totalAmount)}</p>
+                                                    <p className="mt-1 font-plus-jakarta text-[10px] text-gray-400 uppercase tracking-wider">Total Value</p>
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <p className="font-plus-jakarta text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                                    <p className="mt-1 font-plus-jakarta text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                </td>
+                                                <td className="px-8 py-5 text-right">
+                                                    <button 
+                                                        onClick={() => { /* Detail view link */ }}
+                                                        className="rounded-lg p-2 text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 transition-all"
+                                                    >
+                                                        <ChevronRight className="h-5 w-5" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                        );
-                    })}
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3">
+            {/* Legend & Modals */}
+            <div className="flex flex-wrap gap-4 mt-4 px-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-100 bg-white/50 dark:border-gray-800/50">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                    <span className="font-plus-jakarta text-[10px] font-bold text-gray-500 uppercase tracking-widest">Process Flow:</span>
+                </div>
                 {columns.map((col) => {
                     const Icon = col.icon;
                     return (
                         <div key={col.status} className="flex items-center gap-1.5">
-                            <Icon className="h-3.5 w-3.5 text-gray-400" />
-                            <span className="font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
+                            <Icon className="h-3.5 w-3.5 text-gray-300" />
+                            <span className="font-plus-jakarta text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                                 {col.label}
                             </span>
-                            <ChevronRight className="h-3 w-3 text-gray-300" />
+                            <ChevronRight className="h-3 w-3 text-gray-200" />
                         </div>
                     );
                 })}
             </div>
 
-            {/* Photo Upload Modal */}
             <DispatchPhotoModal
                 isOpen={!!selectedOrderId}
                 onClose={() => setSelectedOrderId(null)}

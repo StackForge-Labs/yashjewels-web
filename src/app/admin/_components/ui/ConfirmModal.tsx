@@ -11,7 +11,7 @@ interface ConfirmModalProps {
     description: string;
     confirmText?: string;
     cancelText?: string;
-    type?: "success" | "danger" | "warning";
+    type?: "success" | "danger" | "warning" | "info";
     loading?: boolean;
 }
 
@@ -40,6 +40,11 @@ export function ConfirmModal({
         },
         warning: {
             bg: "bg-amber-50 text-amber-600",
+            button: "bg-amber-600 hover:bg-amber-700 text-white",
+            icon: AlertCircle
+        },
+        info: {
+            bg: "bg-blue-50 text-blue-600",
             button: "bg-blue-600 hover:bg-blue-700 text-white",
             icon: AlertCircle
         }

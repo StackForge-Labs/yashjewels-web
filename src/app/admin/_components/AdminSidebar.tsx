@@ -55,6 +55,7 @@ const navGroups = [
                     { name: "Gold Karats", href: "/admin/gold-karats" },
                     { name: "Diamond Qualities", href: "/admin/diamond-qualities" },
                     { name: "Diamond Cuts", href: "/admin/diamond-cuts" },
+                    { name: "Stone Types", href: "/admin/stone-types" },
                     { name: "Stone Qualities", href: "/admin/gemstones" },
                     { name: "Certifications", href: "/admin/certifications" },
                 ]
@@ -66,7 +67,6 @@ const navGroups = [
         items: [
             { name: "Customers", href: "/admin/customers", icon: Users },
             { name: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
-            { name: "Warranties & Claims", href: "/admin/warranties", icon: HandHeart },
         ],
     },
     {
@@ -101,7 +101,7 @@ interface NavItem {
 }
 
 // Helper Component for Sidebar Items (Handles Expansion)
-function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
+function SidebarItem({ item, pathname, isCollapsed }: { item: NavItem, pathname: string, isCollapsed: boolean }) {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isSubActive = hasSubItems && item.subItems?.some((s: NavSubItem) => pathname === s.href || pathname.startsWith(`${s.href}/`));
     const [isOpen, setIsOpen] = useState(isSubActive || false);
@@ -111,17 +111,17 @@ function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
             <li className="flex flex-col">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`group font-plus-jakarta flex items-center justify-between rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200 ${
+                    className={`group font-plus-jakarta flex items-center justify-between rounded-xl px-4 py-2.5 text-[11px] font-medium transition-all duration-200 ${
                         isSubActive ? "text-gray-900 dark:text-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-white"
                     }`}
                 >
                     <div className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4 transition-colors text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                        <span>{item.name}</span>
+                        <item.icon className="h-4 w-4 shrink-0 transition-colors text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                        {!isCollapsed && <span>{item.name}</span>}
                     </div>
-                    <ChevronRight className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                    {!isCollapsed && <ChevronRight className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`} />}
                 </button>
-                {isOpen && (
+                {isOpen && !isCollapsed && (
                     <ul className="mt-1 flex flex-col gap-1 pl-11 pr-2">
                         {item.subItems?.map((sub: NavSubItem) => {
                             const isChildActive = pathname === sub.href || pathname.startsWith(`${sub.href}/`);
@@ -129,7 +129,7 @@ function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
                                 <li key={sub.name}>
                                     <Link
                                         href={sub.href}
-                                        className={`block rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
+                                        className={`block rounded-lg px-3 py-2 text-[11px] font-semibold transition-all ${
                                             isChildActive 
                                             ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400" 
                                             : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/30 dark:hover:text-white"
@@ -151,7 +151,7 @@ function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
         <li>
             <Link
                 href={item.href}
-                className={`group font-plus-jakarta flex items-center justify-between rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200 ${
+                className={`group font-plus-jakarta flex items-center justify-between rounded-xl px-4 py-2.5 text-[11px] font-medium transition-all duration-200 ${
                     isActive
                         ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
                         : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-white"
@@ -159,11 +159,11 @@ function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
             >
                 <div className="flex items-center gap-3">
                     <item.icon
-                        className={`h-4 w-4 transition-colors ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"}`}
+                        className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"}`}
                     />
-                    <span>{item.name}</span>
+                    {!isCollapsed && <span>{item.name}</span>}
                 </div>
-                {isActive && (
+                {isActive && !isCollapsed && (
                     <div className="h-1.5 w-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
                 )}
             </Link>
@@ -174,16 +174,17 @@ function SidebarItem({ item, pathname }: { item: NavItem, pathname: string }) {
 interface AdminSidebarProps {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
+    isCollapsed: boolean;
 }
 
-export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
+export default function AdminSidebar({ isOpen, setIsOpen, isCollapsed }: AdminSidebarProps) {
     const pathname = usePathname();
 
     return (
         <aside
-            className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-gray-100 bg-white/95 backdrop-blur-xl transition-all duration-300 ease-in-out md:translate-x-0 dark:border-gray-800/50 dark:bg-[#0a0a0a]/95 ${
+            className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-gray-100 bg-white/95 backdrop-blur-xl transition-all duration-300 ease-in-out md:translate-x-0 dark:border-gray-800/50 dark:bg-[#0a0a0a]/95 ${
                 isOpen ? "translate-x-0 shadow-[0_0_50px_rgba(0,0,0,0.1)]" : "-translate-x-full shadow-none"
-            }`}
+            } ${isCollapsed ? "w-[80px]" : "w-[280px]"}`}
         >
             {/* Mobile Close Button */}
             <button
@@ -193,10 +194,10 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                 <ChevronRight className="h-4 w-4 rotate-180" />
             </button>
             {/* Logo area */}
-            <div className="flex h-20 shrink-0 items-center border-b border-gray-100/50 px-8 dark:border-gray-800/30">
-                <Link href="/admin" className="group mx-auto flex cursor-pointer flex-col items-center py-4 md:py-0">
-                    <div className="mb-1 scale-75 transform text-blue-600 transition-transform duration-500 group-hover:rotate-180 md:scale-100">
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div className={`flex h-20 shrink-0 items-center border-b border-gray-100/50 dark:border-gray-800/30 ${isCollapsed ? "justify-center" : "px-8"}`}>
+                <Link href="/admin" className={`group flex cursor-pointer flex-col items-center py-4 md:py-0 ${isCollapsed ? "" : ""}`}>
+                    <div className={`text-blue-600 transition-transform duration-500 group-hover:rotate-180 ${isCollapsed ? "scale-90" : "mb-1"}`}>
+                        <svg width={isCollapsed ? "28" : "34"} height={isCollapsed ? "28" : "34"} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path
                                 d="M12 2L2 9L12 22L22 9L12 2Z"
                                 stroke="currentColor"
@@ -209,12 +210,16 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                             <path d="M12 2L17 9L12 22" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
                         </svg>
                     </div>
-                    <h1 className="font-serif text-sm leading-none font-bold tracking-[0.2em] text-blue-600 uppercase md:text-xl dark:text-white">
-                        Yash Jewels
-                    </h1>
-                    <span className="mt-1 text-[6px] font-bold tracking-[0.3em] text-blue-600 uppercase md:text-[8px]">
-                        High Jewelry
-                    </span>
+                    {!isCollapsed && (
+                        <>
+                            <h1 className="font-serif text-sm leading-none font-bold tracking-[0.2em] text-blue-600 uppercase md:text-xl dark:text-white">
+                                Yash Jewels
+                            </h1>
+                            <span className="mt-1 text-[6px] font-bold tracking-[0.3em] text-blue-600 uppercase md:text-[8px]">
+                                High Jewelry
+                            </span>
+                        </>
+                    )}
                 </Link>
             </div>
 
@@ -223,12 +228,14 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                 <div className="flex flex-col gap-6">
                     {navGroups.map((group) => (
                         <div key={group.title}>
-                            <div className="font-plus-jakarta mb-2.5 px-4 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase dark:text-gray-500">
-                                {group.title}
-                            </div>
+                            {!isCollapsed && (
+                                <div className="font-plus-jakarta mb-2.5 px-4 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase dark:text-gray-500">
+                                    {group.title}
+                                </div>
+                            )}
                             <ul className="space-y-1">
                                 {group.items.map((item) => (
-                                    <SidebarItem key={item.name} item={item} pathname={pathname} />
+                                    <SidebarItem key={item.name} item={item} pathname={pathname} isCollapsed={isCollapsed} />
                                 ))}
                             </ul>
                         </div>

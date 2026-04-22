@@ -174,7 +174,7 @@ export default function SettingsPage() {
                     <div className="flex justify-end p-4">
                         <button 
                             disabled={isSaving}
-                            className="flex items-center gap-2 rounded-xl bg-gray-900 px-6 py-3 font-plus-jakarta text-sm font-bold text-white shadow-lg hover:bg-black transition-all dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                            className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-plus-jakarta text-sm font-bold text-white shadow-lg hover:bg-blue-700 transition-all dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
                         >
                             {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                             {isSaving ? "Persisting Changes..." : "Commit System Changes"}

@@ -1,22 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Download, Eye, RefreshCw } from "lucide-react";
-import { PageHeader } from "../_components/ui/PageHeader";
-import { StatusBadge } from "../_components/ui/StatusBadge";
-import { Modal } from "../_components/ui/Modal";
-import { FormField, inputCls, selectCls, textareaCls } from "../_components/ui/FormField";
+import { Download, Eye, RefreshCw } from "lucide-react";
+import { PageHeader } from "../../admin/_components/ui/PageHeader";
+import { StatusBadge } from "../../admin/_components/ui/StatusBadge";
+import { Modal } from "../../admin/_components/ui/Modal";
 import { listInvoicesApi, getInvoiceApi, InvoiceDto } from "@/services/invoice.service";
 import toast from "react-hot-toast";
 
-export default function InvoicesPage() {
+export default function VendorInvoicesPage() {
     const [invoices, setInvoices] = useState<InvoiceDto[]>([]);
     const [selected, setSelected] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isReissueOpen, setIsReissueOpen] = useState(false);
-    const [reissueReason, setReissueReason] = useState("");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
 
@@ -50,12 +47,12 @@ export default function InvoicesPage() {
     };
 
     const filtered = invoices.filter(i =>
-        (i.invoiceNumber || "").toLowerCase().includes(search.toLowerCase())
+        i.invoiceNumber.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
         <div className="flex flex-col gap-8">
-            <PageHeader title="Invoices" description="Manage billing documents and handle reissue requests."
+            <PageHeader title="Invoices" description="Manage and view customer billing documents."
                 actions={
                     <button className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
                         <Download className="h-4 w-4" /> Export All
@@ -66,7 +63,7 @@ export default function InvoicesPage() {
             <div className="flex flex-col rounded-2xl border border-gray-100 bg-white/70 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70">
                 <div className="border-b border-gray-100 p-6 dark:border-gray-800/50 flex items-center justify-between">
                     <input type="text" placeholder="Search invoice..." value={search} onChange={e => setSearch(e.target.value)}
-                        className="max-w-sm w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm font-medium placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:text-gray-100 dark:placeholder:text-gray-500" />
+                        className="max-w-sm w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm font-medium placeholder:text-gray-400 focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50 dark:text-gray-100 dark:placeholder:text-gray-500" />
                     <button onClick={loadInvoices} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                         <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                     </button>
@@ -86,10 +83,10 @@ export default function InvoicesPage() {
                                         <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{inv.orderId.substring(0, 8)}...</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-semibold text-gray-700 dark:text-gray-300">{inv.buyerName}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inv.totalAmount.toLocaleString()} VND</td>
-                                        <td className="px-6 py-4"><StatusBadge status={inv.status?.toString().toLowerCase() || ""} /></td>
+                                        <td className="px-6 py-4"><StatusBadge status={inv.status.toLowerCase() as any} /></td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <button onClick={() => handleViewDetail(inv.id)} className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-800"><Eye className="h-4 w-4" /></button>
+                                                <button onClick={() => handleViewDetail(inv.id)} className="rounded-lg p-2 text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-gray-800"><Eye className="h-4 w-4" /></button>
                                                 {inv.pdfUrl && <a href={inv.pdfUrl} target="_blank" className="rounded-lg p-2 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-gray-800"><Download className="h-4 w-4" /></a>}
                                             </div>
                                         </td>
@@ -128,33 +125,11 @@ export default function InvoicesPage() {
                             </div>
                             <div className="flex justify-between pt-3 mt-1 border-t border-gray-100 dark:border-gray-800">
                                 <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Final Total</span>
-                                <span className="font-plus-jakarta text-lg font-bold text-blue-600">{selected.totalAmount?.toLocaleString()} VND</span>
+                                <span className="font-plus-jakarta text-lg font-bold text-amber-600">{selected.totalAmount?.toLocaleString()} VND</span>
                             </div>
                         </div>
                     </div>
                 )}
-            </Modal>
-
-
-            {/* Reissue Modal */}
-            <Modal isOpen={isReissueOpen} onClose={() => setIsReissueOpen(false)} title="Request Invoice Reissue" subtitle={selected?.invoice_number} size="md"
-                footer={<>
-                    <button onClick={() => setIsReissueOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 font-plus-jakarta text-sm font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300">Cancel</button>
-                    <button onClick={() => setIsReissueOpen(false)} disabled={!reissueReason.trim()} className="rounded-xl bg-blue-600 px-4 py-2 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">Submit Request</button>
-                </>}>
-                <div className="flex flex-col gap-4">
-                    <FormField label="Reason for Reissue" required>
-                        <select className={selectCls}>
-                            <option>Buyer name correction</option>
-                            <option>Address update</option>
-                            <option>Tax code change</option>
-                            <option>Other</option>
-                        </select>
-                    </FormField>
-                    <FormField label="Additional Notes">
-                        <textarea rows={3} className={textareaCls} value={reissueReason} onChange={e => setReissueReason(e.target.value)} placeholder="Describe the required changes..." />
-                    </FormField>
-                </div>
             </Modal>
         </div>
     );
