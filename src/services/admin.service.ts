@@ -203,20 +203,29 @@ export const adminService = {
     getFinanceStatsApi,
     exportInsuranceApi,
 
-    // Phase 5
-    getVendorsApi: () => apiClient.get<ApiResponse<any[]>>("/admin/vendors").then(r => r.data),
-    createVendorApi: (data: any) => apiClient.post<ApiResponse<string>>("/admin/vendors", data).then(r => r.data),
-    updateVendorStatusApi: (userId: string, status: number) => apiClient.put<ApiResponse<boolean>>(`/admin/vendors/${userId}/status`, status, { headers: { "Content-Type": "application/json" } }).then(r => r.data),
+    // Phase 5 Structured
+    vendors: {
+        getAll: () => apiClient.get<ApiResponse<any[]>>("/admin/vendors").then(r => r.data),
+        create: (data: any) => apiClient.post<ApiResponse<string>>("/admin/vendors", data).then(r => r.data),
+        updateStatus: (userId: string, status: number) => apiClient.put<ApiResponse<boolean>>(`/admin/vendors/${userId}/status`, status, { headers: { "Content-Type": "application/json" } }).then(r => r.data),
+    },
     
-    getShippersApi: () => apiClient.get<ApiResponse<any[]>>("/admin/shippers").then(r => r.data),
-    createShipperApi: (data: any) => apiClient.post<ApiResponse<string>>("/admin/shippers", data).then(r => r.data),
-    approveShipperApi: (id: string) => apiClient.put<ApiResponse<boolean>>(`/admin/shippers/${id}/approve`).then(r => r.data),
-    updateShipperStatusApi: (userId: string, status: number) => apiClient.put<ApiResponse<boolean>>(`/admin/shippers/${userId}/status`, status, { headers: { "Content-Type": "application/json" } }).then(r => r.data),
+    shippers: {
+        getAll: () => apiClient.get<ApiResponse<any[]>>("/admin/shippers").then(r => r.data),
+        create: (data: any) => apiClient.post<ApiResponse<string>>("/admin/shippers", data).then(r => r.data),
+        approve: (id: string) => apiClient.put<ApiResponse<boolean>>(`/admin/shippers/${id}/approve`).then(r => r.data),
+        updateStatus: (userId: string, status: number) => apiClient.put<ApiResponse<boolean>>(`/admin/shippers/${userId}/status`, status, { headers: { "Content-Type": "application/json" } }).then(r => r.data),
+    },
 
-    getSettingsApi: () => apiClient.get<ApiResponse<any>>("/admin/settings").then(r => r.data),
-    updateSettingsApi: (data: any) => apiClient.put<ApiResponse<boolean>>("/admin/settings", data).then(r => r.data),
+    settings: {
+        get: () => apiClient.get<ApiResponse<any>>("/admin/settings").then(r => r.data),
+        update: (data: any) => apiClient.put<ApiResponse<boolean>>("/admin/settings", data).then(r => r.data),
+    },
 
-    getCouponsApi: () => apiClient.get<ApiResponse<any[]>>("/admin/coupons").then(r => r.data),
-    createCouponApi: (data: any) => apiClient.post<ApiResponse<string>>("/admin/coupons", data).then(r => r.data),
-    toggleCouponApi: (id: string) => apiClient.put<ApiResponse<boolean>>(`/admin/coupons/${id}/toggle`).then(r => r.data)
+    coupons: {
+        getAll: () => apiClient.get<ApiResponse<any[]>>("/coupons").then(r => r.data),
+        create: (data: any) => apiClient.post<ApiResponse<string>>("/coupons", data).then(r => r.data),
+        toggle: (id: string) => apiClient.put<ApiResponse<boolean>>(`/coupons/${id}/toggle`).then(r => r.data),
+        delete: (id: string) => apiClient.delete<ApiResponse<boolean>>(`/coupons/${id}`).then(r => r.data)
+    }
 };

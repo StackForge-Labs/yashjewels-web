@@ -13,7 +13,10 @@ import { adminService } from "@/services/admin.service";
 import { toast } from "sonner";
 
 const couponSchema = z.object({
-    code: z.string().min(3, "Code must be at least 3 chars").toUpperCase(),
+    code: z.string()
+        .min(3, "Code must be at least 3 chars")
+        .toUpperCase()
+        .regex(/^[A-Z0-9]+$/, "Code only allows letters and numbers"),
     description: z.string().optional(),
     discountType: z.string().min(1),
     discountValue: z.coerce.number().min(1),
@@ -21,6 +24,9 @@ const couponSchema = z.object({
     maxUsesTotal: z.coerce.number().optional(),
     validFrom: z.string().min(1, "Starting date is required"),
     validUntil: z.string().min(1, "Expiry date is required"),
+}).refine(data => new Date(data.validUntil) >= new Date(data.validFrom), {
+    message: "Expiry date cannot be before starting date",
+    path: ["validUntil"]
 });
 
 type CouponFormData = z.infer<typeof couponSchema>;
@@ -47,7 +53,7 @@ export default function MarketingPage() {
     const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<CouponFormData>({
         resolver: zodResolver(couponSchema) as any,
         defaultValues: {
-            discountType: "PERCENTAGE",
+            discountType: "0", // Mặc định là PERCENTAGE (0)
             validFrom: new Date().toISOString().split("T")[0],
             validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
         }
@@ -58,7 +64,7 @@ export default function MarketingPage() {
     const fetchCoupons = async () => {
         setIsLoading(true);
         try {
-            const res = await adminService.getCouponsApi();
+            const res = await adminService.coupons.getAll();
             if (res.success) setCoupons(res.data);
         } catch {
             toast.error("Failed to fetch coupons");
@@ -71,31 +77,51 @@ export default function MarketingPage() {
         fetchCoupons();
     }, []);
 
-    const handleCreate = async (data: any) => {
+    const handleCreate = async (data: CouponFormData) => {
+        // Frontend duplicate check
+        if (coupons.some(c => c.code.toUpperCase() === data.code.toUpperCase())) {
+            toast.error("This coupon code already exists");
+            return;
+        }
+
         try {
-            const res = await adminService.createCouponApi(data);
+            // Ánh xạ sang cấu hình Backend mong đợi
+            const payload = {
+                ...data,
+                discountType: parseInt(data.discountType), // Chuyển sang Integer cho Enum
+                // Bổ sung CreatedBy (Lấy từ Auth hoặc mặc định Admin ID)
+                createdBy: "00000000-0000-0000-0000-000000000000" // Backend sẽ xử lý hoặc lấy từ Token
+            };
+
+            const res = await adminService.coupons.create(payload);
             if (res.success) {
                 toast.success("Coupon created successfully");
                 setIsDrawerOpen(false);
                 reset();
                 fetchCoupons();
             } else {
-                toast.error(res.message);
+                toast.error(res.message || "Failed to create coupon");
             }
-        } catch {
-            toast.error("An error occurred");
+        } catch (err: any) {
+            const serverErrors = err.response?.data?.errors;
+            if (serverErrors && Array.isArray(serverErrors)) {
+                serverErrors.forEach((e: string) => toast.error(e));
+            } else {
+                toast.error(err.response?.data?.message || "An error occurred");
+            }
         }
     };
 
-    const handleToggle = async (id: string) => {
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this coupon?")) return;
         try {
-            const res = await adminService.toggleCouponApi(id);
+            const res = await adminService.coupons.delete(id);
             if (res.success) {
-                toast.success("Status updated");
+                toast.success("Coupon deleted");
                 fetchCoupons();
             }
         } catch {
-            toast.error("Failed to update status");
+            toast.error("Failed to delete coupon");
         }
     };
 
@@ -165,13 +191,13 @@ export default function MarketingPage() {
                                     <td className="px-6 py-4">
                                         <StatusBadge status={c.isActive ? "active" : "inactive"} />
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-right">
                                         <button
-                                            onClick={() => handleToggle(c.id)}
-                                            className={`rounded-lg p-1.5 transition-colors ${c.isActive ? "text-rose-600 hover:bg-rose-50" : "text-emerald-600 hover:bg-emerald-50"
-                                                }`}
+                                            onClick={() => handleDelete(c.id)}
+                                            className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50 transition-colors"
+                                            title="Delete Coupon"
                                         >
-                                            {c.isActive ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                                            <X className="h-4 w-4" />
                                         </button>
                                     </td>
                                 </tr>
@@ -211,12 +237,12 @@ export default function MarketingPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <FormField label="Discount Type">
                             <select className={selectCls} {...register("discountType")}>
-                                <option value="PERCENTAGE">Percentage (%)</option>
-                                <option value="FIXED_AMOUNT">Fixed Amount (VND)</option>
-                                <option value="FREE_SHIPPING">Free Shipping</option>
+                                <option value="0">Percentage (%)</option>
+                                <option value="1">Fixed Amount (VND)</option>
+                                <option value="2">Free Shipping</option>
                             </select>
                         </FormField>
-                        <FormField label={discountType === "PERCENTAGE" ? "Discount (%)" : "Discount (VND)"} required>
+                        <FormField label={discountType === "0" ? "Discount (%)" : "Discount (VND)"} required>
                             <input type="number" className={inputCls} placeholder={discountType === "PERCENTAGE" ? "10" : "500000"} {...register("discountValue")} />
                         </FormField>
                     </div>
@@ -234,6 +260,7 @@ export default function MarketingPage() {
                         </FormField>
                         <FormField label="Valid Until" required>
                             <input type="date" className={inputCls} {...register("validUntil")} />
+                            {errors.validUntil && <p className="text-rose-500 text-xs mt-1">{errors.validUntil.message}</p>}
                         </FormField>
                     </div>
                 </form>

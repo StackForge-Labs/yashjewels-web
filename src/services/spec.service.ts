@@ -15,6 +15,9 @@ export interface JewelrySpecItem {
     stoneType?: string;
     grade?: string;
     gradeCode?: string;
+    subTypeCode?: string;
+    diamondQualityId?: string;
+    diamondQuality?: any;
 }
 
 const createSpecCrudService = (endpoint: string) => ({

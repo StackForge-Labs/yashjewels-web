@@ -62,6 +62,7 @@ const FormInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
 const FormSelect = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
     <select
         {...props}
+        value={props.value ?? ""}
         className={`w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-900 ${props.className || ""}`}
     />
 );
@@ -92,6 +93,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     const [diamondCuts, setDiamondCuts] = useState<any[]>([]);
     const [stoneQualities, setStoneQualities] = useState<any[]>([]);
     const [stoneTypes, setStoneTypes] = useState<any[]>([]);
+    const [vendors, setVendors] = useState<any[]>([]);
 
     // Form State
     const [formData, setFormData] = useState<ProductCreateRequest & { status?: string, otherMakingCharge?: number }>({
@@ -118,32 +120,33 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     useEffect(() => {
         const loadMetadata = async () => {
             try {
-                const [cats, brs, pts, jts, kts, crs, dq, dc, sq, st] = await Promise.all([
+                // Fetch basic catalog info
+                const [cats, brs, pts, jts] = await Promise.all([
                     categoryService.getAll(),
                     catalogService.brands.getAll(),
                     catalogService.productTypes.getAll(),
                     catalogService.jewelTypes.getAll(),
-                    specService.goldKarats.getAll(),
-                    specService.certifications.getAll(),
-                    specService.diamondQualities.getAll(),
-                    specService.diamondSubTypes.getAll(),
-                    specService.stoneQualities.getAll(),
-                    specService.stoneTypes.getAll(),
                 ]);
 
                 setCategories(cats || []);
                 setBrands(brs?.data || []);
                 setProductTypes(pts?.data || []);
                 setJewelTypes(jts?.data || []);
-                setKarats(kts?.data || []);
-                setCerts(crs?.data || []);
-                setDiamondQualities(dq?.data || []);
-                setDiamondCuts(dc?.data || []);
-                setStoneQualities(sq?.data || []);
-                setStoneTypes(st?.data || []);
+
+                // Fetch specs independently to avoid total failure if one spec is missing
+                specService.goldKarats.getAll().then(res => setKarats(res?.data || []));
+                specService.certifications.getAll().then(res => setCerts(res?.data || []));
+                specService.diamondQualities.getAll().then(res => setDiamondQualities(res?.data || []));
+                specService.diamondSubTypes.getAll().then(res => {
+                    const sorted = (res?.data || []).sort((a: any, b: any) => (a.subTypeCode || "").localeCompare(b.subTypeCode || ""));
+                    setDiamondCuts(sorted);
+                });
+                specService.stoneQualities.getAll().then(res => setStoneQualities(res?.data || []));
+                specService.stoneTypes.getAll().then(res => setStoneTypes(res?.data || []));
+                adminService.vendors.getAll().then(res => setVendors(res?.data || []));
+
             } catch (error) {
                 console.error("Metadata sync failed:", error);
-                toast.error("Failed to load catalog metadata");
             } finally {
                 setLoading(false);
             }
@@ -162,14 +165,23 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                         setFormData({
                             ...data,
                             brandId: data.brandId || "",
-                            categoryId: data.categoryId || "",
+                            categoryId: data.categoryId || "" ,
                             productTypeId: data.productTypeId || "",
                             jewelTypeId: data.jewelTypeId || "",
                             goldKaratId: data.goldKaratId || "",
                             certificationId: data.certificationId || "",
                             status: data.status,
-                            stones: data.stones.map(s => ({ ...s })),
-                            diamonds: data.diamonds.map(d => ({ ...d })),
+                            stones: (data.stones || []).map((s: any) => ({
+                                ...s,
+                                name: s.name || "",
+                                // Nếu Backend trả về object lồng nhau, lấy gradeCode, nếu không lấy trực tiếp giá trị
+                                stoneQuality: (typeof s.stoneQuality === 'object' ? s.stoneQuality?.gradeCode : s.stoneQuality) || s.quality || ""
+                            })),
+                            diamonds: (data.diamonds || []).map((d: any) => ({
+                                ...d,
+                                diamondQuality: (typeof d.diamondQuality === 'object' ? d.diamondQuality?.gradeCode : d.diamondQuality) || d.quality || "",
+                                diamondCut: (typeof d.diamondCut === 'object' ? d.diamondCut?.subTypeCode : d.diamondCut) || d.cut || ""
+                            })),
                             diamondWeightCts: data.diamonds?.reduce((sum, d) => sum + (d.weightCts || 0), 0) || 0
                         } as any);
                         setProductImages(data.images || []);
@@ -576,7 +588,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                             <FormLabel>Quality</FormLabel>
                                                             <FormSelect value={s.stoneQuality} onChange={(e) => handleComponentChange("stone", i, "stoneQuality", e.target.value)}>
                                                                 <option value="">Select</option>
-                                                                {stoneQualities.map(q => <option key={q.id} value={q.name}>{q.name}</option>)}
+                                                                {stoneQualities.map(q => <option key={q.id} value={q.gradeCode || q.grade || ""}>{q.gradeCode || q.grade}</option>)}
                                                             </FormSelect>
                                                         </div>
                                                         <div>
@@ -618,14 +630,14 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                             <FormLabel>Quality</FormLabel>
                                                             <FormSelect value={d.diamondQuality} onChange={(e) => handleComponentChange("diamond", i, "diamondQuality", e.target.value)}>
                                                                 <option value="">Select</option>
-                                                                {diamondQualities.map(q => <option key={q.id} value={q.gradeName}>{q.gradeName}</option>)}
+                                                                {diamondQualities.map(q => <option key={q.id} value={q.gradeCode || q.grade || ""}>{q.gradeCode || q.grade}</option>)}
                                                             </FormSelect>
                                                         </div>
                                                         <div>
                                                             <FormLabel>Cut</FormLabel>
                                                             <FormSelect value={d.diamondCut} onChange={(e) => handleComponentChange("diamond", i, "diamondCut", e.target.value)}>
                                                                 <option value="">Select</option>
-                                                                {diamondCuts.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                                                {diamondCuts.map(c => <option key={c.id} value={c.subTypeCode || c.name || ""}>{c.subTypeCode || c.name}</option>)}
                                                             </FormSelect>
                                                         </div>
                                                         <div>

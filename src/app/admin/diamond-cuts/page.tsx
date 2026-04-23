@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 
 export default function AdminDiamondCutsPage() {
     const [diamondCuts, setDiamondCuts] = useState<JewelrySpecItem[]>([]);
+    const [qualities, setQualities] = useState<JewelrySpecItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -17,14 +18,18 @@ export default function AdminDiamondCutsPage() {
     // Modal & Drawer State
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerMode, setDrawerMode] = useState<"CREATE" | "EDIT">("CREATE");
-    const [selectedItem, setSelectedItem] = useState<JewelrySpecItem | null>(null);
+    const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const fetchData = async () => {
         setIsLoading(true);
-        const res = await specService.diamondSubTypes.getAll();
-        setDiamondCuts(res.data);
+        const [cutsRes, qualitiesRes] = await Promise.all([
+            specService.diamondSubTypes.getAll(),
+            specService.diamondQualities.getAll()
+        ]);
+        setDiamondCuts(cutsRes.data);
+        setQualities(qualitiesRes.data);
         setIsLoading(false);
     };
 
@@ -33,8 +38,9 @@ export default function AdminDiamondCutsPage() {
     }, []);
 
     const filtered = diamondCuts.filter(d => {
-        const name = d.name || "";
-        const matchSearch = name.toLowerCase().includes(search.toLowerCase());
+        const nameMatch = (d.subTypeCode || "").toLowerCase().includes(search.toLowerCase());
+        const qualityMatch = qualities.find(q => q.id === d.diamondQualityId)?.gradeCode?.toLowerCase().includes(search.toLowerCase()) || false;
+        const matchSearch = nameMatch || qualityMatch;
         const matchStatus = filterStatus === "ALL" ? true : filterStatus === "ACTIVE" ? d.isActive : !d.isActive;
         return matchSearch && matchStatus;
     });
@@ -45,13 +51,13 @@ export default function AdminDiamondCutsPage() {
         setIsDrawerOpen(true);
     };
 
-    const openEdit = (item: JewelrySpecItem) => {
+    const openEdit = (item: any) => {
         setDrawerMode("EDIT");
         setSelectedItem(item);
         setIsDrawerOpen(true);
     };
 
-    const openDelete = (item: JewelrySpecItem) => {
+    const openDelete = (item: any) => {
         setSelectedItem(item);
         setIsDeleteModalOpen(true);
     };
@@ -63,10 +69,17 @@ export default function AdminDiamondCutsPage() {
         const formData = new FormData(form);
         
         const payload = {
-            name: formData.get("name") as string,
+            diamondQualityId: formData.get("diamondQualityId") as string,
+            subTypeCode: formData.get("subTypeCode") as string,
             description: formData.get("description") as string,
-            isActive: drawerMode === "EDIT" ? formData.get("isActive") === "on" : undefined,
+            isActive: drawerMode === "EDIT" ? formData.get("isActive") === "on" : true,
         };
+
+        if (!payload.diamondQualityId && drawerMode === "CREATE") {
+            toast.error("Please select a Diamond Quality");
+            setIsSaving(false);
+            return;
+        }
 
         let res;
         if (drawerMode === "CREATE") {
@@ -173,6 +186,7 @@ export default function AdminDiamondCutsPage() {
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                                 <tr>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Cut Name / Shape</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Quality Grade</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Description</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
@@ -181,7 +195,7 @@ export default function AdminDiamondCutsPage() {
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
                                 {filtered.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-12 text-center text-gray-500 font-plus-jakarta text-sm">
+                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-500 font-plus-jakarta text-sm">
                                             No shapes found matching your filters.
                                         </td>
                                     </tr>
@@ -193,9 +207,15 @@ export default function AdminDiamondCutsPage() {
                                                     <Tag className="h-4 w-4" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.name}</p>
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.subTypeCode}</p>
                                                     <p className="font-mono text-[10px] text-gray-400">ID: {item.id.substring(0, 8)}</p>
                                                 </div>
+                                            </div>
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            <div className="inline-flex items-center rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                                {qualities.find(q => q.id === item.diamondQualityId)?.gradeCode || item.diamondQuality?.gradeCode || "Unknown"}
                                             </div>
                                         </td>
                                         
@@ -259,14 +279,32 @@ export default function AdminDiamondCutsPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Cut Shape Name <span className="text-rose-500">*</span>
+                                        Diamond Quality Grade <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select
+                                        name="diamondQualityId"
+                                        required
+                                        defaultValue={selectedItem?.diamondQualityId || ""}
+                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
+                                    >
+                                        <option value="">Select Quality...</option>
+                                        {qualities.map((q) => (
+                                            <option key={q.id} value={q.id}>
+                                                {q.gradeCode}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                                        Cut Shape Name / Code <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
-                                        name="name"
+                                        name="subTypeCode"
                                         required
-                                        defaultValue={selectedItem?.name || ""}
-                                        placeholder="Enter name (e.g. Emerald Cut)..."
+                                        defaultValue={selectedItem?.subTypeCode || ""}
+                                        placeholder="Enter name (e.g. Round)..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
@@ -318,7 +356,7 @@ export default function AdminDiamondCutsPage() {
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.name}?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.subTypeCode}?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                 This action is high-risk and will affect products tied to this specific cut shape.
                             </p>
