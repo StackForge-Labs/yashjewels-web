@@ -84,6 +84,7 @@ export interface UserAddressDto {
     recipientEmail?: string;
     giftMessage?: string;
     isDefault: boolean;
+    distanceKm?: number;
     createdAt: string;
 }
 
@@ -101,6 +102,7 @@ export interface CreateAddressRequest {
     recipientEmail?: string;
     giftMessage?: string;
     isDefault: boolean;
+    distanceKm?: number;
 }
 
 // ── Admin KYC ───────────────────────────────────────────────────
