@@ -6,7 +6,10 @@ import {
     MapPin, CreditCard, Shield, ChevronRight, Check,
     Truck, ShieldCheck, ArrowRight, Package, Gift,
     AlertTriangle, Lock, X,
-    Phone
+    Phone,
+    Zap,
+    Briefcase,
+    CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { useSelector } from "react-redux";
@@ -34,6 +37,7 @@ export default function CheckoutPage() {
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
     const [payment, setPayment] = useState("card");
+    const [shipping, setShipping] = useState<"standard" | "priority">("standard");
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
     // Coupon states
@@ -45,6 +49,8 @@ export default function CheckoutPage() {
     // Form states
     const [selectedAddress, setSelectedAddress] = useState<UserAddressDto | null>(null);
     const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
+    const [estimatedDistance, setEstimatedDistance] = useState<number | null>(null);
+    const [isInternationalAddress, setIsInternationalAddress] = useState(false);
     const [idempotencyKey] = useState(() => crypto.randomUUID());
     const [isFaceScanning, setIsFaceScanning] = useState(false);
     const [isBiometricVerified, setIsBiometricVerified] = useState(false);
@@ -95,7 +101,68 @@ export default function CheckoutPage() {
         }
     }
 
-    const grandTotal = cart.totalLiveMrp + insuranceFee + vatAmount - discountAmount;
+    const getShippingEstimate = (distance: number, type: "standard" | "priority", isInternational: boolean = false) => {
+        const priority = type === "priority";
+        if (isInternational) {
+            return {
+                cost: 5000000 + (priority ? 1000000 : 0),
+                method: priority ? "Priority Global Express" : "International VIP Transport",
+                description: priority ? "Next-flight-out Secure Air Transport" : "FedEx/DHL Secure Transport with Insurance",
+                eta: priority ? "3 - 5 Business Days" : "7 - 10 Business Days",
+                distance,
+                isPriority: priority
+            };
+        }
+        if (distance < 15) {
+            return {
+                cost: 0 + (priority ? 200000 : 0),
+                method: priority ? "Priority Urban Express" : "Urban VIP Delivery",
+                description: priority ? "Dedicated Instant Dispatch" : "Complimentary White-glove Service",
+                eta: priority ? "2 - 4 Hours" : "12 - 24 Hours",
+                distance,
+                isPriority: priority
+            };
+        }
+        if (distance < 50) {
+            return {
+                cost: 500000 + (priority ? 200000 : 0),
+                method: priority ? "Priority Suburban Express" : "Suburban Secure Delivery",
+                description: priority ? "Direct Dedicated Armored Car" : "In-house Armored Fleet Delivery",
+                eta: priority ? "6 - 12 Hours" : "1 - 2 Days",
+                distance,
+                isPriority: priority
+            };
+        }
+        if (distance < 150) {
+            return {
+                cost: 1500000 + (priority ? 200000 : 0),
+                method: priority ? "Priority Regional Express" : "Inter-provincial VIP Transport",
+                description: priority ? "Dedicated Security Team" : "Dedicated Security Escort",
+                eta: priority ? "24 Hours" : "2 - 3 Days",
+                distance,
+                isPriority: priority
+            };
+        }
+        return {
+            cost: 2500000 + (priority ? 500000 : 0),
+            method: priority ? "Priority Airline Express" : "Airline Secure Courier",
+            description: priority ? "Hand-carried Security Staff" : "3rd Party Insured Airline Transport",
+            eta: priority ? "2 Days" : "3 - 5 Days",
+            distance,
+            isPriority: priority
+        };
+    };
+
+    // shipping estimate — only compute when we have a real distance from Mapbox routing
+    const shippingEstimate = estimatedDistance !== null
+        ? getShippingEstimate(estimatedDistance, shipping, isInternationalAddress)
+        : null;
+
+    const shippingFee = shippingEstimate ? shippingEstimate.cost : 0;
+    const grandTotal = cart.totalLiveMrp + insuranceFee + shippingFee - discountAmount;
+
+    // Calculate VAT amount included in MRP: VAT_AMT = TOTAL - (TOTAL / (1 + RATE/100))
+    const calculatedVat = cart.totalLiveMrp - (cart.totalLiveMrp / (1 + cart.vatRate / 100));
 
     // Calculate dynamic deposit based on exact backend logic
     const getDepositRequired = () => {
@@ -132,7 +199,11 @@ export default function CheckoutPage() {
                 shippingAddressId: selectedAddress.id,
                 idempotencyKey,
                 insuranceType: insurance,
-                couponCode: appliedCoupon ? couponCode : undefined
+                couponCode: appliedCoupon ? couponCode : undefined,
+                shippingFee: shippingFee,
+                estimatedDistanceKm: estimatedDistance,
+                paymentMethod: payment,
+                pay100Percent: depositPct === "100%"
             });
 
             if (data.success) {
@@ -313,11 +384,78 @@ export default function CheckoutPage() {
                         <div className="lg:col-span-7">
                             {/* Step 1: Address */}
                             {step === 0 && (
-                                <AddressSection
-                                    selectedId={selectedAddress?.id}
-                                    onSelect={(addr) => setSelectedAddress(addr)}
-                                    onFormToggle={(isOpen) => setIsAddressFormOpen(isOpen)}
-                                />
+                                <div className="space-y-8">
+                                    <AddressSection
+                                        selectedId={selectedAddress?.id}
+                                        onSelect={(addr) => setSelectedAddress(addr)}
+                                        onFormToggle={(isOpen) => setIsAddressFormOpen(isOpen)}
+                                        onDistanceChange={(distance, isIntl) => {
+                                            setEstimatedDistance(distance);
+                                            setIsInternationalAddress(isIntl ?? false);
+                                        }}
+                                    />
+
+                                    {selectedAddress && !isAddressFormOpen && (
+                                        <div className="rounded-2xl border border-gray-100 p-6 md:p-8 dark:border-white/5 animate-in fade-in slide-in-from-bottom-4">
+                                            <div className="flex items-center gap-3">
+                                                <Truck size={20} className="text-gold" />
+                                                <h2 className="font-serif text-xl text-gray-900 dark:text-white">Delivery Method</h2>
+                                            </div>
+                                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-lg">Choose your preferred delivery speed. Priority Express ensures your items are dispatched immediately with a dedicated courier.</p>
+
+                                            <div className="mt-6 p-4 rounded-xl border border-gold/20 bg-gold/5 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg ${shipping === "priority" ? 'bg-gold text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500'} transition-colors`}>
+                                                        <Zap size={18} fill={shipping === "priority" ? "currentColor" : "none"} />
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="text-sm font-bold text-gray-900 dark:text-white">Priority Express Delivery</h5>
+                                                        <p className="text-[11px] text-gray-500">Premium security & immediate dispatch</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShipping(shipping === "priority" ? "standard" : "priority")}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${shipping === "priority" ? 'bg-gold' : 'bg-gray-300 dark:bg-white/10'}`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${shipping === "priority" ? 'translate-x-6' : 'translate-x-1'}`}
+                                                    />
+                                                </button>
+                                            </div>
+
+                                            {shippingEstimate && (
+                                                <div className={`mt-4 rounded-xl border p-5 flex flex-col md:flex-row gap-5 items-start md:items-center animate-in fade-in slide-in-from-bottom-4 shadow-sm transition-all duration-300 ${shippingEstimate.isPriority ? 'bg-red-50/50 border-red-200 dark:bg-red-500/5 dark:border-red-500/20' : 'bg-gray-50 border-gold/30 dark:bg-gold/5 dark:border-gold/20'}`}>
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border transition-all ${shippingEstimate.isPriority ? 'bg-red-100 border-red-200 text-red-600' : 'bg-gold/10 border-gold/20 text-gold'}`}>
+                                                        {shippingEstimate.isPriority ? <Zap size={22} fill="currentColor" /> : <Briefcase size={22} />}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-2">
+                                                            {shippingEstimate.method}
+                                                            {shippingEstimate.isPriority && (
+                                                                <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-sm tracking-wider font-semibold animate-pulse">PRIORITY</span>
+                                                            )}
+                                                            {shippingEstimate.cost === 0 && !shippingEstimate.isPriority && (
+                                                                <span className="text-[10px] bg-gold text-white px-2 py-0.5 rounded-sm tracking-wider font-semibold">COMPLIMENTARY</span>
+                                                            )}
+                                                        </h4>
+                                                        <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">{shippingEstimate.description}</p>
+                                                        <div className="flex items-center gap-4 mt-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">
+                                                            <div className="flex items-center gap-1.5"><MapPin size={13} className="text-gray-400" /> Distance: {isInternationalAddress ? "International" : (typeof shippingEstimate.distance === 'number' ? `${shippingEstimate.distance.toFixed(1)} km` : "--")}</div>
+                                                            <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="text-green-500" /> ETA: {shippingEstimate.eta}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-left md:text-right shrink-0 mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-200 dark:border-white/10 w-full md:w-auto">
+                                                        <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Shipping Fee</div>
+                                                        <div className="text-xl font-light text-gray-900 dark:text-white">
+                                                            {shippingEstimate.cost === 0 ? "FREE" : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'VND' }).format(shippingEstimate.cost)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                             {/* Step 2: Insurance */}
@@ -334,28 +472,28 @@ export default function CheckoutPage() {
                                             {
                                                 id: "none",
                                                 title: "Standard",
-                                                desc: "Standard delivery risk",
+                                                desc: "Standard transit care with baseline security.",
                                                 price: "Free",
                                                 icon: Package,
-                                                features: ["Standard Transit Care", "Return within 2 days", "No loss protection"],
+                                                features: ["3-Day Return & Refund", "Secure Seal Packaging", "Exempt from Accidental Damage"],
                                                 isPopular: false
                                             },
                                             {
                                                 id: "shipping",
                                                 title: "Transit Shield",
-                                                desc: "Covers damage or loss during transit",
+                                                desc: "Immediate protection for transit-related risks.",
                                                 price: `+${formatCurrency(getInsuranceFee("shipping"))}`,
                                                 icon: Truck,
-                                                features: ["Full Loss Recovery", "Return within 7 days", "Transit Damage Cover"],
+                                                features: ["7-Day Return & Refund", "Fast-track 100% Refund", "Transit Loss Guarantee"],
                                                 isPopular: false
                                             },
                                             {
                                                 id: "full",
                                                 title: "Ultra Care",
-                                                desc: "Shipping + 30-day extended protection",
+                                                desc: "Comprehensive protection & lifetime maintenance.",
                                                 price: `+${formatCurrency(getInsuranceFee("full"))}`,
                                                 icon: ShieldCheck,
-                                                features: ["Full Loss Recovery", "Return within 30 days", "Maintenance Support"],
+                                                features: ["30-Day Elite Return & Refund", "12-Month Structural Warranty", "2-Year Professional Polishing"],
                                                 isPopular: true
                                             },
                                         ].map((opt) => (
@@ -453,18 +591,16 @@ export default function CheckoutPage() {
                                             </div>
                                         </div>
 
-                                        {!isGift && (
-                                            <>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Required Deposit: {depositPct}</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                                                    For orders above 10,000,000 VND, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order.
-                                                </p>
-                                                <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
-                                                    <span>To Pay Now:</span>
-                                                    <span>{formatCurrency(depositAmount)}</span>
-                                                </div>
-                                            </>
-                                        )}
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Required Deposit: {depositPct}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                                            {isGift
+                                                ? "As the sender, you are responsible for the deposit. The recipient will receive the gift fully paid once you complete the final balance."
+                                                : "For orders above 10,000,000 VND, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order."}
+                                        </p>
+                                        <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
+                                            <span>To Pay Now:</span>
+                                            <span>{formatCurrency(depositAmount)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -612,78 +748,85 @@ export default function CheckoutPage() {
                                                 <p className="line-clamp-1 font-medium text-gray-900 dark:text-white">{item.productName}</p>
                                                 <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                                             </div>
-                                            {!isGift && (
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.currentLiveMrp)}</p>
-                                            )}
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.currentLiveMrp)}</p>
                                         </div>
                                     ))}
                                 </div>
 
-                                {isGift ? (
-                                    <div className="mt-4 rounded-2xl border border-gold/20 bg-gold/5 px-5 py-4 flex items-center gap-3">
+                                {isGift && (
+                                    <div className="mt-4 mb-6 rounded-2xl border border-gold/20 bg-gold/5 px-5 py-4 flex items-center gap-3">
                                         <div className="shrink-0 w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center">
                                             <Gift size={16} className="text-gold" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-gray-800 dark:text-white">Gift Order</p>
+                                            <p className="text-xs font-bold text-gray-800 dark:text-white">Gift Order Active</p>
                                             <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-0.5">
-                                                Pricing details are hidden for gift orders. The recipient will not see any price information.
+                                                Pricing is visible to you only. The recipient will receive a gift receipt without any price information.
                                             </p>
                                         </div>
                                     </div>
-                                ) : (
-                                    <>
-                                        <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
-                                            <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
-                                            <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
-                                            <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
-                                            <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-green-600 dark:text-green-400 font-medium tracking-wide text-xs">Included in MRP</span></div>
+                                )}
+
+                                <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500">
+                                        <span>Shipping ({shipping === "priority" ? "Priority" : "Standard"})</span>
+                                        <span className={shippingFee === 0 ? "text-green-600 font-medium" : "text-gray-900 dark:text-white"}>
+                                            {shippingFee === 0 ? "Free" : formatCurrency(shippingFee)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500">
+                                        <span>VAT ({cart.vatRate}%)</span>
+                                        <div className="text-right">
+                                            <span className="text-gray-900 dark:text-white block">{formatCurrency(calculatedVat)}</span>
+                                            <span className="text-[10px] text-green-600 dark:text-green-400 font-medium tracking-wide">Included in MRP</span>
+                                        </div>
+                                    </div>
+                                    {appliedCoupon && (
+                                        <div className="flex justify-between text-sm text-green-600 font-bold">
+                                            <span>Discount ({appliedCoupon.code})</span>
+                                            <span>-{formatCurrency(discountAmount)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Coupon Input */}
+                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Voucher / Coupon</p>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter code..."
+                                                value={couponCode}
+                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                disabled={appliedCoupon !== null}
+                                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-all focus:border-gold disabled:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:focus:border-gold"
+                                            />
                                             {appliedCoupon && (
-                                                <div className="flex justify-between text-sm text-green-600 font-bold">
-                                                    <span>Discount ({appliedCoupon.code})</span>
-                                                    <span>-{formatCurrency(discountAmount)}</span>
-                                                </div>
+                                                <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
+                                                    <X size={14} />
+                                                </button>
                                             )}
                                         </div>
+                                        {appliedCoupon == null && (
+                                            <button
+                                                onClick={handleApplyCoupon}
+                                                disabled={!couponCode || isApplyingCoupon}
+                                                className="rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-gold disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gold dark:hover:text-white"
+                                            >
+                                                {isApplyingCoupon ? "..." : "APPLY"}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
+                                </div>
 
-                                        {/* Coupon Input */}
-                                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
-                                            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Voucher / Coupon</p>
-                                            <div className="flex gap-2">
-                                                <div className="relative flex-1">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Enter code..."
-                                                        value={couponCode}
-                                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                        disabled={appliedCoupon !== null}
-                                                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-all focus:border-gold disabled:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:focus:border-gold"
-                                                    />
-                                                    {appliedCoupon && (
-                                                        <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
-                                                            <X size={14} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {appliedCoupon == null && (
-                                                    <button
-                                                        onClick={handleApplyCoupon}
-                                                        disabled={!couponCode || isApplyingCoupon}
-                                                        className="rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-gold disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gold dark:hover:text-white"
-                                                    >
-                                                        {isApplyingCoupon ? "..." : "APPLY"}
-                                                    </button>
-                                                )}
-                                            </div>
-                                            {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
-                                        </div>
-
-                                        <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
-                                            <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
-                                            <span className="text-gold text-xl font-bold">{formatCurrency(grandTotal)}</span>
-                                        </div>
-                                    </>
-                                )}
+                                <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
+                                    <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
+                                    <span className="text-gold text-xl font-bold">{formatCurrency(grandTotal)}</span>
+                                </div>
 
                                 {cart.checkoutBlocked && (
                                     <div className="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100">
