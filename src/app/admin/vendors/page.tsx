@@ -45,7 +45,7 @@ export default function VendorsPage() {
     const fetchVendors = async () => {
         setIsLoading(true);
         try {
-            const res = await adminService.getVendorsApi();
+            const res = await adminService.vendors.getAll();
             if (res.success) setVendors(res.data);
         } catch {
             toast.error("Failed to load vendors");
@@ -60,7 +60,7 @@ export default function VendorsPage() {
 
     const handleCreate = async (data: VendorFormData) => {
         try {
-            const res = await adminService.createVendorApi(data);
+            const res = await adminService.vendors.create(data);
             if (res.success) {
                 toast.success("Vendor created and invitation sent via email!");
                 setIsDrawerOpen(false);
@@ -78,7 +78,7 @@ export default function VendorsPage() {
         if (!selected) return;
         const newStatus = selected.status === 1 ? 2 : 1; // 1=Active, 2=Suspended
         try {
-            const res = await adminService.updateVendorStatusApi(selected.userId, newStatus);
+            const res = await adminService.vendors.updateStatus(selected.userId, newStatus);
             if (res.success) {
                 toast.success(`Vendor status updated successfully`);
                 setIsStatusConfirmOpen(false);

@@ -21,7 +21,7 @@ export default function SettingsPage() {
     const fetchSettings = async () => {
         setIsLoading(true);
         try {
-            const res = await adminService.getSettingsApi();
+            const res = await adminService.settings.get();
             if (res.success) setSettings(res.data);
         } catch (error) {
             toast.error("Failed to fetch system settings");
@@ -38,7 +38,7 @@ export default function SettingsPage() {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const res = await adminService.updateSettingsApi(settings);
+            const res = await adminService.settings.update(settings);
             if (res.success) {
                 toast.success("System configurations saved successfully");
                 fetchSettings();

@@ -54,7 +54,7 @@ export default function ShippersPage() {
     const fetchShippers = async () => {
         setIsLoading(true);
         try {
-            const res = await adminService.getShippersApi();
+            const res = await adminService.shippers.getAll();
             if (res.success) setShippers(res.data);
         } catch (error) {
             toast.error("Failed to load shippers");
@@ -69,7 +69,7 @@ export default function ShippersPage() {
 
     const handleCreate = async (data: ShipperFormData) => {
         try {
-            const res = await adminService.createShipperApi(data);
+            const res = await adminService.shippers.create(data);
             if (res.success) {
                 toast.success("Shipper created and invitation sent!");
                 setIsDrawerOpen(false);
@@ -86,7 +86,7 @@ export default function ShippersPage() {
     const handleApprove = async () => {
         if (!selected) return;
         try {
-            const res = await adminService.approveShipperApi(selected.shipperId);
+            const res = await adminService.shippers.approve(selected.shipperId);
             if (res.success) {
                 toast.success("Shipper approved and verified!");
                 setIsApproveOpen(false);
@@ -101,7 +101,7 @@ export default function ShippersPage() {
         if (!selected) return;
         const newStatus = selected.status === 1 ? 2 : 1;
         try {
-            const res = await adminService.updateShipperStatusApi(selected.userId, newStatus);
+            const res = await adminService.shippers.updateStatus(selected.userId, newStatus);
             if (res.success) {
                 toast.success(`Account status updated`);
                 setIsStatusConfirmOpen(false);
