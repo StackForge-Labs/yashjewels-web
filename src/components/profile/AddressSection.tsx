@@ -29,6 +29,7 @@ export const AddressSection = () => {
         district: "",
         province: "",
         isDefault: false,
+        isGift: false,
     });
 
     const resetForm = () => {
@@ -43,6 +44,7 @@ export const AddressSection = () => {
             district: "",
             province: "",
             isDefault: false,
+            isGift: false,
         });
     };
 
@@ -56,6 +58,7 @@ export const AddressSection = () => {
             district: addr.district,
             province: addr.province,
             isDefault: addr.isDefault,
+            isGift: addr.isGift ?? false,
         });
         setEditingId(addr.id);
         setIsAdding(true);

@@ -96,9 +96,10 @@ interface AddressSectionProps {
     onSelect: (address: UserAddressDto) => void;
     selectedId?: string;
     onFormToggle?: (isOpen: boolean) => void;
+    onDistanceChange?: (distance: number | null, isInternational?: boolean) => void;
 }
 
-export default function AddressSection({ onSelect, selectedId, onFormToggle }: AddressSectionProps) {
+export default function AddressSection({ onSelect, selectedId, onFormToggle, onDistanceChange }: AddressSectionProps) {
     const { data: addresses, isLoading } = useAddresses();
     const createAddress = useCreateAddress();
     const updateAddress = useUpdateAddress();
@@ -107,9 +108,8 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
 
     const [isFormMode, setIsFormMode] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [shippingEstimate, setShippingEstimate] = useState<{cost: number, method: string, description: string, eta: string, distance: number | null, isPriority: boolean} | null>(null);
-    const [isPriority, setIsPriority] = useState(false);
     const [currentDistance, setCurrentDistance] = useState<number | null>(null);
+    const [currentIsIntl, setCurrentIsIntl] = useState(false);
 
     const [countries, setCountries] = useState<{ cca2: string, name: string }[]>([]);
     const [vnProvinces, setVnProvinces] = useState<any[]>([]);
@@ -127,62 +127,8 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
     const watchIsGift = watch("isGift");
 
     useEffect(() => {
-        if (currentDistance !== null) {
-            calculateEstimate(currentDistance, isPriority);
-        }
-    }, [currentDistance, isPriority, watchCountry]);
-
-    const calculateEstimate = (km: number, priority: boolean) => {
-        if (watchCountry !== "VN") {
-            setShippingEstimate({
-                cost: 5000000 + (priority ? 1000000 : 0),
-                method: priority ? "Priority Global Express" : "International VIP Transport",
-                description: priority ? "Next-flight-out Secure Air Transport" : "FedEx/DHL Secure Transport with Insurance",
-                eta: priority ? "3 - 5 Business Days" : "7 - 10 Business Days",
-                distance: km,
-                isPriority: priority
-            });
-            return;
-        }
-
-        if (km <= 15) {
-            setShippingEstimate({
-                cost: 0 + (priority ? 200000 : 0),
-                method: priority ? "Priority Urban Express" : "Urban VIP Delivery",
-                description: priority ? "Dedicated Instant Dispatch" : "Complimentary White-glove Service",
-                eta: priority ? "2 - 4 Hours" : "12 - 24 Hours",
-                distance: km,
-                isPriority: priority
-            });
-        } else if (km <= 50) {
-            setShippingEstimate({
-                cost: 500000 + (priority ? 200000 : 0),
-                method: priority ? "Priority Suburban Express" : "Suburban Secure Delivery",
-                description: priority ? "Direct Dedicated Armored Car" : "In-house Armored Fleet Delivery",
-                eta: priority ? "6 - 12 Hours" : "1 - 2 Days",
-                distance: km,
-                isPriority: priority
-            });
-        } else if (km <= 150) {
-            setShippingEstimate({
-                cost: 1500000 + (priority ? 200000 : 0),
-                method: priority ? "Priority Regional Express" : "Inter-provincial VIP Transport",
-                description: priority ? "Dedicated Security Team" : "Dedicated Security Escort",
-                eta: priority ? "24 Hours" : "2 - 3 Days",
-                distance: km,
-                isPriority: priority
-            });
-        } else {
-            setShippingEstimate({
-                cost: 2500000 + (priority ? 500000 : 0),
-                method: priority ? "Priority Airline Express" : "Airline Secure Courier",
-                description: priority ? "Hand-carried Security Staff" : "3rd Party Insured Airline Transport",
-                eta: priority ? "2 Days" : "3 - 5 Days",
-                distance: km,
-                isPriority: priority
-            });
-        }
-    };
+        onDistanceChange?.(currentDistance, currentIsIntl);
+    }, [currentDistance, currentIsIntl, onDistanceChange]);
 
     const [placeValue, setPlaceValue] = useState("");
     const [placeSuggestions, setPlaceSuggestions] = useState<any[]>([]);
@@ -204,7 +150,6 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(async () => {
             try {
-                // Dynamically scope search to selected country and proximity to shop
                 const countryCode = watchCountry ? watchCountry.toLowerCase() : 'vn';
                 const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(val)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&country=${countryCode}&proximity=${SHOP_COORDS.lng},${SHOP_COORDS.lat}`);
                 const data = await res.json();
@@ -227,7 +172,6 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
     const availableWards = currentDistrict?.wards || [];
 
     useEffect(() => {
-        // Fetch Countries
         fetch('https://restcountries.com/v3.1/all?fields=name,cca2')
             .then(res => res.json())
             .then(data => {
@@ -235,29 +179,58 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                 setCountries(formatted);
             }).catch(console.error);
 
-        // Fetch VN Provinces
         fetch('https://provinces.open-api.vn/api/?depth=3')
             .then(res => res.json())
             .then(data => setVnProvinces(data))
             .catch(console.error);
     }, []);
 
-    const calculateShippingCost = async (lat: number, lon: number) => {
+    const isVietnam = (countryStr?: string) => {
+        if (!countryStr) return false;
+
+        // Normalize and clean the input
+        const c = countryStr.toLowerCase().normalize("NFC").trim();
+        const d = countryStr.toLowerCase().normalize("NFD").trim();
+
+        const keywords = [
+            "vn", "vnm", "vietnam", "việt nam", "viet nam",
+            "hồ chí minh", "ho chi minh", "hcm", "saigon", "sài gòn",
+            "hà nội", "ha noi", "đà nẵng", "da nang", "hải phòng", "hai phong",
+            "cần thơ", "can tho", "vũng tàu", "vung tau",
+            "thành phố", "tỉnh", "quận", "huyện", "phường", "xã"
+        ];
+
+        const isMatch = keywords.some(k => c.includes(k) || d.includes(k));
+
+        // Extra check for "Chợ Bến Thành" specifically or HCM district names
+        if (!isMatch) {
+            const extraKeywords = ["bến thành", "quận 1", "district 1", "thủ đức", "bình dương", "đồng nai"];
+            return extraKeywords.some(k => c.includes(k) || d.includes(k));
+        }
+
+        return isMatch;
+    };
+
+    const calculateShippingCost = async (lat: number, lon: number, isIntl: boolean = false) => {
+        setCurrentIsIntl(isIntl);
+        if (isIntl) {
+            // International address: no Mapbox routing needed, distance = 0
+            setCurrentDistance(0);
+            return;
+        }
         try {
             const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${SHOP_COORDS.lng},${SHOP_COORDS.lat};${lon},${lat}?access_token=${MAPBOX_TOKEN}`);
             const data = await res.json();
 
             if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                const distanceValue = data.routes[0].distance; // in meters
+                const distanceValue = data.routes[0].distance;
                 const km = distanceValue / 1000;
                 setCurrentDistance(km);
             } else {
-                setShippingEstimate(null);
                 setCurrentDistance(null);
             }
         } catch (error) {
             console.error("Mapbox Routing Error:", error);
-            setShippingEstimate(null);
             setCurrentDistance(null);
         }
     };
@@ -265,16 +238,18 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
     const handleSelectSuggestion = async (address: string, lat: number, lon: number) => {
         setValue("addressLine1", address);
         setPlaceValue(address);
-        
-        // Auto-detect country if possible from the address string
-        if (address.toLowerCase().includes("vietnam") || address.toLowerCase().includes("việt nam")) {
+
+        const detectedIntl = (watchCountry === "VN") ? false : !isVietnam(address);
+
+        if (!detectedIntl) {
             setValue("country", "VN");
         }
-        
+
         setPlaceSuggestions([]);
         setSuggestionStatus("IDLE");
         setSelectedLocation({ lat, lon });
-        calculateShippingCost(lat, lon);
+
+        calculateShippingCost(lat, lon, detectedIntl);
     };
 
     const handleSave = async (data: AddressFormValues) => {
@@ -313,8 +288,7 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
         e.stopPropagation();
         setEditingId(addr.id);
         setPlaceValue(addr.addressLine1);
-        
-        // Try to restore map location via geocoding
+
         try {
             const query = encodeURIComponent(addr.addressLine1);
             const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${MAPBOX_TOKEN}&limit=1`);
@@ -354,9 +328,35 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
         }
     }, [addresses, selectedId, onSelect]);
 
-    if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-gold" /></div>;
+    // Auto-geocode selected address to get driving distance
+    useEffect(() => {
+        if (!selectedId || !addresses) return;
+        const addr = addresses.find((a: UserAddressDto) => a.id === selectedId);
+        if (!addr) return;
 
-    const fullAddressString = `${watchStreet || ''} ${watchProvince || ''} ${watchCountry || ''}`.trim();
+        const isIntl = !isVietnam(addr.country);
+
+        if (isIntl) {
+            setCurrentIsIntl(true);
+            setCurrentDistance(0);
+            return;
+        }
+
+        setCurrentIsIntl(false);
+        const query = [addr.addressLine1, addr.district, addr.province, "Vietnam"].filter(Boolean).join(", ");
+        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&limit=1&country=vn`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.features && data.features.length > 0) {
+                    const [lon, lat] = data.features[0].center;
+                    calculateShippingCost(lat, lon, false);
+                }
+            })
+            .catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedId, addresses]);
+
+    if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-gold" /></div>;
 
     return (
         <div className="space-y-6">
@@ -370,9 +370,7 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                         onClick={() => {
                             setEditingId(null);
                             setSelectedLocation(null);
-                            setShippingEstimate(null);
                             setCurrentDistance(null);
-                            setIsPriority(false);
                             setPlaceValue("");
                             reset({ label: "HOME", country: "VN", isDefault: false, isGift: false, recipientEmail: "" });
                             setIsFormMode(true);
@@ -419,7 +417,6 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                             {...register("recipientPhone")}
                         />
 
-                        {/* Country Selection */}
                         <div className="md:col-span-2">
                             <FloatingSelect label="Country *" error={errors.country?.message} {...register("country")}>
                                 <option value="VN">Vietnam</option>
@@ -431,7 +428,6 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                             </FloatingSelect>
                         </div>
 
-                        {/* Strategy Pattern based on Country */}
                         {watchCountry === "VN" ? (
                             <>
                                 <FloatingSelect label="State / Province *" error={errors.province?.message} {...register("province")}>
@@ -477,7 +473,6 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                             </>
                         )}
 
-                        {/* Street Address with API suggestion simulation */}
                         <div className="md:col-span-2 relative">
                             <FloatingInput
                                 label="Street Address *"
@@ -513,72 +508,15 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                                             latitude: selectedLocation.lat,
                                             zoom: 14
                                         }}
-                                        style={{width: '100%', height: '100%'}}
+                                        style={{ width: '100%', height: '100%' }}
                                         mapStyle="mapbox://styles/mapbox/streets-v12"
                                     >
                                         <Marker longitude={selectedLocation.lon} latitude={selectedLocation.lat} color="red" />
                                     </MapGL>
                                 </div>
                             )}
-
-                            {/* Priority Shipping Toggle */}
-                            {currentDistance !== null && (
-                                <div className="mt-6 p-4 rounded-xl border border-gold/20 bg-gold/5 animate-in fade-in slide-in-from-top-2">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${isPriority ? 'bg-gold text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500'} transition-colors`}>
-                                                <Zap size={18} fill={isPriority ? "currentColor" : "none"} />
-                                            </div>
-                                            <div>
-                                                <h5 className="text-sm font-bold text-gray-900 dark:text-white">Priority Express Delivery</h5>
-                                                <p className="text-[11px] text-gray-500">Premium security & faster dispatch</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsPriority(!isPriority)}
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isPriority ? 'bg-gold' : 'bg-gray-300 dark:bg-white/10'}`}
-                                        >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPriority ? 'translate-x-6' : 'translate-x-1'}`}
-                                            />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
-
-                    {/* VIP Delivery Estimate Card */}
-                    {shippingEstimate && (
-                        <div className={`mt-8 rounded-xl border p-5 flex flex-col md:flex-row gap-5 items-start md:items-center animate-in fade-in slide-in-from-bottom-4 shadow-sm transition-all duration-300 ${shippingEstimate.isPriority ? 'bg-red-50/50 border-red-200 dark:bg-red-500/5 dark:border-red-500/20' : 'bg-gray-50 border-gold/30 dark:bg-gold/5 dark:border-gold/20'}`}>
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border transition-all ${shippingEstimate.isPriority ? 'bg-red-100 border-red-200 text-red-600' : 'bg-gold/10 border-gold/20 text-gold'}`}>
-                                {shippingEstimate.isPriority ? <Zap size={22} fill="currentColor" /> : <Briefcase size={22} />}
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-2">
-                                    {shippingEstimate.method}
-                                    {shippingEstimate.isPriority && (
-                                        <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-sm tracking-wider font-semibold animate-pulse">PRIORITY</span>
-                                    )}
-                                    {shippingEstimate.cost === 0 && !shippingEstimate.isPriority && (
-                                        <span className="text-[10px] bg-gold text-white px-2 py-0.5 rounded-sm tracking-wider font-semibold">COMPLIMENTARY</span>
-                                    )}
-                                </h4>
-                                <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">{shippingEstimate.description}</p>
-                                <div className="flex items-center gap-4 mt-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">
-                                    <div className="flex items-center gap-1.5"><MapPin size={13} className="text-gray-400"/> Distance: {shippingEstimate.distance ? shippingEstimate.distance.toFixed(1) : "--"} km</div>
-                                    <div className="flex items-center gap-1.5"><CheckCircle2 size={13} className="text-green-500"/> ETA: {shippingEstimate.eta}</div>
-                                </div>
-                            </div>
-                            <div className="text-left md:text-right shrink-0 mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-200 dark:border-white/10 w-full md:w-auto">
-                                <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Shipping Fee</div>
-                                <div className="text-xl font-light text-gray-900 dark:text-white">
-                                    {shippingEstimate.cost === 0 ? "FREE" : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'VND' }).format(shippingEstimate.cost)}
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 space-y-4">
                         <div className="flex flex-col gap-4">
@@ -637,25 +575,30 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                                 <span className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Set as default address</span>
                             </label>
 
-                        <div className="flex gap-3 w-full md:w-auto">
-                            <button type="button" onClick={() => { setIsFormMode(false); setEditingId(null); onFormToggle?.(false); }} className="flex-1 md:flex-none rounded-xl px-6 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-widest border border-gray-200 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5 transition-colors">
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={createAddress.isPending || updateAddress.isPending}
-                                className="flex-1 md:flex-none bg-[#d4af37] px-8 py-3 rounded-xl text-[11px] font-bold text-white uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#c4a030] shadow-[0_4px_14px_0_rgba(212,175,55,0.39)] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {(createAddress.isPending || updateAddress.isPending) && <Loader2 size={14} className="animate-spin" />}
-                                {editingId ? "Update Address" : "Save Address"}
-                            </button>
+                            <div className="flex gap-3 w-full md:w-auto">
+                                <button type="button" onClick={() => { setIsFormMode(false); setEditingId(null); onFormToggle?.(false); }} className="flex-1 md:flex-none rounded-xl px-6 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-widest border border-gray-200 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5 transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={createAddress.isPending || updateAddress.isPending}
+                                    className="flex-1 md:flex-none bg-[#d4af37] px-8 py-3 rounded-xl text-[11px] font-bold text-white uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#c4a030] shadow-[0_4px_14px_0_rgba(212,175,55,0.39)] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {(createAddress.isPending || updateAddress.isPending) && <Loader2 size={14} className="animate-spin" />}
+                                    {editingId ? "Update Address" : "Save Address"}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
             ) : (
                 <div className="grid grid-cols-1 gap-5">
-                    {addresses.length === 0 ? (
+                    {isLoading ? (
+                        <div className="text-center py-16 border border-dashed border-gray-300 bg-gray-50/50 rounded-2xl dark:border-white/10 dark:bg-white/5">
+                            <Loader2 className="w-8 h-8 animate-spin mx-auto text-gold mb-4" />
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Loading addresses...</p>
+                        </div>
+                    ) : !addresses || addresses.length === 0 ? (
                         <div className="text-center py-16 border border-dashed border-gray-300 bg-gray-50/50 rounded-2xl dark:border-white/10 dark:bg-white/5">
                             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm mb-4">
                                 <MapPin className="text-gray-400" />
@@ -699,7 +642,7 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle }: A
                                                 )}
                                                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                                                 <span className="text-gold font-semibold">
-                                                    {(addr.country === 'VN' || addr.addressLine1.toLowerCase().includes('vietnam') || addr.addressLine1.toLowerCase().includes('việt nam')) ? 'Vietnam' : addr.country || 'International'}
+                                                    {(isVietnam(addr.country) || isVietnam(addr.addressLine1)) ? 'Vietnam' : addr.country || 'International'}
                                                 </span>
                                             </p>
                                             <p className="mt-3 text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed border-l-2 border-gold/30 pl-3">
