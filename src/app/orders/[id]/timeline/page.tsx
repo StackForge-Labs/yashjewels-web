@@ -265,7 +265,7 @@ export default function OrderTimelinePage() {
         }
     };
 
-    const isClaimable = order?.status === "RETURN_APPROVED";
+    const isClaimable = order?.status === "RETURN_APPROVED" || order?.status === "VENDOR_REJECTED";
 
     return (
         <main className="min-h-screen bg-[#FAFAF9] pb-32 dark:bg-[#050505]">
@@ -293,8 +293,14 @@ export default function OrderTimelinePage() {
                                         <Wallet size={28} />
                                     </div>
                                     <div>
-                                        <h3 className="font-serif text-xl text-emerald-900 dark:text-emerald-400">Return Approved!</h3>
-                                        <p className="text-sm text-emerald-700/80">Your physical return has been verified. You can now claim your refund.</p>
+                                        <h3 className="font-serif text-xl text-emerald-900 dark:text-emerald-400">
+                                            {order.status === "RETURN_APPROVED" ? "Return Approved!" : "Refund Available"}
+                                        </h3>
+                                        <p className="text-sm text-emerald-700/80">
+                                            {order.status === "RETURN_APPROVED" 
+                                                ? "Your physical return has been verified. You can now claim your refund."
+                                                : "The vendor rejected the order. You can now claim your deposit refund."}
+                                        </p>
                                     </div>
                                 </div>
                                 <button
