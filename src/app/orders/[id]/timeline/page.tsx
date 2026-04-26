@@ -116,15 +116,19 @@ export default function OrderTimelinePage() {
     if (error || !order) return <div className="py-40 text-center font-serif text-lg text-rose-500">Order not found.</div>;
 
     const currentStatusIdx = orderSteps.map(s => s.statuses.includes(order.status)).lastIndexOf(true);
-    const isCancelled = ["CANCELLED", "REFUNDING", "REFUNDED", "VENDOR_REJECTED"].includes(order.status.toUpperCase());
+    const isCancelled = ["CANCELLED", "VENDOR_REJECTED"].includes(order.status.toUpperCase());
 
     // Return & Review Logic
     const deliveredAt = order.timeline?.find(t => t.status === "DELIVERED")?.changedAt;
     const daysSinceDelivery = deliveredAt ? differenceInDays(new Date(), new Date(deliveredAt)) : 0;
-    const isWithinReturnWindow = daysSinceDelivery <= 7;
+    
+    // Fetch dynamic return window from order, fallback to 7 if not set
+    const returnWindow = order.returnPolicyDays || 7;
+    const isWithinReturnWindow = daysSinceDelivery <= returnWindow;
 
     // Status Logic
-    const isReturnable = order.status === "DELIVERED" && isWithinReturnWindow && !order.returnRequestId;
+    // Only allow return when order is COMPLETED
+    const isReturnable = order.status === "COMPLETED" && isWithinReturnWindow && !order.returnRequestId;
     const isReviewable = order.status === "COMPLETED" && !order.isReviewed;
     const hasReturnRequest = !!order.returnRequestId;
 
@@ -305,29 +309,7 @@ export default function OrderTimelinePage() {
                     )}
 
                     <div className="mb-8 rounded-3xl border border-gray-100 bg-white/60 p-8 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-[#0C0A09]/60">
-                        {order.status === "REFUNDED" ? (
-                            <div className="flex flex-col items-center justify-center py-10 text-center">
-                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 shadow-inner">
-                                    <CheckCircle2 size={40} />
-                                </div>
-                                <h3 className="mb-3 font-serif text-3xl text-emerald-950 dark:text-emerald-400">Refund Completed</h3>
-                                <p className="max-w-md text-sm leading-relaxed text-emerald-700/70">
-                                    The integrity of your experience is our priority. Your refund has been successfully processed via the original payment method.
-                                    <br />
-                                    <span className="font-bold">Thank you for your patience and trust in Yash Jewels.</span>
-                                </p>
-                            </div>
-                        ) : order.status === "REFUNDING" ? (
-                            <div className="flex flex-col items-center justify-center py-10 text-center">
-                                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 shadow-inner">
-                                    <RotateCcw className="animate-spin-slow" size={40} />
-                                </div>
-                                <h3 className="mb-3 font-serif text-3xl text-amber-900 dark:text-amber-400">Refund in Progress</h3>
-                                <p className="max-w-md text-sm leading-relaxed text-amber-700/70">
-                                    Our artisans and finance team are finalizing the return of your funds. You will be notified the moment the transaction is complete.
-                                </p>
-                            </div>
-                        ) : isCancelled ? (
+                        {isCancelled ? (
                             <div className="flex flex-col items-center justify-center py-10 text-center">
                                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
                                     <AlertCircle size={40} />
@@ -485,7 +467,7 @@ export default function OrderTimelinePage() {
                                 </motion.div>
                             )}
 
-                            {order.status === "COMPLETED" && !order.isReviewed && (
+                            {order.status === "COMPLETED" && !order.isReviewed && !hasReturnRequest && (
                                 <motion.div className="mb-8 rounded-3xl border border-gold/30 bg-gold/5 p-8 shadow-inner shadow-gold/5">
                                     <div className="flex items-start gap-6">
                                         <div className="p-4 rounded-2xl bg-gold text-white shadow-lg shadow-gold/20"><Star size={24} /></div>
@@ -500,7 +482,7 @@ export default function OrderTimelinePage() {
                                 </motion.div>
                             )}
 
-                            {order.isReviewed && (
+                            {order.isReviewed && order.status !== "REFUNDED" && order.status !== "REFUNDING" && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -523,6 +505,40 @@ export default function OrderTimelinePage() {
                                 </motion.div>
                             )}
 
+                            {order.status === "REFUNDED" && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-8 rounded-3xl border border-emerald-100 bg-emerald-50/50 p-8 text-center"
+                                >
+                                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+                                        <CheckCircle2 size={32} />
+                                    </div>
+                                    <h3 className="font-serif text-2xl text-emerald-900 dark:text-emerald-400">Refund Completed</h3>
+                                    <p className="mt-3 text-sm text-emerald-700/80 leading-relaxed max-w-md mx-auto">
+                                        The integrity of your experience is our priority. Your refund has been successfully processed via the original payment method.
+                                        <br />
+                                        <span className="font-bold">Thank you for your patience and trust in Yash Jewels.</span>
+                                    </p>
+                                </motion.div>
+                            )}
+
+                            {order.status === "REFUNDING" && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-8 rounded-3xl border border-amber-100 bg-amber-50/50 p-8 text-center"
+                                >
+                                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/20">
+                                        <RotateCcw className="animate-spin-slow" size={32} />
+                                    </div>
+                                    <h3 className="font-serif text-2xl text-amber-900 dark:text-amber-400">Refund in Progress</h3>
+                                    <p className="mt-3 text-sm text-amber-700/80 leading-relaxed max-w-md mx-auto">
+                                        Our artisans and finance team are finalizing the return of your funds. You will be notified the moment the transaction is complete.
+                                    </p>
+                                </motion.div>
+                            )}
+
                             {isReturnable && !hasReturnRequest && (
                                 <motion.div className="mb-8 rounded-3xl border border-gray-200 bg-white/60 p-8 dark:border-white/5 dark:bg-[#0C0A09]/60">
                                     <h3 className="mb-2 font-serif text-xl">Assurance & Returns</h3>
@@ -531,7 +547,7 @@ export default function OrderTimelinePage() {
                                         <button onClick={() => setIsReturnModalOpen(true)} className="flex items-center gap-3 rounded-xl bg-gray-950 px-6 py-3.5 text-[10px] font-bold text-white uppercase dark:bg-white dark:text-gray-950">
                                             <RotateCcw size={16} /> Request Return
                                         </button>
-                                        <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">{7 - daysSinceDelivery} days remaining</span>
+                                        <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">{returnWindow - daysSinceDelivery} days remaining</span>
                                     </div>
                                 </motion.div>
                             )}

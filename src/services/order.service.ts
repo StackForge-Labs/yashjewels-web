@@ -36,6 +36,7 @@ export interface OrderDetailDto {
     insuranceUrl?: string;
     insuranceThumbnailUrl?: string;
     cancelReason?: string;
+    returnPolicyDays?: number;
 }
 
 

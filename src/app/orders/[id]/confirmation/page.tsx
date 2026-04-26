@@ -1,12 +1,26 @@
 "use client";
 
 import { PageHero } from "@/app/_components/PageHero";
-import { CheckCircle, Package } from "lucide-react";
+import { CheckCircle, Package, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { orderService, OrderDetailDto } from "@/services/order.service";
 
 export default function OrderConfirmationPage() {
   const { id } = useParams() as { id: string };
+  const [order, setOrder] = useState<OrderDetailDto | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      orderService.getOrderById(id)
+        .then(res => {
+          if (res.success) setOrder(res.data);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
 
   return (
     <>
@@ -24,10 +38,18 @@ export default function OrderConfirmationPage() {
             </div>
             
             <h2 className="font-serif text-3xl text-gray-900 dark:text-white mb-4">Payment Successful!</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
               Your deposit has been successfully processed. We have received your order <br/>
-              <span className="font-bold text-gray-900 dark:text-white uppercase tracking-wider mt-2 block">{id}</span>
-            </p>
+              {loading ? (
+                <div className="flex justify-center mt-3">
+                  <Loader2 className="animate-spin text-gold" size={16} />
+                </div>
+              ) : (
+                <span className="font-bold text-gray-900 dark:text-white uppercase tracking-[0.2em] mt-3 block text-lg">
+                  {order?.orderNumber || id}
+                </span>
+              )}
+            </div>
 
             <div className="rounded-xl bg-gray-50 p-6 dark:bg-white/5 mb-8">
               <p className="text-xs text-gray-500 dark:text-gray-400">
