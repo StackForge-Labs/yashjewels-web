@@ -34,7 +34,6 @@ export default function CheckoutPage() {
     const [step, setStep] = useState(0);
     const [insurance, setInsurance] = useState("none");
     const [payment, setPayment] = useState("card");
-    const [isGift, setIsGift] = useState(false);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
     // Coupon states
@@ -45,14 +44,13 @@ export default function CheckoutPage() {
 
     // Form states
     const [selectedAddress, setSelectedAddress] = useState<UserAddressDto | null>(null);
+    const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
     const [idempotencyKey] = useState(() => crypto.randomUUID());
     const [isFaceScanning, setIsFaceScanning] = useState(false);
     const [isBiometricVerified, setIsBiometricVerified] = useState(false);
 
-    // Phone missing check states
-    const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
-    const [missingPhone, setMissingPhone] = useState("");
-    const [isSavingPhone, setIsSavingPhone] = useState(false);
+    // Derived: is the selected address a gift address?
+    const isGift = selectedAddress?.isGift ?? false;
 
     useEffect(() => {
         fetchCart();
@@ -176,13 +174,13 @@ export default function CheckoutPage() {
     };
 
     const handleNextStep = () => {
-        if (step === 0 && !selectedAddress) {
-            toast.error("Please select a shipping address to continue.");
+        if (isAddressFormOpen) {
+            toast.error("Please save your address before continuing.");
             return;
         }
 
-        if (step === 0 && (!user?.phone || user.phone.trim() === "")) {
-            setIsPhoneModalOpen(true);
+        if (step === 0 && !selectedAddress) {
+            toast.error("Please select a shipping address to continue.");
             return;
         }
 
@@ -318,6 +316,7 @@ export default function CheckoutPage() {
                                 <AddressSection
                                     selectedId={selectedAddress?.id}
                                     onSelect={(addr) => setSelectedAddress(addr)}
+                                    onFormToggle={(isOpen) => setIsAddressFormOpen(isOpen)}
                                 />
                             )}
 
@@ -385,9 +384,11 @@ export default function CheckoutPage() {
                                                 <div className="w-full mt-2">
                                                     <p className="text-base font-bold text-gray-900 dark:text-white capitalize">{opt.title}</p>
                                                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 h-10">{opt.desc}</p>
-                                                    <p className={`mt-3 text-lg font-black tracking-tight ${insurance === opt.id ? "text-gold" : "text-gray-900 dark:text-white"}`}>
-                                                        {opt.price}
-                                                    </p>
+                                                    {!isGift && (
+                                                        <p className={`mt-3 text-lg font-black tracking-tight ${insurance === opt.id ? "text-gold" : "text-gray-900 dark:text-white"}`}>
+                                                            {opt.price}
+                                                        </p>
+                                                    )}
                                                 </div>
 
                                                 <div className="mt-4 w-full space-y-2 border-t border-gray-100/50 pt-4 dark:border-white/5">
@@ -446,18 +447,24 @@ export default function CheckoutPage() {
                                         <div className="flex items-center justify-between mb-4 border-b border-gold/10 pb-4">
                                             <div>
                                                 <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">Settlement Preference</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Your deposit requirement is calculated based on the order value.</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    {isGift ? "Standard settlement applies for gift orders." : "Your deposit requirement is calculated based on the order value."}
+                                                </p>
                                             </div>
                                         </div>
 
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Required Deposit: {depositPct}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                                            For orders above 10,000,000 VND, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order.
-                                        </p>
-                                        <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
-                                            <span>To Pay Now:</span>
-                                            <span>{formatCurrency(depositAmount)}</span>
-                                        </div>
+                                        {!isGift && (
+                                            <>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Required Deposit: {depositPct}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                                                    For orders above 10,000,000 VND, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order.
+                                                </p>
+                                                <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
+                                                    <span>To Pay Now:</span>
+                                                    <span>{formatCurrency(depositAmount)}</span>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -520,10 +527,29 @@ export default function CheckoutPage() {
                                                 </div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                                                     Method: <span className="capitalize font-medium text-gray-700 dark:text-gray-300">{payment.replace("-", " ")}</span><br />
-                                                    {payment === "cod" ? "Pay securely upon delivery." : `A deposit of ${depositPct} is required to secure the order.`}
+                                                    {payment === "cod" ? "Pay securely upon delivery." : isGift ? "Secure checkout enabled." : `A deposit of ${depositPct} is required to secure the order.`}
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {isGift && (
+                                            <div className="flex items-start gap-4 rounded-xl bg-gold/5 p-5 border border-gold/10">
+                                                <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-gold/10 text-gold">
+                                                    <Gift size={18} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Gift Details</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                                        <span className="font-medium text-gray-700 dark:text-gray-300">Recipient Email:</span> {selectedAddress?.recipientEmail} <br />
+                                                        {selectedAddress?.giftMessage && (
+                                                            <>
+                                                                <span className="font-medium text-gray-700 dark:text-gray-300">Message:</span> "{selectedAddress.giftMessage}"
+                                                            </>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Trust Elements UI */}
@@ -556,7 +582,8 @@ export default function CheckoutPage() {
                                 {step < STEPS.length - 1 ? (
                                     <button
                                         onClick={handleNextStep}
-                                        className="bg-gold group flex items-center gap-2 rounded-xl px-8 py-3 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105"
+                                        disabled={step === 0 && (!selectedAddress || isAddressFormOpen)}
+                                        className="bg-gold group flex items-center gap-2 rounded-xl px-8 py-3 text-xs font-bold tracking-[0.2em] text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                                     >
                                         Continue <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                                     </button>
@@ -585,60 +612,78 @@ export default function CheckoutPage() {
                                                 <p className="line-clamp-1 font-medium text-gray-900 dark:text-white">{item.productName}</p>
                                                 <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.currentLiveMrp)}</p>
+                                            {!isGift && (
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.currentLiveMrp)}</p>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-green-600 dark:text-green-400 font-medium tracking-wide text-xs">Included in MRP</span></div>
-                                    {appliedCoupon && (
-                                        <div className="flex justify-between text-sm text-green-600 font-bold">
-                                            <span>Discount ({appliedCoupon.code})</span>
-                                            <span>-{formatCurrency(discountAmount)}</span>
+                                {isGift ? (
+                                    <div className="mt-4 rounded-2xl border border-gold/20 bg-gold/5 px-5 py-4 flex items-center gap-3">
+                                        <div className="shrink-0 w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center">
+                                            <Gift size={16} className="text-gold" />
                                         </div>
-                                    )}
-                                </div>
-
-                                {/* Coupon Input */}
-                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
-                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Voucher / Coupon</p>
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <input
-                                                type="text"
-                                                placeholder="Enter code..."
-                                                value={couponCode}
-                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                disabled={appliedCoupon !== null}
-                                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-all focus:border-gold disabled:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:focus:border-gold"
-                                            />
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-800 dark:text-white">Gift Order</p>
+                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mt-0.5">
+                                                Pricing details are hidden for gift orders. The recipient will not see any price information.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
+                                            <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
+                                            <div className="flex justify-between text-sm text-gray-500"><span>Shipping</span><span className="text-green-600 font-medium">Free</span></div>
+                                            <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
+                                            <div className="flex justify-between text-sm text-gray-500"><span>VAT (10%)</span><span className="text-green-600 dark:text-green-400 font-medium tracking-wide text-xs">Included in MRP</span></div>
                                             {appliedCoupon && (
-                                                <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
-                                                    <X size={14} />
-                                                </button>
+                                                <div className="flex justify-between text-sm text-green-600 font-bold">
+                                                    <span>Discount ({appliedCoupon.code})</span>
+                                                    <span>-{formatCurrency(discountAmount)}</span>
+                                                </div>
                                             )}
                                         </div>
-                                        {appliedCoupon == null && (
-                                            <button
-                                                onClick={handleApplyCoupon}
-                                                disabled={!couponCode || isApplyingCoupon}
-                                                className="rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-gold disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gold dark:hover:text-white"
-                                            >
-                                                {isApplyingCoupon ? "..." : "APPLY"}
-                                            </button>
-                                        )}
-                                    </div>
-                                    {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
-                                </div>
 
-                                <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
-                                    <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
-                                    <span className="text-gold text-xl font-bold">{formatCurrency(grandTotal)}</span>
-                                </div>
+                                        {/* Coupon Input */}
+                                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                                            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Voucher / Coupon</p>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter code..."
+                                                        value={couponCode}
+                                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                        disabled={appliedCoupon !== null}
+                                                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-all focus:border-gold disabled:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:focus:border-gold"
+                                                    />
+                                                    {appliedCoupon && (
+                                                        <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
+                                                            <X size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {appliedCoupon == null && (
+                                                    <button
+                                                        onClick={handleApplyCoupon}
+                                                        disabled={!couponCode || isApplyingCoupon}
+                                                        className="rounded-xl bg-gray-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-gold disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gold dark:hover:text-white"
+                                                    >
+                                                        {isApplyingCoupon ? "..." : "APPLY"}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
+                                        </div>
+
+                                        <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 dark:border-white/5">
+                                            <span className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">Total</span>
+                                            <span className="text-gold text-xl font-bold">{formatCurrency(grandTotal)}</span>
+                                        </div>
+                                    </>
+                                )}
 
                                 {cart.checkoutBlocked && (
                                     <div className="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100">
@@ -681,67 +726,7 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             )}
-
-            {/* Missing Phone Modal Overlay */}
-            {isPhoneModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-                    <div className="relative w-full max-w-md rounded-3xl border border-gray-100 bg-white p-8 shadow-2xl dark:border-white/10 dark:bg-[#111]">
-                        <button
-                            onClick={() => setIsPhoneModalOpen(false)}
-                            className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                        >
-                            <X size={20} />
-                        </button>
-
-                        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold/10 text-gold mx-auto shadow-inner">
-                            <Phone size={32} />
-                        </div>
-                        <h2 className="mb-2 text-center font-serif text-2xl text-gray-900 dark:text-white">Phone Required</h2>
-                        <p className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                            Please provide your phone number so our vendor and delivery team can contact you about your order.
-                        </p>
-
-                        <input
-                            type="tel"
-                            placeholder="e.g. 0901234567"
-                            className="mb-6 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-gold focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
-                            value={missingPhone}
-                            onChange={(e) => setMissingPhone(e.target.value)}
-                        />
-
-                        <button
-                            onClick={async () => {
-                                if (!missingPhone || missingPhone.trim().length < 9) {
-                                    toast.error("Please enter a valid phone number.");
-                                    return;
-                                }
-                                setIsSavingPhone(true);
-                                try {
-                                    await updateProfile.mutateAsync({
-                                        fullName: user?.fullName || "",
-                                        phone: missingPhone,
-                                        dateOfBirth: user?.dateOfBirth || undefined
-                                    });
-                                    if (user) {
-                                        dispatch(setUser({ ...user, phone: missingPhone }));
-                                    }
-                                    toast.success("Phone number saved successfully.");
-                                    setIsPhoneModalOpen(false);
-                                    setStep(1);
-                                } catch (error) {
-                                    toast.error("Failed to save phone number. Please try again.");
-                                } finally {
-                                    setIsSavingPhone(false);
-                                }
-                            }}
-                            disabled={isSavingPhone}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-4 text-xs font-bold tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 shadow-lg shadow-gold/20 disabled:opacity-50"
-                        >
-                            {isSavingPhone ? "Saving..." : "Save and Continue"}
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Tier 2 Face Scan Overlay */}
         </>
     );
 }
