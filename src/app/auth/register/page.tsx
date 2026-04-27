@@ -19,7 +19,13 @@ const registerSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
     email: z.string().min(1, "Email is required").email("Invalid email format"),
     countryCode: z.string().min(1, "Country code is required"),
-    phone: z.string().min(1, "Phone number is required").min(8, "Phone number is too short").max(15, "Phone number is too long"),
+    phone: z.string()
+        .min(1, "Phone number is required")
+        .min(7, "Phone number is too short")
+        .max(15, "Phone number is too long")
+        .regex(/^\d+$/, "Phone number must contain digits only")
+        .refine((val) => !/^0+$/.test(val), "Invalid phone number format.")
+        .refine((val) => !/^(.)\1+$/.test(val), "Invalid phone number format."),
     dateOfBirth: z.string().min(1, "Date of birth is required").refine((dob) => {
         const birthDate = new Date(dob);
         const today = new Date();
@@ -32,7 +38,7 @@ const registerSchema = z.object({
     }, "You must be at least 18 years old"),
     password: z.string()
         .min(8, "Password must be at least 8 characters")
-        .max(12, "Password must not exceed 12 characters")
+        .max(50, "Password must not exceed 50 characters")
         .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
         .regex(/[a-z]/, "Password must contain at least one lowercase letter")
         .regex(/[0-9]/, "Password must contain at least one number"),
