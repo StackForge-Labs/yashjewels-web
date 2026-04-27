@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
-import { Heart, ShoppingCart, ShoppingBag, Zap, Loader2 } from "lucide-react";
+import { Heart, ShoppingCart, Zap, Loader2 } from "lucide-react";
 import { useMrpPrice } from "@/hooks/useMrpPrice";
 import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -49,7 +50,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
     const { mrpFormatted, isLoading, breakdown } = useMrpPrice(productId);
     const { addToCart } = useCart();
+    const { isWishlisted, toggle: toggleWishlist } = useWishlist();
     const [isAdding, setIsAdding] = useState(false);
+
+    const favorited = productId ? isWishlisted(productId) : false;
 
     // Get real-time overrides from Redux
     const realtimeData = useSelector((state: RootState) => 
@@ -143,15 +147,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     </div>
                 )}
 
-                {/* Wishlist */}
-                {!isDynamic && !isOutOfStock && (
-                    <div
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        className="absolute top-4 right-4 z-30 transform rounded-full bg-white/90 p-2 text-gray-400 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:scale-110 hover:text-red-500 dark:bg-black/80 dark:text-gray-500 dark:hover:text-red-500"
-                    >
-                        <Heart size={16} />
-                    </div>
-                )}
 
                 {/* Quick Action Overlay */}
                 {!isOutOfStock && (
@@ -167,10 +162,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
                                 Add to Cart
                             </button>
                             <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-lg transition-colors hover:bg-gray-100 dark:bg-[#222] dark:text-white dark:hover:bg-gray-800"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (productId) toggleWishlist(productId, name);
+                                }}
+                                className={`flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition-colors hover:bg-red-50 dark:bg-[#222] dark:hover:bg-red-950/30 ${
+                                    favorited ? "text-red-500" : "text-gray-900 dark:text-white"
+                                }`}
                             >
-                                <ShoppingBag size={14} />
+                                <Heart size={14} fill={favorited ? "currentColor" : "none"} />
                             </button>
                         </div>
                     </>
