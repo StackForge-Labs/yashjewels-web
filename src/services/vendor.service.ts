@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/lib/api-client";
 import { ApiResponse } from "@/types/user.types";
 import { OrderDetailDto } from "./order.service";
@@ -69,18 +70,22 @@ export const vendorService = {
         return res.data;
     },
 
-    // Vendor Management APIs (Fixed 403 issues)
-    getCustomers: async (page: number = 1, pageSize: number = 10, search?: string) => {
+    // Vendor Management APIs
+    getCustomers: async (page: number = 1, pageSize: number = 20, search?: string, status?: string, kycStatus?: string, joinedFrom?: string, joinedTo?: string) => {
         const params = new URLSearchParams();
         params.set("page", String(page));
         params.set("pageSize", String(pageSize));
         if (search) params.set("search", search);
+        if (status) params.set("status", status);
+        if (kycStatus) params.set("kycStatus", kycStatus);
+        if (joinedFrom) params.set("joinedFrom", joinedFrom);
+        if (joinedTo) params.set("joinedTo", joinedTo);
         const res = await apiClient.get<ApiResponse<any[]>>(`/vendor/management/customers?${params.toString()}`);
         return res.data;
     },
 
-    getPendingKyc: async () => {
-        const res = await apiClient.get<ApiResponse<any[]>>("/vendor/management/kyc/pending");
+    getCustomerDetail: async (id: string) => {
+        const res = await apiClient.get<ApiResponse<any>>(`/vendor/management/customers/${id}`);
         return res.data;
     },
 
@@ -88,6 +93,11 @@ export const vendorService = {
         const res = await apiClient.put<ApiResponse<boolean>>(`/vendor/orders/${orderId}/dispatch`, {
             evidenceUrls
         });
+        return res.data;
+    },
+
+    checkEmailExists: async (email: string) => {
+        const res = await apiClient.get<ApiResponse<boolean>>(`/vendor/management/customers/check-email?email=${encodeURIComponent(email)}`);
         return res.data;
     },
 
@@ -101,8 +111,4 @@ export const vendorService = {
         return res.data;
     },
 
-    deleteCustomer: async (id: string) => {
-        const res = await apiClient.delete<ApiResponse<string>>(`/vendor/management/customers/${id}`);
-        return res.data;
-    }
 };
