@@ -263,6 +263,7 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle, onD
             recipientEmail: data.isGift ? data.recipientEmail : undefined,
             giftMessage: data.isGift ? data.giftMessage : undefined,
             isDefault: data.isDefault ?? false,
+            distanceKm: currentDistance ?? 0, // Persist Mapbox-calculated distance to DB
         };
 
         if (editingId) {
@@ -334,7 +335,7 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle, onD
         const addr = addresses.find((a: UserAddressDto) => a.id === selectedId);
         if (!addr) return;
 
-        const isIntl = !isVietnam(addr.country);
+        const isIntl = !(isVietnam(addr.country) || isVietnam(addr.province) || isVietnam(addr.addressLine1));
 
         if (isIntl) {
             setCurrentIsIntl(true);
@@ -642,7 +643,7 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle, onD
                                                 )}
                                                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                                                 <span className="text-gold font-semibold">
-                                                    {(isVietnam(addr.country) || isVietnam(addr.addressLine1)) ? 'Vietnam' : addr.country || 'International'}
+                                                    {(isVietnam(addr.country) || isVietnam(addr.province) || isVietnam(addr.addressLine1)) ? 'Vietnam' : addr.country || 'International'}
                                                 </span>
                                             </p>
                                             <p className="mt-3 text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed border-l-2 border-gold/30 pl-3">

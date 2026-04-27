@@ -62,6 +62,19 @@ export default function CheckoutPage() {
         fetchCart();
     }, [fetchCart]);
 
+    // Seed estimatedDistance from DB value as soon as address is selected (before Mapbox geocoding)
+    useEffect(() => {
+        if (!selectedAddress) return;
+        const isVietnamAddr = /(việt nam|viet nam|vietnam|hồ chí minh|ho chi minh|hà nội|ha noi|đà nẵng|da nang|hải phòng|thành phố|tỉnh|quận)/i.test(
+            [selectedAddress.province, selectedAddress.district, selectedAddress.addressLine1].join(' ')
+        );
+        setIsInternationalAddress(!isVietnamAddr);
+        // Use saved distanceKm from DB as the initial value
+        if (selectedAddress.distanceKm && selectedAddress.distanceKm > 0) {
+            setEstimatedDistance(Number(selectedAddress.distanceKm));
+        }
+    }, [selectedAddress]);
+
     // Handle COD constraints (Limit 2,000,000 VND)
     useEffect(() => {
         const insuranceFee = getInsuranceFee(insurance);
@@ -387,7 +400,13 @@ export default function CheckoutPage() {
                                 <div className="space-y-8">
                                     <AddressSection
                                         selectedId={selectedAddress?.id}
-                                        onSelect={(addr) => setSelectedAddress(addr)}
+                                        onSelect={(addr) => {
+                                            setSelectedAddress(addr);
+                                            // Immediately use saved distance from DB (will be overridden by Mapbox later)
+                                            if (addr.distanceKm && addr.distanceKm > 0) {
+                                                setEstimatedDistance(Number(addr.distanceKm));
+                                            }
+                                        }}
                                         onFormToggle={(isOpen) => setIsAddressFormOpen(isOpen)}
                                         onDistanceChange={(distance, isIntl) => {
                                             setEstimatedDistance(distance);
