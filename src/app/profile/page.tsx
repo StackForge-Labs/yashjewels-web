@@ -22,8 +22,15 @@ function ProfileContent() {
     const updateAvatar = useUpdateAvatar();
     const updateProfile = useUpdateProfile();
 
+    const [mounted, setMounted] = React.useState(false);
     const [isEditing, setIsEditing] = React.useState(false);
     const [view, setView] = React.useState<"overview" | "orders">("overview");
+
+    // Handle mounting to prevent hydration mismatch
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [editData, setEditData] = React.useState({
         fullName: "",
         phone: "",
@@ -54,7 +61,7 @@ function ProfileContent() {
         }
     };
 
-    if (isLoading || !profile) {
+    if (!mounted || isLoading || !profile) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50/30 dark:bg-[#050505]">
                 <Loader2 size={40} className="animate-spin text-gold" />
