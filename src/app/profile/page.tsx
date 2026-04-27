@@ -212,9 +212,9 @@ function ProfileContent() {
                                             </button>
                                         </li>
                                         <li>
-                                            <button className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                                            <Link href="/wishlist" className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
                                                 <Heart size={18} /> My Wishlist
-                                            </button>
+                                            </Link>
                                         </li>
                                         <li>
                                             <button className="flex w-full items-center gap-4 rounded-xl px-6 py-4 text-xs font-bold tracking-widest text-gray-500 uppercase transition-all hover:bg-gray-50 dark:hover:bg-white/5">
