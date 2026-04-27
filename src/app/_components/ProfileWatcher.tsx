@@ -1,14 +1,21 @@
 "use client";
 
+import { useEffect } from "react";
 import { useProfile } from "@/hooks/useAuth";
 import { useOrderNotifications } from "@/hooks/useOrderNotifications";
+import { useWishlist } from "@/hooks/useWishlist";
 
 export const ProfileWatcher = () => {
-    // This hook will automatically fetch the profile and dispatch to Redux
     const { data: profile } = useProfile();
-    
-    // Initialize SignalR listener if user is logged in
+    const { loadWishlist } = useWishlist();
+
     useOrderNotifications(profile?.id);
-    
+
+    useEffect(() => {
+        if (profile?.id) {
+            loadWishlist();
+        }
+    }, [profile?.id]);
+
     return null;
 };

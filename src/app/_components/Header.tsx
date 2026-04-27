@@ -30,6 +30,7 @@ import { useState, useRef, useEffect } from "react";
 export const Header = () => {
     const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
     const cart = useSelector((state: RootState) => state.cart);
+    const wishlistCount = useSelector((state: RootState) => state.wishlist.items.length);
     const logout = useLogout();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -172,6 +173,11 @@ export const Header = () => {
 
                         <Link href="/wishlist" className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5">
                             <Heart size={22} strokeWidth={1.5} />
+                            {wishlistCount > 0 && (
+                                <span className="bg-gold absolute -top-0 -right-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white px-1 text-[9px] font-bold text-white dark:border-[#050505] dark:text-black">
+                                    {wishlistCount}
+                                </span>
+                            )}
                         </Link>
 
                         <Link href="/cart" className="hover:text-gold relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-110 dark:hover:bg-white/5">
