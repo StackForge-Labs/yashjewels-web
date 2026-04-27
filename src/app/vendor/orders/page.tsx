@@ -293,7 +293,7 @@ function AssignShipperModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                     >
                         <option value="">-- Select a courier --</option>
                         {shippers.map(shipper => (
-                            <option key={shipper.userId} value={shipper.userId}>
+                            <option key={shipper.shipperId} value={shipper.shipperId}>
                                 {shipper.fullName} ({shipper.email})
                             </option>
                         ))}
@@ -328,6 +328,7 @@ function OrderCard({
     onConfirm,
     onPrepare,
     onReject,
+    onAssignShipper,
     isConfirming = false,
     isRejecting = false
 }: {
