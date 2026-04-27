@@ -350,8 +350,11 @@ export default function OrdersPage() {
                         {detail?.status === "DEPOSIT_PAID" && (
                             <button disabled={actionLoading} onClick={() => handleDecision(true)} className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20">Approve & Start Processing</button>
                         )}
-                        {detail?.status === "SHIP_PENDING" && (
-                            <button disabled={actionLoading} onClick={() => setAssignOrderId(detail.orderId)} className="flex-[2] rounded-xl bg-emerald-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20"><Truck className="inline-block w-4 h-4 mr-2" />Assign Courier</button>
+                        {(detail?.status === "SHIP_PENDING" || detail?.status === "RETURN_AUTHORIZED") && (
+                            <button disabled={actionLoading} onClick={() => setAssignOrderId(detail.orderId)} className="flex-[2] rounded-xl bg-emerald-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20">
+                                <Truck className="inline-block w-4 h-4 mr-2" />
+                                {detail.status === "RETURN_AUTHORIZED" ? "Assign Courier for Return" : "Assign Courier"}
+                            </button>
                         )}
                     </div>
                 }

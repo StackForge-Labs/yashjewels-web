@@ -281,6 +281,44 @@ export default function OrderTimelinePage() {
                         <ArrowLeft size={14} /> Back to Maison
                     </button>
 
+                    {/* ── Resume Payment Banner (DEPOSIT_PENDING / FULL_PAYMENT_PENDING / AWAITING_FULL_PAYMENT) ── */}
+                    {(order.status === "DEPOSIT_PENDING" || order.status === "FULL_PAYMENT_PENDING" || order.status === "AWAITING_FULL_PAYMENT") && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-8 rounded-3xl border border-amber-200 bg-amber-50 p-8 shadow-lg shadow-amber-500/10 dark:border-amber-900/30 dark:bg-amber-950/20"
+                        >
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/30">
+                                        <Wallet size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-serif text-xl text-amber-900 dark:text-amber-400">
+                                            {order.status === "DEPOSIT_PENDING" ? "Deposit Payment Pending" : 
+                                             order.status === "AWAITING_FULL_PAYMENT" ? "Balance Payment Required" : "Payment Pending"}
+                                        </h3>
+                                        <p className="text-sm text-amber-700/80 dark:text-amber-500/70 leading-relaxed mt-1">
+                                            {order.status === "DEPOSIT_PENDING"
+                                                ? "Your order is reserved but awaiting deposit. Complete the payment to secure your jewelry piece."
+                                                : order.status === "AWAITING_FULL_PAYMENT"
+                                                ? "Your order has been confirmed by the vendor! Please settle the remaining balance to initiate shipment."
+                                                : "Your order requires payment to proceed. Please complete the payment to continue."}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href={`/orders/${orderId}/payment`}
+                                    className="flex w-full md:w-auto shrink-0 items-center justify-center gap-3 rounded-2xl bg-amber-500 px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-amber-500/30 transition-all hover:bg-amber-600 active:scale-95"
+                                >
+                                    {order.status === "DEPOSIT_PENDING" ? "Pay Deposit Now" : 
+                                     order.status === "AWAITING_FULL_PAYMENT" ? "Pay Balance Now" : "Complete Payment"}
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {isClaimable && (
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
