@@ -116,9 +116,9 @@ function ShipperScannerContent() {
     };
 
     return (
-        <div className="relative flex h-screen w-full flex-col overflow-hidden bg-black font-plus-jakarta">
+        <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-black font-plus-jakarta">
             
-            {/* ── Camera Engine (Background) ── */}
+            {/* ── Camera Engine (Full Viewport Background) ── */}
             <div id="reader" className="absolute inset-0 z-0 h-full w-full bg-black" />
 
             {/* ── UI Viewfinder (Z-10) ── */}
