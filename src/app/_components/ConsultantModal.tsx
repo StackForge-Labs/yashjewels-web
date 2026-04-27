@@ -1,9 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Send, Phone, User, Mail, MessageSquare, ShieldCheck, Globe, Loader2 } from "lucide-react";
+import { X, Send, User, Mail, MessageSquare, ShieldCheck, Globe, Loader2 } from "lucide-react";
 import { vendorService } from "@/services/vendor.service";
 import { toast } from "sonner";
+import { isValidPhoneNumber } from "libphonenumber-js";
+import type { CountryCode } from "libphonenumber-js";
+
+const COUNTRIES: { code: CountryCode; dial: string; flag: string; name: string }[] = [
+    { code: "VN", dial: "+84", flag: "🇻🇳", name: "Vietnam" },
+    { code: "US", dial: "+1",  flag: "🇺🇸", name: "United States" },
+    { code: "GB", dial: "+44", flag: "🇬🇧", name: "United Kingdom" },
+    { code: "AU", dial: "+61", flag: "🇦🇺", name: "Australia" },
+    { code: "JP", dial: "+81", flag: "🇯🇵", name: "Japan" },
+    { code: "KR", dial: "+82", flag: "🇰🇷", name: "South Korea" },
+    { code: "CN", dial: "+86", flag: "🇨🇳", name: "China" },
+    { code: "SG", dial: "+65", flag: "🇸🇬", name: "Singapore" },
+    { code: "TH", dial: "+66", flag: "🇹🇭", name: "Thailand" },
+    { code: "MY", dial: "+60", flag: "🇲🇾", name: "Malaysia" },
+    { code: "ID", dial: "+62", flag: "🇮🇩", name: "Indonesia" },
+    { code: "PH", dial: "+63", flag: "🇵🇭", name: "Philippines" },
+    { code: "IN", dial: "+91", flag: "🇮🇳", name: "India" },
+    { code: "DE", dial: "+49", flag: "🇩🇪", name: "Germany" },
+    { code: "FR", dial: "+33", flag: "🇫🇷", name: "France" },
+    { code: "CA", dial: "+1",  flag: "🇨🇦", name: "Canada" },
+];
 
 export const ConsultantModal = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,10 +33,11 @@ export const ConsultantModal = () => {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
+        dialCode: "VN" as CountryCode,
         phone: "",
-        country: "VN"
     });
-    const [delay, setDelay] = useState(30000); // Initial 30s
+    const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
+    const [delay, setDelay] = useState(30000);
 
     useEffect(() => {
         requestAnimationFrame(() => {
@@ -26,7 +48,6 @@ export const ConsultantModal = () => {
             const lastSubmitted = localStorage.getItem("consultant_last_submitted");
             const now = Date.now();
 
-            // If submitted in last 24h, don't show
             if (lastSubmitted && now - parseInt(lastSubmitted) < 24 * 60 * 60 * 1000) {
                 return;
             }
@@ -46,20 +67,52 @@ export const ConsultantModal = () => {
 
     const handleClose = () => {
         setIsOpen(false);
-        // Increase delay by 10s for next time (40s, 50s...)
         setDelay((prev) => prev + 10000);
+    };
+
+    const validate = (): boolean => {
+        const errs: typeof errors = {};
+
+        if (!formData.name.trim())
+            errs.name = "Full name is required.";
+
+        if (!formData.email.trim())
+            errs.email = "Email address is required.";
+        else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email.trim()))
+            errs.email = "Please enter a valid email address.";
+
+        if (!formData.phone.trim()) {
+            errs.phone = "Phone number is required.";
+        } else {
+            const country = COUNTRIES.find(c => c.code === formData.dialCode)!;
+            const fullNumber = country.dial + formData.phone.trim();
+            try {
+                if (!isValidPhoneNumber(fullNumber, formData.dialCode))
+                    errs.phone = `Invalid phone number for ${country.name}.`;
+            } catch {
+                errs.phone = "Invalid phone number.";
+            }
+        }
+
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validate()) return;
+
+        const country = COUNTRIES.find(c => c.code === formData.dialCode)!;
+        const fullPhone = country.dial + formData.phone.trim();
+
         try {
             setFormStatus("submitting");
             const res = await vendorService.submitInquiry({
                 name: formData.name,
                 email: formData.email,
-                phone: formData.phone,
+                phone: fullPhone,
                 subject: "Luxury Consultation Request",
-                message: `Consultation request from ${formData.country}`
+                message: `Consultation request from ${country.name}`
             });
 
             if (res.success) {
@@ -69,7 +122,7 @@ export const ConsultantModal = () => {
                 setFormStatus("idle");
                 toast.error(res.message || "Something went wrong. Please try again.");
             }
-        } catch (error) {
+        } catch {
             setFormStatus("idle");
             toast.error("An error occurred.");
         }
@@ -151,49 +204,24 @@ export const ConsultantModal = () => {
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                                                Full Name
-                                            </label>
-                                            <div className="group relative">
-                                                <User
-                                                    className="group-focus-within:text-gold absolute top-1/2 left-4 -translate-y-1/2 text-gray-300 transition-colors"
-                                                    size={18}
-                                                />
-                                                <input
-                                                    required
-                                                    type="text"
-                                                    placeholder="Alex Sterling"
-                                                    className="focus:border-gold focus:ring-gold/20 w-full rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                                    value={formData.name}
-                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                />
-                                            </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
+                                            Full Name
+                                        </label>
+                                        <div className="group relative">
+                                            <User
+                                                className="group-focus-within:text-gold absolute top-1/2 left-4 -translate-y-1/2 text-gray-300 transition-colors"
+                                                size={18}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Alex Sterling"
+                                                className={`w-full rounded-xl border py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none dark:text-white ${errors.name ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-gray-50 focus:border-gold focus:ring-1 focus:ring-gold/20 dark:border-white/5 dark:bg-[#111]"}`}
+                                                value={formData.name}
+                                                onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setErrors(p => ({ ...p, name: undefined })); }}
+                                            />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                                                Country
-                                            </label>
-                                            <div className="group relative">
-                                                <Globe
-                                                    className="group-focus-within:text-gold absolute top-1/2 left-4 -translate-y-1/2 text-gray-300 transition-colors"
-                                                    size={18}
-                                                />
-                                                <select
-                                                    required
-                                                    className="focus:border-gold focus:ring-gold/20 w-full appearance-none rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
-                                                    value={formData.country}
-                                                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                                >
-                                                    <option value="US">United States</option>
-                                                    <option value="UK">United Kingdom</option>
-                                                    <option value="VN">Vietnam</option>
-                                                    <option value="SG">Singapore</option>
-                                                    <option value="FR">France</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                        {errors.name && <p className="text-[11px] font-medium text-rose-500">{errors.name}</p>}
                                     </div>
 
                                     <div className="space-y-2">
@@ -206,33 +234,39 @@ export const ConsultantModal = () => {
                                                 size={18}
                                             />
                                             <input
-                                                required
-                                                type="email"
+                                                type="text"
                                                 placeholder="alex@luxury.com"
-                                                className="focus:border-gold focus:ring-gold/20 w-full rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
+                                                className={`w-full rounded-xl border py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none dark:text-white ${errors.email ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-gray-50 focus:border-gold focus:ring-1 focus:ring-gold/20 dark:border-white/5 dark:bg-[#111]"}`}
                                                 value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors(p => ({ ...p, email: undefined })); }}
                                             />
                                         </div>
+                                        {errors.email && <p className="text-[11px] font-medium text-rose-500">{errors.email}</p>}
                                     </div>
+
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                                            Phone Number (inc. area code)
+                                            Phone Number
                                         </label>
-                                        <div className="group relative">
-                                            <Phone
-                                                className="group-focus-within:text-gold absolute top-1/2 left-4 -translate-y-1/2 text-gray-300 transition-colors"
-                                                size={18}
-                                            />
+                                        <div className={`flex overflow-hidden rounded-xl border transition-colors ${errors.phone ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-gray-50 focus-within:border-gold dark:border-white/5 dark:bg-[#111]"}`}>
+                                            <select
+                                                value={formData.dialCode}
+                                                onChange={e => { setFormData({ ...formData, dialCode: e.target.value as CountryCode }); setErrors(p => ({ ...p, phone: undefined })); }}
+                                                className="shrink-0 border-r border-gray-100 bg-transparent px-3 py-4 text-sm text-gray-700 focus:outline-none dark:border-white/5 dark:text-gray-300"
+                                            >
+                                                {COUNTRIES.map(c => (
+                                                    <option key={c.code} value={c.code}>{c.flag} {c.dial}</option>
+                                                ))}
+                                            </select>
                                             <input
-                                                required
                                                 type="tel"
-                                                placeholder="+1 234 567 890"
-                                                className="focus:border-gold focus:ring-gold/20 w-full rounded-xl border border-gray-100 bg-gray-50 py-4 pr-4 pl-12 text-sm text-gray-900 transition-all outline-none focus:ring-1 dark:border-white/5 dark:bg-[#111] dark:text-white"
                                                 value={formData.phone}
-                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                onChange={e => { setFormData({ ...formData, phone: e.target.value }); setErrors(p => ({ ...p, phone: undefined })); }}
+                                                className="min-w-0 flex-1 bg-transparent px-4 py-4 text-sm focus:outline-none dark:text-white"
+                                                placeholder="912 345 678"
                                             />
                                         </div>
+                                        {errors.phone && <p className="text-[11px] font-medium text-rose-500">{errors.phone}</p>}
                                     </div>
 
                                     <button
@@ -245,7 +279,7 @@ export const ConsultantModal = () => {
                                         </span>
                                         {formStatus === "submitting" && (
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white dark:border-black/30 dark:border-t-black"></div>
+                                                <Loader2 className="h-5 w-5 animate-spin" />
                                             </div>
                                         )}
                                     </button>
