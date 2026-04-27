@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-    Clock, 
-    CheckCircle2, 
-    Package, 
-    Truck, 
-    ChevronRight, 
-    Upload, 
-    AlertCircle, 
-    X, 
-    Loader2, 
+import {
+    Clock,
+    CheckCircle2,
+    Package,
+    Truck,
+    ChevronRight,
+    Upload,
+    AlertCircle,
+    X,
+    Loader2,
     XCircle,
     LayoutGrid,
     List,
@@ -214,7 +214,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                             </div>
                         ))}
 
-                        <label className="flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-xl cursor-pointer border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 transition-colors">
+                        <label className={`flex flex-col items-center justify-center w-full aspect-video border-2 border-dashed rounded-xl cursor-pointer border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 transition-colors ${previews.length === 0 ? "col-span-2" : ""}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                                 <Upload className="w-8 h-8 mb-3 text-indigo-500" />
                                 <p className="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Add Attachment</p>
@@ -233,7 +233,7 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
                         disabled={files.length === 0 || isUploading}
                         className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm tracking-wide hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Dispatch"}
+                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Upload"}
                     </button>
                 </div>
             </div>
@@ -242,7 +242,21 @@ function DispatchPhotoModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; o
 }
 
 // ─── Order Card ────────────────────────────────────────────────
-function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onConfirm: (id: string) => void; onPrepare: (id: string) => void; onReject: (id: string) => void }) {
+function OrderCard({
+    order,
+    onConfirm,
+    onPrepare,
+    onReject,
+    isConfirming = false,
+    isRejecting = false
+}: {
+    order: any;
+    onConfirm: (id: string) => void;
+    onPrepare: (id: string) => void;
+    onReject: (id: string) => void;
+    isConfirming?: boolean;
+    isRejecting?: boolean;
+}) {
     // Determine deadline from remainingDueAt if exists (awaiting full payment Phase 3)
     let deadlineStr = "";
     if (order.status === "AWAITING_FULL_PAYMENT" && order.remainingDueAt) {
@@ -277,20 +291,33 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
                 )}
             </div>
 
+            <div className="flex flex-col gap-1.5 rounded-lg bg-gray-50/50 p-2.5 dark:bg-white/5">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deposit Paid</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatVnd(order.depositAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Remaining</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{formatVnd(order.remainingAmount)}</span>
+                </div>
+            </div>
+
             {order.status === "DEPOSIT_PAID" && (
                 <div className="flex w-full gap-2 mt-1">
                     <button
                         onClick={() => onReject(order.orderId)}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 px-2 py-2 font-plus-jakarta text-xs font-bold transition-all hover:bg-red-100 active:scale-95 dark:bg-red-500/10 dark:border-red-900/50 dark:text-red-400"
+                        disabled={isConfirming || isRejecting}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 px-2 py-2 font-plus-jakarta text-xs font-bold transition-all hover:bg-red-100 active:scale-95 dark:bg-red-500/10 dark:border-red-900/50 dark:text-red-400 disabled:opacity-50"
                     >
-                        <XCircle className="h-3.5 w-3.5" />
+                        {isRejecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
                         Reject
                     </button>
                     <button
                         onClick={() => onConfirm(order.orderId)}
-                        className="flex-[2] flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-amber-700 active:scale-95"
+                        disabled={isConfirming || isRejecting}
+                        className="flex-[2] flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-amber-700 active:scale-95 disabled:opacity-50"
                     >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {isConfirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                         Confirm
                     </button>
                 </div>
@@ -308,7 +335,7 @@ function OrderCard({ order, onConfirm, onPrepare, onReject }: { order: any; onCo
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-indigo-700 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-800/30 dark:bg-indigo-500/10 dark:text-indigo-300"
                 >
                     <Upload className="h-3.5 w-3.5" />
-                    Upload Dispatch Photo
+                    Upload Photo
                 </button>
             )}
         </div>
@@ -321,6 +348,8 @@ export default function VendorOrdersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
+    const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+    const [processingAction, setProcessingAction] = useState<"confirm" | "reject" | null>(null);
     const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -345,6 +374,8 @@ export default function VendorOrdersPage() {
 
     const handleConfirm = async (id: string) => {
         try {
+            setProcessingOrderId(id);
+            setProcessingAction("confirm");
             const toastId = toast.loading("Confirming...");
             const res = await vendorService.makeDecision(id, true);
             if (res.success) {
@@ -355,6 +386,9 @@ export default function VendorOrdersPage() {
             }
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Unexpected error");
+        } finally {
+            setProcessingOrderId(null);
+            setProcessingAction(null);
         }
     };
 
@@ -369,6 +403,8 @@ export default function VendorOrdersPage() {
     const handleRejectSubmit = async (reason: string) => {
         if (!rejectOrderId) return;
         try {
+            setProcessingOrderId(rejectOrderId);
+            setProcessingAction("reject");
             const toastId = toast.loading("Rejecting order...");
             const res = await vendorService.makeDecision(rejectOrderId, false, reason);
             if (res.success) {
@@ -380,6 +416,9 @@ export default function VendorOrdersPage() {
             }
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Unexpected error");
+        } finally {
+            setProcessingOrderId(null);
+            setProcessingAction(null);
         }
     };
 
@@ -459,7 +498,7 @@ export default function VendorOrdersPage() {
                         className="w-full rounded-xl border border-gray-100 bg-white/70 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm backdrop-blur-md focus:border-amber-500 focus:outline-none dark:border-gray-800/50 dark:bg-[#111]/70"
                     />
                 </div>
-                
+
                 <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white/50 p-1 dark:border-gray-800/50 dark:bg-[#111]/50">
                     <button
                         onClick={() => setViewMode("kanban")}
@@ -492,8 +531,8 @@ export default function VendorOrdersPage() {
                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-4 lg:grid-cols-2">
                             {columns.map((col) => {
                                 const colOrders = orders.filter((o) => {
-                                    const matchesSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                                       o.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+                                    const matchesSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        o.customerName.toLowerCase().includes(searchQuery.toLowerCase());
                                     if (!matchesSearch) return false;
 
                                     if (col.status === "CONFIRMED") {
@@ -535,6 +574,8 @@ export default function VendorOrdersPage() {
                                                         onConfirm={handleConfirm}
                                                         onPrepare={handlePrepareClick}
                                                         onReject={handleRejectClick}
+                                                        isConfirming={processingOrderId === order.orderId && processingAction === "confirm"}
+                                                        isRejecting={processingOrderId === order.orderId && processingAction === "reject"}
                                                     />
                                                 ))
                                             )}
@@ -556,8 +597,8 @@ export default function VendorOrdersPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                                        {orders.filter(o => 
-                                            o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                        {orders.filter(o =>
+                                            o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                             o.customerName.toLowerCase().includes(searchQuery.toLowerCase())
                                         ).map((order) => (
                                             <tr key={order.orderId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
@@ -574,10 +615,9 @@ export default function VendorOrdersPage() {
                                                 <td className="px-8 py-5">
                                                     {/* Using the same status logic as Kanban but in table format */}
                                                     <div className="flex items-center gap-2">
-                                                        <div className={`h-2 w-2 rounded-full ${
-                                                            order.status === "DEPOSIT_PAID" ? "bg-amber-500" :
+                                                        <div className={`h-2 w-2 rounded-full ${order.status === "DEPOSIT_PAID" ? "bg-amber-500" :
                                                             order.status === "SHIP_PENDING" ? "bg-emerald-500" : "bg-blue-500"
-                                                        } animate-pulse`} />
+                                                            } animate-pulse`} />
                                                         <span className="font-plus-jakarta text-xs font-bold text-gray-700 dark:text-gray-300">{order.status}</span>
                                                     </div>
                                                 </td>
@@ -590,7 +630,7 @@ export default function VendorOrdersPage() {
                                                     <p className="mt-1 font-plus-jakarta text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                 </td>
                                                 <td className="px-8 py-5 text-right">
-                                                    <button 
+                                                    <button
                                                         onClick={() => { /* Detail view link */ }}
                                                         className="rounded-lg p-2 text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 transition-all"
                                                     >

@@ -24,6 +24,8 @@ export interface CartState {
     cartId: string | null;
     items: CartItemType[];
     totalLiveMrp: number;
+    vatRate: number;
+    shippingFee: number;
     hasPriceWarning: boolean;
     checkoutBlocked: boolean;
     itemCount: number;
@@ -35,6 +37,8 @@ const initialState: CartState = {
     cartId: null,
     items: [],
     totalLiveMrp: 0,
+    vatRate: 10,
+    shippingFee: 0,
     hasPriceWarning: false,
     checkoutBlocked: false,
     itemCount: 0,
@@ -70,6 +74,8 @@ const cartSlice = createSlice({
             state.cartId = action.payload.cartId;
             state.items = action.payload.items;
             state.totalLiveMrp = action.payload.totalLiveMrp;
+            state.vatRate = action.payload.vatRate;
+            state.shippingFee = action.payload.shippingFee;
             state.hasPriceWarning = action.payload.hasPriceWarning;
             state.checkoutBlocked = action.payload.checkoutBlocked;
             state.itemCount = action.payload.itemCount;
@@ -93,6 +99,8 @@ const cartSlice = createSlice({
                 state.cartId = action.payload.cartId;
                 state.items = action.payload.items;
                 state.totalLiveMrp = action.payload.totalLiveMrp;
+                state.vatRate = action.payload.vatRate;
+                state.shippingFee = action.payload.shippingFee;
                 state.hasPriceWarning = action.payload.hasPriceWarning;
                 state.checkoutBlocked = action.payload.checkoutBlocked;
                 state.itemCount = action.payload.itemCount;

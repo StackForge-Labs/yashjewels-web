@@ -36,6 +36,7 @@ export interface OrderDetailDto {
     insuranceUrl?: string;
     insuranceThumbnailUrl?: string;
     cancelReason?: string;
+    returnPolicyDays?: number;
 }
 
 
@@ -46,14 +47,26 @@ export interface OrderItemDto {
     styleCode: string;
     unitPrice: number;
     quantity: number;
+    primaryImageUrl?: string;
     certificationUrl?: string;
     certificationThumbnailUrl?: string;
+}
+
+export interface OrderDto {
+    orderId: string;
+    orderNumber: string;
+    customerName: string;
+    status: string;
+    totalAmount: number;
+    createdAt: string;
+    isCod: boolean;
+    items: OrderItemDto[];
 }
 
 
 export const orderService = {
     getOrders: async () => {
-        const res = await apiClient.get<ApiResponse<any[]>>("/user-orders");
+        const res = await apiClient.get<ApiResponse<OrderDto[]>>("/user-orders");
         return res.data;
     },
     getOrderById: async (id: string) => {

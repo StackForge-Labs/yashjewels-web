@@ -6,7 +6,7 @@ import {
     AlertCircle, FileVideo, Calendar, Search,
     ArrowRight, DollarSign, ShieldAlert,
     TrendingUp, Clock, Ban, BarChart3,
-    Truck
+    Truck, Loader2
 } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
@@ -243,16 +243,24 @@ export default function ReturnsManagementPage() {
                             <button
                                 disabled={actionLoading}
                                 onClick={() => handleInitialProcess(selectedRequest.id, false)}
-                                className="py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 border border-rose-100 transition-all"
+                                className="py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 border border-rose-100 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Reject Claim
+                                {actionLoading ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                                ) : (
+                                    <><XCircle className="h-4 w-4" /> Reject Claim</>
+                                )}
                             </button>
                             <button
                                 disabled={actionLoading}
                                 onClick={() => handleInitialProcess(selectedRequest.id, true)}
-                                className="py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all"
+                                className="py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Authorize Return
+                                {actionLoading ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                                ) : (
+                                    <><CheckCircle2 className="h-4 w-4" /> Authorize Return</>
+                                )}
                             </button>
                         </div>
                     ) : (selectedRequest?.status === "RETURN_RECEIVED" || selectedRequest?.status === "RECEIVED_AT_STORE") ? (
@@ -260,16 +268,24 @@ export default function ReturnsManagementPage() {
                             <button
                                 disabled={actionLoading}
                                 onClick={() => handleFinalProcess(selectedRequest.id, false)}
-                                className="py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 border border-rose-100 transition-all"
+                                className="py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-100 border border-rose-100 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Inspection Failed
+                                {actionLoading ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                                ) : (
+                                    <><XCircle className="h-4 w-4" /> Inspection Failed</>
+                                )}
                             </button>
                             <button
                                 disabled={actionLoading}
                                 onClick={() => handleFinalProcess(selectedRequest.id, true)}
-                                className="py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                                className="py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                <DollarSign className="h-4 w-4" /> Issue Refund
+                                {actionLoading ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                                ) : (
+                                    <><DollarSign className="h-4 w-4" /> Issue Refund</>
+                                )}
                             </button>
                         </div>
                     ) : (

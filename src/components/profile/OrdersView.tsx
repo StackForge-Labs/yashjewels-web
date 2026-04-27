@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { orderService } from "@/services/order.service";
 import { Package, ChevronRight, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -62,44 +63,76 @@ export const OrdersView = () => {
             <div className="space-y-4">
                 {orders.map((order) => (
                     <div key={order.orderId} className="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:border-gold/30 hover:shadow-xl dark:border-white/5 dark:bg-[#0a0a0a]">
-                        <div className="flex flex-col md:flex-row md:items-center">
-                            {/* Order Info */}
-                            <div className="flex-1 p-6">
-                                <div className="mb-4 flex flex-wrap items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gold dark:bg-white/5">
-                                        <Package size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">#{order.orderNumber}</p>
-                                        <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest">{format(new Date(order.createdAt), "MMMM dd, yyyy")}</p>
-                                    </div>
-                                    <div className="md:ml-auto">
-                                        <StatusBadge status={order.status} />
-                                    </div>
+                        {/* Order Header */}
+                        <div className="flex flex-wrap items-center gap-4 p-6 pb-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gold dark:bg-white/5">
+                                <Package size={20} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">#{order.orderNumber}</p>
+                                <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest">{format(new Date(order.createdAt), "MMMM dd, yyyy")}</p>
+                            </div>
+                            <div className="ml-auto">
+                                <StatusBadge status={order.status} />
+                            </div>
+                        </div>
+
+                        {/* Product Strip */}
+                        {order.items && order.items.length > 0 && (
+                            <div className="px-6 pb-4">
+                                <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
+                                    {order.items.map((item) => (
+                                        <div key={item.orderItemId} className="flex-none flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-2.5 pr-4 dark:border-white/5 dark:bg-white/[0.03] min-w-0">
+                                            {/* Product Image */}
+                                            <div className="relative h-12 w-12 flex-none overflow-hidden rounded-lg bg-gray-100 dark:bg-white/5">
+                                                {item.primaryImageUrl ? (
+                                                    <Image
+                                                        src={item.primaryImageUrl}
+                                                        alt={item.productName}
+                                                        fill
+                                                        className="object-cover"
+                                                        sizes="48px"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center text-gold/40">
+                                                        <Package size={20} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Product Info */}
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-semibold text-gray-900 dark:text-white truncate max-w-[140px]">{item.productName}</p>
+                                                <p className="text-[10px] text-gray-400 tracking-widest uppercase">{item.styleCode}</p>
+                                                <p className="text-[10px] font-bold text-gold mt-0.5">× {item.quantity}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="grid grid-cols-2 gap-8 border-t border-gray-50 pt-4 dark:border-white/5">
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Investment</p>
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} VND</p>
-                                    </div>
-                                    <div className="text-right">
-                                        {order.status === "AWAITING_FULL_PAYMENT" ? (
-                                             <Link 
-                                                href={`/orders/${order.orderId}/payment`}
-                                                className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-[10px] font-bold tracking-widest text-white uppercase transition-all hover:brightness-105"
-                                            >
-                                                Pay Balance <ChevronRight size={12} />
-                                            </Link>
-                                        ) : (
-                                            <Link 
-                                                href={`/orders/${order.orderId}/timeline`}
-                                                className="inline-flex items-center gap-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase hover:text-gold transition-all"
-                                            >
-                                                View Journey <ChevronRight size={12} />
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer: Investment + Action */}
+                        <div className="grid grid-cols-2 gap-8 border-t border-gray-50 px-6 py-4 dark:border-white/5">
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Investment</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} VND</p>
+                            </div>
+                            <div className="text-right">
+                                {order.status === "AWAITING_FULL_PAYMENT" ? (
+                                     <Link 
+                                        href={`/orders/${order.orderId}/payment`}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-[10px] font-bold tracking-widest text-white uppercase transition-all hover:brightness-105"
+                                    >
+                                        Pay Balance <ChevronRight size={12} />
+                                    </Link>
+                                ) : (
+                                    <Link 
+                                        href={`/orders/${order.orderId}/timeline`}
+                                        className="inline-flex items-center gap-2 text-[10px] font-bold tracking-widest text-gray-400 uppercase hover:text-gold transition-all"
+                                    >
+                                        View Journey <ChevronRight size={12} />
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>

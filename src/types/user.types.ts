@@ -78,7 +78,13 @@ export interface UserAddressDto {
     ward: string;
     district: string;
     province: string;
+    country?: string;
+    postalCode?: string;
+    isGift: boolean;
+    recipientEmail?: string;
+    giftMessage?: string;
     isDefault: boolean;
+    distanceKm?: number;
     createdAt: string;
 }
 
@@ -90,7 +96,13 @@ export interface CreateAddressRequest {
     ward: string;
     district: string;
     province: string;
+    country?: string;
+    postalCode?: string;
+    isGift: boolean;
+    recipientEmail?: string;
+    giftMessage?: string;
     isDefault: boolean;
+    distanceKm?: number;
 }
 
 // ── Admin KYC ───────────────────────────────────────────────────

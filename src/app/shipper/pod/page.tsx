@@ -235,7 +235,7 @@ function ShipperPodContent() {
                         Về Danh Sách Đơn
                     </button>
                     <button
-                        onClick={() => router.push("/shipper/scanner")}
+                        onClick={() => router.push("/shipper")}
                         className="w-full rounded-2xl border border-gray-200 py-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:border-gray-700 dark:text-gray-300 active:scale-95 hover:bg-gray-50 dark:hover:bg-[#111]"
                     >
                         Giao Đơn Tiếp Theo
