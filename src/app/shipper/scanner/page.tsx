@@ -24,11 +24,13 @@ function ShipperScannerContent() {
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const isHandlingSuccess = useRef(false);
 
-    // Hàm dừng quét an toàn
     const cleanupScanner = async () => {
-        if (scannerRef.current && scannerRef.current.isScanning) {
+        if (scannerRef.current) {
             try {
-                await scannerRef.current.stop();
+                if (scannerRef.current.isScanning) {
+                    await scannerRef.current.stop();
+                }
+                scannerRef.current.clear();
             } catch (e) {
                 console.warn("Scanner stop warning:", e);
             }
@@ -47,8 +49,7 @@ function ShipperScannerContent() {
             scannerRef.current = html5QrCode;
 
             const config = {
-                fps: 20, // Tăng fps để quét cực nhạy
-                qrbox: { width: 250, height: 250 },
+                fps: 10, // Full frame scanning doesn't need 20fps
             };
 
             await html5QrCode.start(

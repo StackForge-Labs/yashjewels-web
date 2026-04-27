@@ -45,6 +45,86 @@ function OrderTimeline({ timeline }: { timeline: OrderTimelineDto[] }) {
     );
 }
 
+function AssignShipperModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: (shipperId: string) => Promise<void> }) {
+    const [shippers, setShippers] = useState<any[]>([]);
+    const [selectedShipperId, setSelectedShipperId] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setIsLoading(true);
+            adminService.shippers.getAll()
+                .then(res => {
+                    if (res.success) {
+                        // Filter active shippers only
+                        setShippers(res.data.filter((s: any) => s.status === 1 || s.status === "ACTIVE" || s.isActive));
+                    }
+                })
+                .catch(err => toast.error("Failed to load shippers"))
+                .finally(() => setIsLoading(false));
+        } else {
+            setSelectedShipperId("");
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Assign Shipper</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <XCircle className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    Select an active courier to assign to this delivery. They will be notified immediately.
+                </p>
+
+                {isLoading ? (
+                    <div className="flex justify-center p-4">
+                        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+                    </div>
+                ) : (
+                    <select
+                        className="w-full rounded-xl border border-gray-300 bg-gray-50 p-4 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-white mb-6"
+                        value={selectedShipperId}
+                        onChange={(e) => setSelectedShipperId(e.target.value)}
+                    >
+                        <option value="">-- Select a courier --</option>
+                        {shippers.map(shipper => (
+                            <option key={shipper.userId} value={shipper.userId}>
+                                {shipper.fullName} ({shipper.email})
+                            </option>
+                        ))}
+                    </select>
+                )}
+
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (!selectedShipperId) return;
+                            setIsSubmitting(true);
+                            await onConfirm(selectedShipperId);
+                            setIsSubmitting(false);
+                        }}
+                        disabled={!selectedShipperId || isSubmitting}
+                        className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm tracking-wide hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                        {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Confirm Assignment"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function OrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -61,6 +141,7 @@ export default function OrdersPage() {
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [previewTitle, setPreviewTitle] = useState("");
+    const [assignOrderId, setAssignOrderId] = useState<string | null>(null);
 
     
     const [actionLoading, setActionLoading] = useState(false);
@@ -115,7 +196,27 @@ export default function OrdersPage() {
         }
     };
 
-
+    const handleAssignShipperSubmit = async (shipperId: string) => {
+        if (!assignOrderId) return;
+        setActionLoading(true);
+        try {
+            const res = await adminService.assignShipperApi(assignOrderId, shipperId);
+            if (res.success) {
+                toast.success("Courier assigned successfully!");
+                setAssignOrderId(null);
+                fetchOrders();
+                if (detail && detail.orderId === assignOrderId) {
+                    handleViewDetail(assignOrderId); // refresh detail
+                }
+            } else {
+                toast.error(res.message || "Assignment failed");
+            }
+        } catch (error) {
+            toast.error("Unexpected error assigning shipper");
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     const filtered = orders.filter(o => {
         const matchesSearch = o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -248,6 +349,9 @@ export default function OrdersPage() {
                         <button onClick={() => setIsDetailOpen(false)} className="flex-1 rounded-xl border border-gray-200 py-3 font-plus-jakarta text-sm font-bold text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400">Cancel</button>
                         {detail?.status === "DEPOSIT_PAID" && (
                             <button disabled={actionLoading} onClick={() => handleDecision(true)} className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20">Approve & Start Processing</button>
+                        )}
+                        {detail?.status === "SHIP_PENDING" && (
+                            <button disabled={actionLoading} onClick={() => setAssignOrderId(detail.orderId)} className="flex-[2] rounded-xl bg-emerald-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/20"><Truck className="inline-block w-4 h-4 mr-2" />Assign Courier</button>
                         )}
                     </div>
                 }
@@ -459,6 +563,12 @@ export default function OrdersPage() {
                     )}
                 </div>
             </Modal>
+
+            <AssignShipperModal
+                isOpen={!!assignOrderId}
+                onClose={() => setAssignOrderId(null)}
+                onConfirm={handleAssignShipperSubmit}
+            />
         </div>
 
     );
