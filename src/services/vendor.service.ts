@@ -96,6 +96,11 @@ export const vendorService = {
         return res.data;
     },
 
+    getPendingKyc: async () => {
+        const res = await apiClient.get<ApiResponse<any[]>>("/admin/kyc/pending");
+        return res.data;
+    },
+
     checkEmailExists: async (email: string) => {
         const res = await apiClient.get<ApiResponse<boolean>>(`/vendor/management/customers/check-email?email=${encodeURIComponent(email)}`);
         return res.data;
