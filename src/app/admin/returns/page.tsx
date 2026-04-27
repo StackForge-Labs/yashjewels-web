@@ -6,7 +6,7 @@ import {
     AlertCircle, FileVideo, Calendar, Search,
     ArrowRight, DollarSign, ShieldAlert,
     TrendingUp, Clock, Ban, BarChart3,
-    Truck, Loader2
+    Truck, Loader2, RefreshCw
 } from "lucide-react";
 import { PageHeader } from "../_components/ui/PageHeader";
 import { StatusBadge } from "../_components/ui/StatusBadge";
@@ -15,12 +15,92 @@ import { adminService } from "@/services/admin.service";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+function AssignShipperModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: (shipperId: string) => Promise<void> }) {
+    const [shippers, setShippers] = useState<any[]>([]);
+    const [selectedShipperId, setSelectedShipperId] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setIsLoading(true);
+            adminService.shippers.getAll()
+                .then(res => {
+                    if (res.success) {
+                        setShippers(res.data.filter((s: any) => s.status === 1 || s.status === "ACTIVE" || s.isActive));
+                    }
+                })
+                .catch(err => toast.error("Failed to load shippers"))
+                .finally(() => setIsLoading(false));
+        } else {
+            setSelectedShipperId("");
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 transform transition-all">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold font-plus-jakarta text-gray-900 dark:text-white">Assign Shipper</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <XCircle className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    Select an active courier to assign to this delivery. They will be notified immediately.
+                </p>
+
+                {isLoading ? (
+                    <div className="flex justify-center p-4">
+                        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+                    </div>
+                ) : (
+                    <select
+                        className="w-full rounded-xl border border-gray-300 bg-gray-50 p-4 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-white mb-6"
+                        value={selectedShipperId}
+                        onChange={(e) => setSelectedShipperId(e.target.value)}
+                    >
+                        <option value="">-- Select a courier --</option>
+                        {shippers.map(shipper => (
+                            <option key={shipper.shipperId} value={shipper.shipperId}>
+                                {shipper.fullName} ({shipper.email})
+                            </option>
+                        ))}
+                    </select>
+                )}
+
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-800">
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (!selectedShipperId) return;
+                            setIsSubmitting(true);
+                            await onConfirm(selectedShipperId);
+                            setIsSubmitting(false);
+                        }}
+                        disabled={!selectedShipperId || isSubmitting}
+                        className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm tracking-wide hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                        {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Confirm Assignment"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function ReturnsManagementPage() {
     const [returns, setReturns] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    const [assignOrderId, setAssignOrderId] = useState<string | null>(null);
     const [decisionNote, setDecisionNote] = useState("");
     const [deductInsurance, setDeductInsurance] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -122,6 +202,26 @@ export default function ReturnsManagementPage() {
         }
     };
 
+    const handleAssignShipperSubmit = async (shipperId: string) => {
+        if (!assignOrderId) return;
+        setActionLoading(true);
+        try {
+            const res = await adminService.assignShipperApi(assignOrderId, shipperId);
+            if (res.success) {
+                toast.success("Courier assigned successfully!");
+                setAssignOrderId(null);
+                fetchReturns();
+                setIsDrawerOpen(false);
+            } else {
+                toast.error(res.message || "Assignment failed");
+            }
+        } catch (error) {
+            toast.error("Unexpected error assigning shipper");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-8 animate-in fade-in duration-700">
             <PageHeader
@@ -211,9 +311,9 @@ export default function ReturnsManagementPage() {
                                         <StatusBadge
                                             status={req.status}
                                             label={
-                                                req.status === "SUBMITTED" ? "Return Requested" : 
-                                                req.status === "REJECTED" ? "Return Rejected" : 
-                                                undefined
+                                                req.status === "SUBMITTED" ? "Return Requested" :
+                                                    req.status === "REJECTED" ? "Return Rejected" :
+                                                        undefined
                                             }
                                         />
                                     </td>
@@ -287,6 +387,28 @@ export default function ReturnsManagementPage() {
                                     <><DollarSign className="h-4 w-4" /> Issue Refund</>
                                 )}
                             </button>
+                        </div>
+                    ) : selectedRequest?.status === "AUTHORIZED" ? (
+                        <div className="flex flex-col gap-3 w-full">
+                            <button
+                                disabled={actionLoading}
+                                onClick={() => setAssignOrderId(selectedRequest.orderId)}
+                                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Truck className="h-4 w-4" /> Assign Courier for Pickup
+                            </button>
+                            <button onClick={() => setIsDrawerOpen(false)} className="w-full py-3 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm">Close Detail</button>
+                        </div>
+                    ) : selectedRequest?.status === "REJECTED" ? (
+                        <div className="flex flex-col gap-3 w-full">
+                            <button
+                                disabled={actionLoading}
+                                onClick={() => setAssignOrderId(selectedRequest.orderId)}
+                                className="w-full py-3 bg-orange-600 text-white rounded-xl font-bold text-sm hover:bg-orange-700 shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Truck className="h-4 w-4" /> Assign Courier for Redelivery
+                            </button>
+                            <button onClick={() => setIsDrawerOpen(false)} className="w-full py-3 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm">Close Detail</button>
                         </div>
                     ) : (
                         <button onClick={() => setIsDrawerOpen(false)} className="w-full py-3 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm">Close Detail</button>
@@ -383,13 +505,27 @@ export default function ReturnsManagementPage() {
                                 <Truck className="h-8 w-8 text-blue-500 opacity-50" />
                                 <div>
                                     <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Return Logistics in Progress</p>
-                                    <p className="text-[10px] text-blue-600/80 mt-1 leading-relaxed">The return shipment has been authorized. Admin actions are suspended until the item is physically received at the store.</p>
+                                    <p className="text-[10px] text-blue-600/80 mt-1 leading-relaxed">The return shipment has been authorized. You must assign a courier to pick up the item from the customer.</p>
+                                </div>
+                            </div>
+                        ) : selectedRequest.status === "REJECTED" ? (
+                            <div className="bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-800/50 rounded-2xl p-5 flex flex-col items-center text-center gap-3">
+                                <Truck className="h-8 w-8 text-orange-500 opacity-50" />
+                                <div>
+                                    <p className="text-xs font-bold text-orange-700 dark:text-orange-400">Redelivery Required</p>
+                                    <p className="text-[10px] text-orange-600/80 mt-1 leading-relaxed">This return was rejected after physical inspection. You must assign a courier to redeliver the item back to the customer.</p>
                                 </div>
                             </div>
                         ) : null}
                     </div>
                 )}
             </Drawer>
+
+            <AssignShipperModal
+                isOpen={!!assignOrderId}
+                onClose={() => setAssignOrderId(null)}
+                onConfirm={handleAssignShipperSubmit}
+            />
         </div>
     );
 }

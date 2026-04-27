@@ -178,7 +178,9 @@ function ShipperPodContent() {
                 );
                 setPodState("done");
             } else {
-                toast.error(res.message || "Xác thực thất bại.", { id: loadingToast });
+                // If the API provides specific errors (like QR expired), show them. Otherwise use the message field.
+                const specificError = res.errors && res.errors.length > 0 ? res.errors[0] : res.message;
+                toast.error(specificError || "Xác thực thất bại.", { id: loadingToast });
             }
         } catch (error: any) {
             const msg = getErrorMessage(error);

@@ -107,14 +107,6 @@ function TripCard({
                     >
                         <MapPin className="h-4 w-4" />
                     </a>
-                    {order.status === "SHIP_PENDING" && (
-                        <button
-                            onClick={() => onAccept(order)}
-                            className="flex h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-indigo-700 ml-1"
-                        >
-                            Nhận Đơn <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
-                    )}
                     {order.status === "SHIPPED" && (
                         <Link
                             href={`/shipper/scanner?orderId=${order.orderId}`}
@@ -306,7 +298,7 @@ export default function ShipperHomePage() {
         loadOrders();
     }, []);
 
-    const pendingCount = orders.filter((o) => ["SHIP_PENDING", "SHIPPED", "RETURN_AUTHORIZED", "RETURN_IN_TRANSIT", "RETURN_REJECTED", "REDELIVERING"].includes(o.status)).length;
+    const pendingCount = orders.filter((o) => ["SHIPPED", "RETURN_AUTHORIZED", "RETURN_IN_TRANSIT", "RETURN_REJECTED", "REDELIVERING"].includes(o.status)).length;
     const deliveredCount = orders.filter((o) => ["DELIVERED", "COMPLETED", "RETURN_RECEIVED", "REFUNDED", "REDELIVERED"].includes(o.status)).length;
     const totalCount = orders.length;
 
@@ -367,7 +359,7 @@ export default function ShipperHomePage() {
 
             {/* Filter Chips */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {([["ALL", "Tất Cả"], ["SHIP_PENDING", "Chờ Nhận"], ["SHIPPED", "Đang Giao"], ["RETURN_JOBS", "Thu Hồi"], ["DELIVERED", "Đã Giao"]] as const).map(([val, label]) => (
+                {([["ALL", "Tất Cả"], ["SHIPPED", "Đang Giao"], ["RETURN_JOBS", "Thu Hồi"], ["DELIVERED", "Đã Giao"]] as const).map(([val, label]) => (
                     <button
                         key={val}
                         onClick={() => setActiveFilter(val)}

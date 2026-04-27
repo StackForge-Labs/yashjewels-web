@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { X, Mail, Loader2, RotateCcw, CheckCircle2, AlertCircle, ShieldCheck, QrCode } from "lucide-react";
 import { shipperService } from "@/services/shipper.service";
 import toast from "react-hot-toast";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
 type ScanState = "idle" | "scanning" | "success" | "error";
 
@@ -24,11 +24,13 @@ function ShipperScannerContent() {
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const isHandlingSuccess = useRef(false);
 
-    // Hàm dừng quét an toàn
     const cleanupScanner = async () => {
-        if (scannerRef.current && scannerRef.current.isScanning) {
+        if (scannerRef.current) {
             try {
-                await scannerRef.current.stop();
+                if (scannerRef.current.isScanning) {
+                    await scannerRef.current.stop();
+                }
+                scannerRef.current.clear();
             } catch (e) {
                 console.warn("Scanner stop warning:", e);
             }
@@ -42,13 +44,24 @@ function ShipperScannerContent() {
             setScanState("scanning");
             isHandlingSuccess.current = false;
 
-            // Đảm bảo element "reader" đã tồn tại
-            const html5QrCode = new Html5Qrcode("reader");
+            // Chỉ quét định dạng mã QR (bỏ qua mã vạch truyền thống) giúp tăng tốc độ xử lý lên x10 lần
+            const html5QrCode = new Html5Qrcode("reader", {
+                formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
+            } as any);
             scannerRef.current = html5QrCode;
 
             const config = {
-                fps: 20, // Tăng fps để quét cực nhạy
-                qrbox: { width: 250, height: 250 },
+                fps: 30, // Tốc độ xử lý khung hình tối đa
+                // Tính toán vùng quét động, lấy 70% chiều nhỏ nhất của màn hình
+                qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                    const qrboxSize = Math.floor(minEdgeSize * 0.7);
+                    return { width: qrboxSize, height: qrboxSize };
+                },
+                disableFlip: false
             };
 
             await html5QrCode.start(
@@ -208,11 +221,11 @@ function ShipperScannerContent() {
 
             {/* ── Global Fix Styles ── */}
             <style jsx global>{`
-                /* Ép video chiếm toàn bộ không gian nhưng không object-fit cover quá đà để tránh lệch tọa độ quét */
+                /* Dùng object-fit cover để video tràn viền, khớp chính xác vùng quét (qrbox) với kính ngắm UI */
                 #reader video {
                     width: 100% !important;
                     height: 100% !important;
-                    object-fit: contain !important;
+                    object-fit: cover !important;
                     background: black;
                 }
                 /* CHỈ ẨN các thành phần UI dư thừa của thư viện */
