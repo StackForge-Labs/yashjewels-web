@@ -2,11 +2,32 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Mail, MapPin, ShieldCheck, ShieldAlert, Clock, CheckCircle2, UserX, HelpCircle, Search, Filter, Eye, RotateCcw, ChevronLeft, ChevronRight, Calendar, Plus, Pencil, Trash2, X } from "lucide-react";
+import { Mail, MapPin, ShieldCheck, ShieldAlert, Clock, CheckCircle2, UserX, HelpCircle, Search, Eye, RotateCcw, ChevronLeft, ChevronRight, Plus, Pencil, X, Loader2 } from "lucide-react";
+import { isValidPhoneNumber, parsePhoneNumber } from "libphonenumber-js";
+import type { CountryCode } from "libphonenumber-js";
 import { vendorService } from "@/services/vendor.service";
 import { StatusBadge } from "../../admin/_components/ui/StatusBadge";
 import { Drawer } from "../../admin/_components/ui/Drawer";
 import toast from "react-hot-toast";
+
+const COUNTRIES: { code: CountryCode; dial: string; flag: string; name: string }[] = [
+    { code: "VN", dial: "+84", flag: "🇻🇳", name: "Vietnam" },
+    { code: "US", dial: "+1",  flag: "🇺🇸", name: "United States" },
+    { code: "GB", dial: "+44", flag: "🇬🇧", name: "United Kingdom" },
+    { code: "AU", dial: "+61", flag: "🇦🇺", name: "Australia" },
+    { code: "JP", dial: "+81", flag: "🇯🇵", name: "Japan" },
+    { code: "KR", dial: "+82", flag: "🇰🇷", name: "South Korea" },
+    { code: "CN", dial: "+86", flag: "🇨🇳", name: "China" },
+    { code: "SG", dial: "+65", flag: "🇸🇬", name: "Singapore" },
+    { code: "TH", dial: "+66", flag: "🇹🇭", name: "Thailand" },
+    { code: "MY", dial: "+60", flag: "🇲🇾", name: "Malaysia" },
+    { code: "ID", dial: "+62", flag: "🇮🇩", name: "Indonesia" },
+    { code: "PH", dial: "+63", flag: "🇵🇭", name: "Philippines" },
+    { code: "IN", dial: "+91", flag: "🇮🇳", name: "India" },
+    { code: "DE", dial: "+49", flag: "🇩🇪", name: "Germany" },
+    { code: "FR", dial: "+33", flag: "🇫🇷", name: "France" },
+    { code: "CA", dial: "+1",  flag: "🇨🇦", name: "Canada" },
+];
 
 // ── Types ──────────────────────────────────────────────────────
 interface CustomerAddress {
@@ -119,6 +140,7 @@ export default function VendorCustomersPage() {
     const [joinedTo, setJoinedTo] = useState<string>("");
 
     const [selected, setSelected] = useState<Customer | null>(null);
+    const [profileLoading, setProfileLoading] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     // CRUD States
@@ -128,22 +150,59 @@ export default function VendorCustomersPage() {
     const [formData, setFormData] = useState({
         email: "",
         fullName: "",
+        dialCode: "VN" as CountryCode,
         phone: "",
         dateOfBirth: ""
     });
+    const [emailCheckState, setEmailCheckState] = useState<"idle" | "checking" | "exists" | "available">("idle");
+    const [formErrors, setFormErrors] = useState<{ email?: string; fullName?: string; phone?: string; dateOfBirth?: string }>({});
+
+    // Debounce email uniqueness check — only runs in create mode
+    useEffect(() => {
+        if (modalMode !== "create" || !isModalOpen) return;
+        const email = formData.email.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setEmailCheckState("idle");
+            setFormErrors(prev => ({ ...prev, email: undefined }));
+            return;
+        }
+        setEmailCheckState("checking");
+        const timer = setTimeout(async () => {
+            try {
+                const res = await vendorService.checkEmailExists(email);
+                if (res.success && res.data) {
+                    setEmailCheckState("exists");
+                    setFormErrors(prev => ({ ...prev, email: "This email is already registered." }));
+                } else {
+                    setEmailCheckState("available");
+                    setFormErrors(prev => ({ ...prev, email: undefined }));
+                }
+            } catch {
+                setEmailCheckState("available"); // allow submit on check failure, backend validates too
+            }
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [formData.email, modalMode, isModalOpen]);
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            // Note: Vendor uses its own management API (Fixed 403)
-            const res = await vendorService.getCustomers(page, 20, search || undefined);
+            const res = await vendorService.getCustomers(
+                page, 20,
+                search || undefined,
+                filterStatus || undefined,
+                filterKyc || undefined,
+                joinedFrom || undefined,
+                joinedTo || undefined
+            );
             if (res.success) setCustomers(res.data);
         } catch {
             toast.error("Failed to load customer list");
         } finally {
             setLoading(false);
         }
-    }, [page, search]);
+    }, [page, search, filterStatus, filterKyc, joinedFrom, joinedTo]);
 
     useEffect(() => {
         const timer = setTimeout(() => load(), 300);
@@ -160,28 +219,47 @@ export default function VendorCustomersPage() {
     };
 
     const handleViewProfile = async (id: string) => {
+        setSelected(null);
         setIsProfileOpen(true);
+        setProfileLoading(true);
         try {
-            const res = await vendorService.getCustomers(1, 1, id); 
-            if (res.success && res.data.length > 0) setSelected(res.data[0]);
+            const res = await vendorService.getCustomerDetail(id);
+            if (res.success) setSelected(res.data);
+            else toast.error(res.message || "Failed to load profile");
         } catch {
             toast.error("Failed to load profile details");
+        } finally {
+            setProfileLoading(false);
         }
     };
 
     const handleOpenCreate = () => {
         setModalMode("create");
-        setFormData({ email: "", fullName: "", phone: "", dateOfBirth: "" });
+        setFormData({ email: "", fullName: "", dialCode: "VN", phone: "", dateOfBirth: "" });
+        setEmailCheckState("idle");
+        setFormErrors({});
         setIsModalOpen(true);
     };
 
     const handleOpenEdit = (c: Customer) => {
         setModalMode("edit");
         setSelected(c);
+        let dialCode: CountryCode = "VN";
+        let phone = c.phoneNumber || "";
+        if (c.phoneNumber) {
+            try {
+                const parsed = parsePhoneNumber(c.phoneNumber);
+                if (parsed.country) dialCode = parsed.country;
+                phone = parsed.nationalNumber;
+            } catch {
+                // keep defaults
+            }
+        }
         setFormData({
             email: c.email,
             fullName: c.fullName,
-            phone: c.phoneNumber || "",
+            dialCode,
+            phone,
             dateOfBirth: c.dateOfBirth ? c.dateOfBirth.split("T")[0] : ""
         });
         setIsModalOpen(true);
@@ -189,46 +267,80 @@ export default function VendorCustomersPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Validate all fields before submit
+        const errors: { email?: string; fullName?: string; phone?: string; dateOfBirth?: string } = {};
+        if (modalMode === "create") {
+            if (!formData.email.trim()) {
+                errors.email = "Email is required.";
+            } else if (emailCheckState === "exists") {
+                errors.email = "This email is already registered.";
+            } else if (emailCheckState === "checking") {
+                errors.email = "Please wait — checking email availability...";
+            }
+        }
+        if (!formData.fullName.trim()) {
+            errors.fullName = "Full name is required.";
+        }
+        if (formData.phone.trim()) {
+            const country = COUNTRIES.find(c => c.code === formData.dialCode)!;
+            const fullNumber = country.dial + formData.phone.trim();
+            try {
+                if (!isValidPhoneNumber(fullNumber, formData.dialCode)) {
+                    errors.phone = `Invalid phone number for ${country.name}.`;
+                }
+            } catch {
+                errors.phone = "Invalid phone number.";
+            }
+        }
+        if (formData.dateOfBirth) {
+            const dob = new Date(formData.dateOfBirth);
+            const today = new Date();
+            if (isNaN(dob.getTime())) {
+                errors.dateOfBirth = "Invalid date.";
+            } else if (dob >= today) {
+                errors.dateOfBirth = "Date of birth must be in the past.";
+            } else if (today.getFullYear() - dob.getFullYear() > 120) {
+                errors.dateOfBirth = "Date of birth is unrealistic.";
+            }
+        }
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+        const country = COUNTRIES.find(c => c.code === formData.dialCode)!;
+        const fullPhone = formData.phone.trim() ? country.dial + formData.phone.trim() : undefined;
         setFormLoading(true);
         try {
             let res;
             if (modalMode === "create") {
-                res = await vendorService.createCustomer(formData);
+                res = await vendorService.createCustomer({
+                    email: formData.email,
+                    fullName: formData.fullName,
+                    phone: fullPhone,
+                    dateOfBirth: formData.dateOfBirth || undefined
+                });
             } else {
                 res = await vendorService.updateCustomer(selected!.id, {
                     fullName: formData.fullName,
-                    phone: formData.phone,
-                    dateOfBirth: formData.dateOfBirth
+                    phone: fullPhone,
+                    dateOfBirth: formData.dateOfBirth || undefined
                 });
             }
 
             if (res.success) {
-                toast.success(modalMode === "create" ? "Customer created successfully!" : "Customer updated successfully!");
+                toast.success(modalMode === "create" ? "Customer created! Magic link sent to email." : "Customer updated successfully!");
                 setIsModalOpen(false);
                 load();
             } else {
-                toast.error(res.message || "Failed to save customer");
+                const msg = res.errors?.[0] || res.message || "Failed to save customer";
+                toast.error(msg);
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "An error occurred");
+            const apiErr = err.response?.data;
+            const msg = apiErr?.errors?.[0] || apiErr?.message || "An error occurred";
+            toast.error(msg);
         } finally {
             setFormLoading(false);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this customer? This action cannot be undone.")) return;
-        
-        try {
-            const res = await vendorService.deleteCustomer(id);
-            if (res.success) {
-                toast.success("Customer deleted successfully");
-                load();
-            } else {
-                toast.error(res.message || "Failed to delete customer");
-            }
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Cannot delete customer with order history");
         }
     };
 
@@ -264,13 +376,30 @@ export default function VendorCustomersPage() {
                     />
                 </div>
 
-                <div className="flex items-center gap-2">
-                     <select value={filterKyc} onChange={e => { setFilterKyc(e.target.value); setPage(1); }}
+                <div className="flex flex-wrap items-center gap-2">
+                    <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+                        className="rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
+                        <option value="">All Status</option>
+                        <option value="1">Active</option>
+                        <option value="2">Suspended</option>
+                        <option value="0">Unverified</option>
+                    </select>
+
+                    <select value={filterKyc} onChange={e => { setFilterKyc(e.target.value); setPage(1); }}
                         className="rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-xs font-bold text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300">
                         <option value="">All KYC</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="VERIFIED">Verified</option>
+                        <option value="0">None</option>
+                        <option value="1">Pending</option>
+                        <option value="2">Verified</option>
+                        <option value="3">Rejected</option>
                     </select>
+
+                    <input type="date" value={joinedFrom} onChange={e => { setJoinedFrom(e.target.value); setPage(1); }}
+                        className="rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-xs text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300"
+                        title="Joined from" />
+                    <input type="date" value={joinedTo} onChange={e => { setJoinedTo(e.target.value); setPage(1); }}
+                        className="rounded-xl border border-gray-200 bg-white px-3 py-2 font-plus-jakarta text-xs text-gray-600 dark:border-gray-800 dark:bg-[#111] dark:text-gray-300"
+                        title="Joined to" />
 
                     <button onClick={handleResetFilters}
                         className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-gray-400 hover:text-amber-600 transition-colors">
@@ -336,19 +465,12 @@ export default function VendorCustomersPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => handleOpenEdit(c)}
                                                     className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 transition-all"
                                                     title="Edit Customer"
                                                 >
                                                     <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDelete(c.id)}
-                                                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 transition-all"
-                                                    title="Delete Customer"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -394,7 +516,13 @@ export default function VendorCustomersPage() {
                     </button>
                 }
             >
-                {selected && (
+                {profileLoading ? (
+                    <div className="flex flex-col gap-4 animate-pulse">
+                        {Array(4).fill(0).map((_, i) => (
+                            <div key={i} className="h-16 rounded-xl bg-gray-100 dark:bg-white/5" />
+                        ))}
+                    </div>
+                ) : selected ? (
                     <div className="flex flex-col gap-6">
                         <div className="grid grid-cols-2 gap-3">
                             {[
@@ -444,6 +572,8 @@ export default function VendorCustomersPage() {
                             ))}
                         </div>
                     </div>
+                ) : (
+                    <p className="font-plus-jakarta text-sm text-gray-400 text-center py-10">Customer not found.</p>
                 )}
             </Drawer>
 
@@ -469,52 +599,87 @@ export default function VendorCustomersPage() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSave} className="space-y-5">
+                        <form onSubmit={handleSave} noValidate className="space-y-5">
                             <div className="space-y-1.5">
                                 <label className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Email Address</label>
-                                <input
-                                    type="email"
-                                    required
-                                    disabled={modalMode === "edit"}
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 font-plus-jakarta text-sm focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50 disabled:opacity-50"
-                                    placeholder="customer@example.com"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="email"
+                                        disabled={modalMode === "edit"}
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                        className={`w-full rounded-2xl border px-4 py-3.5 pr-10 font-plus-jakarta text-sm focus:outline-none dark:bg-[#1a1a1a]/50 disabled:opacity-50 transition-colors ${
+                                            emailCheckState === "exists"
+                                                ? "border-rose-400 bg-rose-50/50 focus:border-rose-400 dark:border-rose-500/50"
+                                                : emailCheckState === "available"
+                                                ? "border-emerald-400 bg-emerald-50/30 focus:border-emerald-400 dark:border-emerald-500/50"
+                                                : "border-gray-200 bg-gray-50/50 focus:border-amber-500 focus:bg-white dark:border-gray-800"
+                                        }`}
+                                        placeholder="customer@example.com"
+                                    />
+                                    {modalMode === "create" && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            {emailCheckState === "checking" && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                                            {emailCheckState === "available" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                                            {emailCheckState === "exists" && <X className="h-4 w-4 text-rose-500" />}
+                                        </div>
+                                    )}
+                                </div>
+                                {formErrors.email && (
+                                    <p className="ml-1 font-plus-jakarta text-[11px] font-medium text-rose-500">{formErrors.email}</p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Full Name</label>
                                 <input
                                     type="text"
-                                    required
                                     value={formData.fullName}
-                                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 font-plus-jakarta text-sm focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50"
+                                    onChange={e => { setFormData({ ...formData, fullName: e.target.value }); setFormErrors(prev => ({ ...prev, fullName: undefined })); }}
+                                    className={`w-full rounded-2xl border px-4 py-3.5 font-plus-jakarta text-sm focus:outline-none dark:bg-[#1a1a1a]/50 transition-colors ${
+                                        formErrors.fullName
+                                            ? "border-rose-400 bg-rose-50/50 focus:border-rose-400"
+                                            : "border-gray-200 bg-gray-50/50 focus:border-amber-500 focus:bg-white dark:border-gray-800"
+                                    }`}
                                     placeholder="Enter full name"
                                 />
+                                {formErrors.fullName && (
+                                    <p className="ml-1 font-plus-jakarta text-[11px] font-medium text-rose-500">{formErrors.fullName}</p>
+                                )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Phone Number</label>
+                            <div className="space-y-1.5">
+                                <label className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Phone Number</label>
+                                <div className={`flex overflow-hidden rounded-2xl border transition-colors ${formErrors.phone ? "border-rose-400 bg-rose-50/50" : "border-gray-200 bg-gray-50/50 focus-within:border-amber-500 focus-within:bg-white dark:border-gray-800 dark:bg-[#1a1a1a]/50"}`}>
+                                    <select
+                                        value={formData.dialCode}
+                                        onChange={e => setFormData({ ...formData, dialCode: e.target.value as CountryCode })}
+                                        className="shrink-0 border-r border-gray-200 bg-transparent px-3 py-3.5 font-plus-jakarta text-sm text-gray-700 focus:outline-none dark:border-gray-700 dark:text-gray-300"
+                                    >
+                                        {COUNTRIES.map(c => (
+                                            <option key={c.code} value={c.code}>{c.flag} {c.dial}</option>
+                                        ))}
+                                    </select>
                                     <input
                                         type="tel"
                                         value={formData.phone}
-                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                        className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 font-plus-jakarta text-sm focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50"
-                                        placeholder="09xxx..."
+                                        onChange={e => { setFormData({ ...formData, phone: e.target.value }); setFormErrors(prev => ({ ...prev, phone: undefined })); }}
+                                        className="min-w-0 flex-1 bg-transparent px-3 py-3.5 font-plus-jakarta text-sm focus:outline-none dark:text-gray-100"
+                                        placeholder="912 345 678"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Date of Birth</label>
-                                    <input
-                                        type="date"
-                                        value={formData.dateOfBirth}
-                                        onChange={e => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                                        className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 font-plus-jakarta text-sm focus:border-amber-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a]/50"
-                                    />
-                                </div>
+                                {formErrors.phone && <p className="ml-1 font-plus-jakarta text-[11px] font-medium text-rose-500">{formErrors.phone}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Date of Birth</label>
+                                <input
+                                    type="date"
+                                    value={formData.dateOfBirth}
+                                    onChange={e => { setFormData({ ...formData, dateOfBirth: e.target.value }); setFormErrors(prev => ({ ...prev, dateOfBirth: undefined })); }}
+                                    className={`w-full rounded-2xl border px-4 py-3.5 font-plus-jakarta text-sm focus:outline-none dark:bg-[#1a1a1a]/50 transition-colors ${formErrors.dateOfBirth ? "border-rose-400 bg-rose-50/50 focus:border-rose-400" : "border-gray-200 bg-gray-50/50 focus:border-amber-500 focus:bg-white dark:border-gray-800"}`}
+                                />
+                                {formErrors.dateOfBirth && <p className="ml-1 font-plus-jakarta text-[11px] font-medium text-rose-500">{formErrors.dateOfBirth}</p>}
                             </div>
 
                             <div className="pt-4 flex gap-3">
@@ -528,10 +693,10 @@ export default function VendorCustomersPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={formLoading}
+                                    disabled={formLoading || emailCheckState === "checking"}
                                     className="flex-[2] rounded-2xl bg-gray-900 py-3.5 font-plus-jakarta text-sm font-bold text-white hover:bg-black dark:bg-amber-600 dark:hover:bg-amber-500 transition-all disabled:opacity-50"
                                 >
-                                    {formLoading ? "Processing..." : modalMode === "create" ? "Create Account" : "Save Changes"}
+                                    {formLoading ? "Processing..." : emailCheckState === "checking" ? "Checking email..." : modalMode === "create" ? "Create Account" : "Save Changes"}
                                 </button>
                             </div>
                         </form>
