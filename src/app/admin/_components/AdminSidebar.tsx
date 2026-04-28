@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
@@ -23,6 +24,7 @@ import {
     TrendingUp,
     HandHeart,
     Truck,
+    MessageSquareWarning,
 } from "lucide-react";
 
 const navGroups = [
@@ -67,6 +69,7 @@ const navGroups = [
         items: [
             { name: "Customers", href: "/admin/customers", icon: Users },
             { name: "KYC Verifications", href: "/admin/kyc", icon: ShieldCheck },
+            { name: "Inquiry Audit", href: "/admin/inquiries", icon: MessageSquareWarning },
         ],
     },
     {

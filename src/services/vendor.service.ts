@@ -65,6 +65,26 @@ export const vendorService = {
         return res.data;
     },
 
+    replyToInquiry: async (id: string, message: string) => {
+        const res = await apiClient.post<ApiResponse<boolean>>(`/vendor/inquiries/${id}/reply`, { message });
+        return res.data;
+    },
+
+    contactFailed: async (id: string) => {
+        const res = await apiClient.post<ApiResponse<boolean>>(`/vendor/inquiries/${id}/contact-failed`);
+        return res.data;
+    },
+
+    respondToInquiry: async (id: string, data: { message?: string; couponCode?: string; discountValue?: number; discountType?: string }) => {
+        const res = await apiClient.post<ApiResponse<boolean>>(`/vendor/inquiries/${id}/respond`, data);
+        return res.data;
+    },
+
+    getInquiryActivity: async (id: string) => {
+        const res = await apiClient.get<ApiResponse<any[]>>(`/vendor/inquiries/${id}/activity`);
+        return res.data;
+    },
+
     submitInquiry: async (data: { name: string; email: string; phone?: string; subject: string; message: string }) => {
         const res = await apiClient.post<ApiResponse<string>>("/vendor/inquiries/submit", data);
         return res.data;
