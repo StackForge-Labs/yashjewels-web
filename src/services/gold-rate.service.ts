@@ -1,12 +1,8 @@
 import apiClient from "@/lib/api-client";
 
-/** VND/gram rate returned by backend */
 export interface GoldRateSnapshot {
-  rate24kPerGram: number;  // VND per gram 24K
-  rate18kPerGram: number;  // VND per gram 18K (= 24K × 0.75)
-  rate24kPerChi: number;   // VND per chỉ (= gram × 3.75)
-  usdToVnd: number;        // USD → VND exchange rate
-  updatedAt: string;       // ISO timestamp
+  currentGoldRateUsd: number; // USD per gram 24K
+  updatedAt: string;          // ISO timestamp
 }
 
 export interface PriceBreakdown {
@@ -36,25 +32,17 @@ const CHI_MULTIPLIER = 3.75;
 const KARAT_18K_RATIO = 0.75;
 
 export const goldRateService = {
-  /** Fetch current VND/gram rate and derive all display values */
+  /** Fetch current USD/gram rate */
   getSnapshot: async (): Promise<GoldRateSnapshot | null> => {
     try {
-      const [rateRes, usdRes] = await Promise.all([
-        apiClient.get<any>("/gold-rates/current-gold-rate"),
-        apiClient.get<any>("/gold-rates/current-usd-rate"),
-      ]);
+      const { data: res } = await apiClient.get<any>("/gold-rates/current-gold-rate");
+      const rawRate = res?.data;
 
-      const rawRate = rateRes.data?.data;
-      const rawUsd = usdRes.data?.data;
-
-      const rate24k = typeof rawRate === 'number' ? rawRate : (rawRate?.currentGoldRateVnd || rawRate?.CurrentGoldRateVnd || 0);
-      const usdRate = typeof rawUsd === 'number' ? rawUsd : (rawUsd?.currentUsdToVndRate || rawUsd?.CurrentUsdToVndRate || 25000);
+      // The backend returns a decimal directly or wrapped in an object
+      const rateUsd = typeof rawRate === "number" ? rawRate : (rawRate?.rateUsd || rawRate?.RateUsd || 0);
 
       return {
-        rate24kPerGram: rate24k,
-        rate18kPerGram:  Math.round(rate24k * KARAT_18K_RATIO),
-        rate24kPerChi: Math.round(rate24k * CHI_MULTIPLIER),
-        usdToVnd: usdRate,
+        currentGoldRateUsd: rateUsd,
         updatedAt: new Date().toISOString(),
       };
     } catch (err) {

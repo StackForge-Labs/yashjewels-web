@@ -8,8 +8,13 @@ interface UseMrpPriceReturn {
   mrpFormatted: string | null;
 }
 
-const formatVnd = (n: number) =>
-  n.toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
+const formatUsd = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: val % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+    }).format(val);
 
 export function useMrpPrice(productId: string | undefined): UseMrpPriceReturn {
   const [breakdown, setBreakdown] = useState<PriceBreakdown | null>(null);
@@ -27,22 +32,22 @@ export function useMrpPrice(productId: string | undefined): UseMrpPriceReturn {
           productId: productId,
           styleCode: "DEMO-STYLE",
           breakdown: {
-            goldRatePerGram: 4070000,
-            goldRatePerChi: 15262500,
-            goldMaterialAmt: 8140000,
-            wastageAmt: 407000,
-            goldMakingCharge: 500000,
+            goldRatePerGram: 75,
+            goldRatePerChi: 280,
+            goldMaterialAmt: 300,
+            wastageAmt: 30,
+            goldMakingCharge: 50,
             stoneMakingCharge: 0,
             otherMakingCharge: 0,
-            stoneCharges: 10000000,
-            subtotal: 19047000,
-            vatAmt: 1904700,
-            mrp: 20951700,
+            stoneCharges: 800,
+            subtotal: 1180,
+            vatAmt: 118,
+            mrp: 1298,
             rateValidUntil: new Date().toISOString(),
-            rateSource: "Real-time Gold Market"
+            rateSource: "Real-time Gold Market (USD)"
           },
           insuranceFee: 0,
-          finalPrice: 20951700,
+          finalPrice: 1298,
           calculatedAt: new Date().toISOString()
         });
         setIsLoading(false);
@@ -60,6 +65,6 @@ export function useMrpPrice(productId: string | undefined): UseMrpPriceReturn {
   return {
     breakdown,
     isLoading,
-    mrpFormatted: breakdown ? formatVnd(breakdown.finalPrice) : null,
+    mrpFormatted: breakdown ? formatUsd(breakdown.finalPrice) : null,
   };
 }
