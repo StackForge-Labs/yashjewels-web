@@ -85,7 +85,7 @@ export default function InvoicesPage() {
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inv.invoiceNumber}</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm text-gray-500">{inv.orderId.substring(0, 8)}...</td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-semibold text-gray-700 dark:text-gray-300">{inv.buyerName}</td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inv.totalAmount.toLocaleString()} VND</td>
+                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inv.totalAmount.toLocaleString()} USD</td>
                                         <td className="px-6 py-4"><StatusBadge status={inv.status?.toString().toLowerCase() || ""} /></td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
@@ -114,21 +114,21 @@ export default function InvoicesPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="rounded-xl border border-gray-100 p-3 dark:border-gray-800"><p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">Buyer</p><p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selected.buyerName}</p></div>
                             <div className="rounded-xl border border-gray-100 p-3 dark:border-gray-800"><p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">Order ID</p><p className="mt-1 font-plus-jakarta text-xs font-bold text-gray-900 dark:text-white">{selected.orderId}</p></div>
-                            <div className="col-span-2 rounded-xl border border-gray-100 p-3 dark:border-gray-800"><p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">Sub Total</p><p className="mt-1 font-plus-jakarta text-sm font-medium text-gray-700 dark:text-gray-300">{selected.subTotal?.toLocaleString()} VND</p></div>
+                            <div className="col-span-2 rounded-xl border border-gray-100 p-3 dark:border-gray-800"><p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400">Sub Total</p><p className="mt-1 font-plus-jakarta text-sm font-medium text-gray-700 dark:text-gray-300">{selected.subTotal?.toLocaleString()} USD</p></div>
                         </div>
                         <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
                             <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400 mb-3">Finance Summary</p>
                             <div className="flex justify-between py-2 border-b border-gray-50 last:border-0 dark:border-gray-800/50">
                                 <span className="font-plus-jakarta text-sm text-gray-700 dark:text-gray-300">Sub Total</span>
-                                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selected.subTotal?.toLocaleString()} VND</span>
+                                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selected.subTotal?.toLocaleString()} USD</span>
                             </div>
                             <div className="flex justify-between py-2 border-b border-gray-50 last:border-0 dark:border-gray-800/50">
                                 <span className="font-plus-jakarta text-sm text-gray-700 dark:text-gray-300">VAT (10%)</span>
-                                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selected.taxAmount?.toLocaleString()} VND</span>
+                                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{selected.taxAmount?.toLocaleString()} USD</span>
                             </div>
                             <div className="flex justify-between pt-3 mt-1 border-t border-gray-100 dark:border-gray-800">
                                 <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Final Total</span>
-                                <span className="font-plus-jakarta text-lg font-bold text-blue-600">{selected.totalAmount?.toLocaleString()} VND</span>
+                                <span className="font-plus-jakarta text-lg font-bold text-blue-600">{selected.totalAmount?.toLocaleString()} USD</span>
                             </div>
                         </div>
                     </div>

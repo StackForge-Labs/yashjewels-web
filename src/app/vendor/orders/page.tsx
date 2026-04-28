@@ -34,8 +34,8 @@ const columns: { status: OrderStatus; label: string; icon: typeof Clock; color: 
     { status: "SHIP_PENDING", label: "Awaiting Pickup", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
 ];
 
-function formatVnd(n: number) {
-    return new Intl.NumberFormat("vi-VN").format(n) + " ₫";
+function formatUsd(n: number) {
+    return new Intl.NumberFormat("en-US").format(n) + " $";
 }
 
 function getDaysLeft(deadline?: string): { text: string; urgent: boolean } {
@@ -365,7 +365,7 @@ function OrderCard({
             <p className="font-plus-jakarta text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{displayProduct}</p>
 
             <div className="flex items-center justify-between">
-                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatVnd(order.totalAmount)}</span>
+                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatUsd(order.totalAmount)}</span>
                 {days.text && (
                     <span className={`flex items-center gap-1 font-plus-jakarta text-[10px] font-bold ${days.urgent ? "text-rose-600 dark:text-rose-400" : "text-gray-400"}`}>
                         {days.urgent && <AlertCircle className="h-3 w-3" />}
@@ -377,11 +377,11 @@ function OrderCard({
             <div className="flex flex-col gap-1.5 rounded-lg bg-gray-50/50 p-2.5 dark:bg-white/5">
                 <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deposit Paid</span>
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatVnd(order.depositAmount)}</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatUsd(order.depositAmount)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Remaining</span>
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{formatVnd(order.remainingAmount)}</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{formatUsd(order.remainingAmount)}</span>
                 </div>
             </div>
 
@@ -574,7 +574,7 @@ export default function VendorOrdersPage() {
                         { label: "Pending Approval", value: stats.pendingApproval, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
                         { label: "In Preparation", value: stats.processing, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
                         { label: "Ready to Ship", value: stats.readyToShip, icon: Truck, color: "text-emerald-600", bg: "bg-emerald-50" },
-                        { label: "Total Volume", value: formatVnd(stats.totalValue), icon: Coins, color: "text-indigo-600", bg: "bg-indigo-50" }
+                        { label: "Total Volume", value: formatUsd(stats.totalValue), icon: Coins, color: "text-indigo-600", bg: "bg-indigo-50" }
                     ].map((card, i) => (
                         <div key={i} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/70 p-5 shadow-sm backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 transition-all hover:shadow-md">
                             <div className="flex items-center justify-between">
@@ -733,7 +733,7 @@ export default function VendorOrdersPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-5">
-                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatVnd(order.totalAmount)}</p>
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatUsd(order.totalAmount)}</p>
                                                     <p className="mt-1 font-plus-jakarta text-[10px] text-gray-400 uppercase tracking-wider">Total Value</p>
                                                 </td>
                                                 <td className="px-8 py-5">

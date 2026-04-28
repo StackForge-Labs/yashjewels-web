@@ -172,7 +172,7 @@ export default function MarketingPage() {
                                         <div className="flex items-center gap-2">
                                             <TrendingDown className="h-3.5 w-3.5 text-emerald-600" />
                                             <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
-                                                {c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : `${c.discountValue.toLocaleString()} VND`}
+                                                {c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : `${c.discountValue.toLocaleString()} USD`}
                                             </span>
                                         </div>
                                     </td>
@@ -238,16 +238,16 @@ export default function MarketingPage() {
                         <FormField label="Discount Type">
                             <select className={selectCls} {...register("discountType")}>
                                 <option value="0">Percentage (%)</option>
-                                <option value="1">Fixed Amount (VND)</option>
+                                <option value="1">Fixed Amount (USD)</option>
                                 <option value="2">Free Shipping</option>
                             </select>
                         </FormField>
-                        <FormField label={discountType === "0" ? "Discount (%)" : "Discount (VND)"} required>
+                        <FormField label={discountType === "0" ? "Discount (%)" : "Discount (USD)"} required>
                             <input type="number" className={inputCls} placeholder={discountType === "PERCENTAGE" ? "10" : "500000"} {...register("discountValue")} />
                         </FormField>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Min Order Amount (VND)">
+                        <FormField label="Min Order Amount (USD)">
                             <input type="number" className={inputCls} {...register("minOrderAmount")} />
                         </FormField>
                         <FormField label="Max Total Uses">

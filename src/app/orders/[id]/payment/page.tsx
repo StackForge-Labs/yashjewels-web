@@ -43,8 +43,8 @@ interface PaymentIntentData {
   amountVnd?: number;
 }
 
-const formatVND = (v: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(v);
+const formatUSD = (v: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 
 // ─── Stripe sub-form ─────────────────────────────────────────────────────────
 function StripeForm({ orderId, amount, paymentType }: { orderId: string; amount: number; paymentType: string }) {
@@ -84,7 +84,7 @@ function StripeForm({ orderId, amount, paymentType }: { orderId: string; amount:
         {processing ? (
           <><RefreshCw size={14} className="animate-spin" /> Processing...</>
         ) : (
-          <>{paymentType === "BALANCE" ? "Pay Balance" : "Pay Deposit"} · {formatVND(amount)} <ArrowRight size={14} /></>
+          <>{paymentType === "BALANCE" ? "Pay Balance" : "Pay Deposit"} · {formatUSD(amount)} <ArrowRight size={14} /></>
         )}
       </button>
       <p className="flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
@@ -131,7 +131,7 @@ function PayPalForm({ approvalUrl, payPalOrderId, orderId, amount }: {
           </svg>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
-          You will be redirected to PayPal to complete payment of <span className="font-bold text-gray-900 dark:text-white">{formatVND(amount)}</span>.
+          You will be redirected to PayPal to complete payment of <span className="font-bold text-gray-900 dark:text-white">{formatUSD(amount)}</span>.
         </p>
         <p className="text-xs text-gray-400">Amount will be converted to USD at live exchange rate.</p>
       </div>
@@ -155,8 +155,8 @@ function PayPalForm({ approvalUrl, payPalOrderId, orderId, amount }: {
 }
 
 // ─── SePay QR sub-form ────────────────────────────────────────────────────────
-function SePayForm({ qrImageUrl, transactionCode, amountVnd, orderId }: {
-  qrImageUrl: string; transactionCode: string; amountVnd: number; orderId: string;
+function SePayForm({ qrImageUrl, transactionCode, amountVnd, amountUsd, orderId }: {
+  qrImageUrl: string; transactionCode: string; amountVnd: number; amountUsd: number; orderId: string;
 }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -250,8 +250,15 @@ function SePayForm({ qrImageUrl, transactionCode, amountVnd, orderId }: {
         </div>
 
         {/* Amount badge */}
-        <div className="mt-4 rounded-xl bg-gold px-6 py-2.5 shadow-lg shadow-gold/20">
-          <span className="text-lg font-black text-white tracking-tight">{formatVND(amountVnd)}</span>
+        <div className="mt-4 flex flex-col items-center gap-1">
+          <div className="rounded-xl bg-emerald-600 px-6 py-2.5 shadow-lg shadow-emerald-500/20">
+            <span className="text-lg font-black text-white tracking-tight">
+              {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amountVnd)}
+            </span>
+          </div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+            Equivalent to {formatUSD(amountUsd)}
+          </p>
         </div>
 
         {/* Pulse indicator */}
@@ -294,7 +301,7 @@ function SePayForm({ qrImageUrl, transactionCode, amountVnd, orderId }: {
         <p className="text-xs font-bold text-gray-700 dark:text-gray-200">How to pay:</p>
         {[
           "Open your banking app and scan the QR code above",
-          `Enter amount: ${formatVND(amountVnd)}`,
+          `Enter exact amount: ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amountVnd)}`,
           `Add the transfer note: "${transactionCode}"`,
           "Confirm the transfer — this page will update automatically",
         ].map((step, i) => (
@@ -356,7 +363,7 @@ const GATEWAYS = [
   {
     id: "sepay" as Gateway,
     label: "VietQR / Bank Transfer",
-    sub: "SePay · VND",
+    sub: "SePay · USD",
     icon: QrCode,
     color: "from-emerald-500/10 to-teal-500/10",
     border: "border-emerald-500/30",
@@ -577,7 +584,7 @@ export default function OrderPaymentPage() {
                 {amount > 0 && (
                   <div className="ml-auto text-right shrink-0">
                     <p className="text-[10px] text-gray-400 uppercase tracking-widest">Amount</p>
-                    <p className="font-bold text-gray-900 dark:text-white text-base">{formatVND(amount)}</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-base">{formatUSD(amount)}</p>
                   </div>
                 )}
               </div>
@@ -625,7 +632,8 @@ export default function OrderPaymentPage() {
                     <SePayForm
                       qrImageUrl={intentData.sePayQrImageUrl}
                       transactionCode={intentData.sePayTransactionCode!}
-                      amountVnd={intentData.amountVnd ?? amount}
+                      amountVnd={intentData.amountVnd ?? 0}
+                      amountUsd={intentData.depositAmount}
                       orderId={id}
                     />
                   )}

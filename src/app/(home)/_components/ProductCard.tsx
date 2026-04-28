@@ -210,7 +210,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     isDynamic ? (
                         breakdown && (
                             <p className="text-[9px] font-medium tracking-wider text-gray-400 uppercase dark:text-gray-500">
-                                Gold {(breakdown.breakdown.goldRatePerGram / 1000).toFixed(0)}K ₫/g · VAT incl.
+                                Gold @ {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(breakdown.breakdown.goldRatePerGram)}/g · VAT Incl.
                             </p>
                         )
                     ) : (

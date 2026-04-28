@@ -75,7 +75,7 @@ export default function CheckoutPage() {
         }
     }, [selectedAddress]);
 
-    // Handle COD constraints (Limit 2,000,000 VND)
+    // Handle COD constraints (Limit 2,000,000 USD)
     useEffect(() => {
         const insuranceFee = getInsuranceFee(insurance);
         const grandTotal = cart.totalLiveMrp + insuranceFee;
@@ -85,7 +85,7 @@ export default function CheckoutPage() {
     }, [insurance, cart.totalLiveMrp, payment]);
 
     const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
     };
 
     // Calculate dynamic insurance fees based on cart total
@@ -118,7 +118,7 @@ export default function CheckoutPage() {
         const priority = type === "priority";
         if (isInternational) {
             return {
-                cost: 5000000 + (priority ? 1000000 : 0),
+                cost: 500 + (priority ? 1000000 : 0),
                 method: priority ? "Priority Global Express" : "International VIP Transport",
                 description: priority ? "Next-flight-out Secure Air Transport" : "FedEx/DHL Secure Transport with Insurance",
                 eta: priority ? "3 - 5 Business Days" : "7 - 10 Business Days",
@@ -179,8 +179,8 @@ export default function CheckoutPage() {
 
     // Calculate dynamic deposit based on exact backend logic
     const getDepositRequired = () => {
-        if (grandTotal >= 50000000) return grandTotal; // 100%
-        if (grandTotal >= 10000000) return grandTotal * 0.5; // 50%
+        if (grandTotal >= 5000) return grandTotal; // 100%
+        if (grandTotal >= 1000) return grandTotal * 0.5; // 50%
         return grandTotal * 0.3; // 30%
     };
     const depositAmount = getDepositRequired();
@@ -308,7 +308,7 @@ export default function CheckoutPage() {
     };
 
     // Conditional render for Level 1 KYC
-    if (grandTotal >= 5000000 && !isKycApproved) {
+    if (grandTotal >= 500 && !isKycApproved) {
         return (
             <>
                 <PageHero
@@ -324,7 +324,7 @@ export default function CheckoutPage() {
                             </div>
                             <h2 className="font-serif text-3xl text-gray-900 dark:text-white">Security Check</h2>
                             <p className="mt-4 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-                                To protect our clients and maintain the integrity of our Maison, we require identity verification for all jewelry purchases over <span className="font-bold text-gray-900 dark:text-white">5,000,000 VND</span>.
+                                To protect our clients and maintain the integrity of our Maison, we require identity verification for all jewelry purchases over <span className="font-bold text-gray-900 dark:text-white">5,000,000 USD</span>.
                             </p>
 
                             <div className="mt-10 flex flex-col gap-4">
@@ -467,7 +467,7 @@ export default function CheckoutPage() {
                                                     <div className="text-left md:text-right shrink-0 mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-200 dark:border-white/10 w-full md:w-auto">
                                                         <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Shipping Fee</div>
                                                         <div className="text-xl font-light text-gray-900 dark:text-white">
-                                                            {shippingEstimate.cost === 0 ? "FREE" : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'VND' }).format(shippingEstimate.cost)}
+                                                            {shippingEstimate.cost === 0 ? "FREE" : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(shippingEstimate.cost)}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -573,7 +573,7 @@ export default function CheckoutPage() {
                                     {[
                                         { id: "card", title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX", disabled: false },
                                         { id: "bank", title: "Bank Transfer", desc: "Direct bank transfer with auto-verification", disabled: false },
-                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 VND", disabled: grandTotal > 2000000 },
+                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 USD", disabled: grandTotal > 2000000 },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
@@ -614,7 +614,7 @@ export default function CheckoutPage() {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
                                             {isGift
                                                 ? "As the sender, you are responsible for the deposit. The recipient will receive the gift fully paid once you complete the final balance."
-                                                : "For orders above 10,000,000 VND, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order."}
+                                                : "For orders above 10,000,000 USD, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order."}
                                         </p>
                                         <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
                                             <span>To Pay Now:</span>
@@ -869,7 +869,7 @@ export default function CheckoutPage() {
                             </div>
                             <h3 className="font-serif text-2xl text-gray-900 dark:text-white mb-2">Biometric Verification</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-                                As your order value exceeds 20,000,000 VND, we require a quick face scan to ensure your identity matches your KYC record.
+                                As your order value exceeds 20,000,000 USD, we require a quick face scan to ensure your identity matches your KYC record.
                             </p>
 
                             <div className="w-full mb-8">

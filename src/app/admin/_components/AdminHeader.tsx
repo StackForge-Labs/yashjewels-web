@@ -30,7 +30,7 @@ export default function AdminHeader({ onToggleSidebar, onToggleCollapse, isColla
     }, []);
 
     const mockNotifications = [
-        { id: 1, type: 'order', title: 'New High-Value Order', desc: 'Order #ORD-8829 (52,000,000 VND) requires review.', time: '2 mins ago', icon: <ShoppingBag className="h-4 w-4 text-blue-600" />, bg: 'bg-blue-50' },
+        { id: 1, type: 'order', title: 'New High-Value Order', desc: 'Order #ORD-8829 (52,000,000 USD) requires review.', time: '2 mins ago', icon: <ShoppingBag className="h-4 w-4 text-blue-600" />, bg: 'bg-blue-50' },
         { id: 2, type: 'kyc', title: 'KYC Document Uploaded', desc: 'Customer "James Sterling" uploaded ID for verification.', time: '15 mins ago', icon: <ShieldCheck className="h-4 w-4 text-emerald-600" />, bg: 'bg-emerald-50' },
         { id: 3, type: 'inventory', title: 'Stock Alert', desc: 'Classic Solitaire Diamond Ring is running low (2 left).', time: '1 hour ago', icon: <AlertTriangle className="h-4 w-4 text-amber-600" />, bg: 'bg-amber-50' },
         { id: 4, type: 'system', title: 'System Update', desc: 'Maison de Yash v2.4 successfully deployed.', time: '5 hours ago', icon: <CheckCircle2 className="h-4 w-4 text-purple-600" />, bg: 'bg-purple-50' },
