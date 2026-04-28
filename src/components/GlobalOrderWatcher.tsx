@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { orderService, OrderDetailDto } from "@/services/order.service";
+import { orderService, OrderDto } from "@/services/order.service";
 import { AlertTriangle, Clock, Truck, ShieldAlert, X, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function GlobalOrderWatcher() {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.user);
-    const [urgentOrder, setUrgentOrder] = useState<OrderDetailDto | null>(null);
+    const [urgentOrder, setUrgentOrder] = useState<OrderDto | null>(null);
     const [dismissedOrders, setDismissedOrders] = useState<string[]>([]);
     const pathname = usePathname();
 

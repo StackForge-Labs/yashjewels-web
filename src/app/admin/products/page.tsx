@@ -5,7 +5,7 @@ import {
     Plus, Search, Package, Edit3, X, Gem, TrendingUp, Filter,
     Trash2, CheckCircle2, AlertCircle, Loader2, Save, Image as ImageIcon,
     LayoutGrid, List, ChevronLeft, ChevronRight, Settings2, Trash, Star, Upload, Info, Wand2, Lock,
-    RefreshCcw, EyeOff
+    RefreshCcw, EyeOff, FileJson
 } from "lucide-react";
 import { toast } from "sonner";
 import { productService } from "@/services/product.service";
@@ -313,7 +313,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
             } else {
                 const res = await productService.create(formData);
                 if (res.success) {
-                    const newId = res.data?.id || res.data.id; // Support different response formats
+                    const newId = res.data?.id; 
                     if (newId && selectedFiles.length > 0) {
                         toast.loading("Uploading staged images...");
                         await productService.uploadImages(newId, selectedFiles as any);
@@ -800,6 +800,23 @@ export default function AdminProductsPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [showDeleted, setShowDeleted] = useState(false);
 
+    // Advanced Filter state
+    const [showFilterPanel, setShowFilterPanel] = useState(false);
+    const [filterBrandId, setFilterBrandId] = useState("");
+    const [filterJewelTypeId, setFilterJewelTypeId] = useState("");
+    const [filterProductTypeId, setFilterProductTypeId] = useState("");
+    const [filterMinPrice, setFilterMinPrice] = useState("");
+    const [filterMaxPrice, setFilterMaxPrice] = useState("");
+    const [filterSortBy, setFilterSortBy] = useState("");
+    const [filterInStock, setFilterInStock] = useState(false);
+
+    // Catalog lists for filter dropdowns
+    const [brands, setBrands] = useState<any[]>([]);
+    const [filterJewelTypes, setFilterJewelTypes] = useState<any[]>([]);
+    const [filterProductTypes, setFilterProductTypes] = useState<any[]>([]);
+
+    // Derived: count active non-basic filters
+    const activeFilterCount = [filterBrandId, filterJewelTypeId, filterProductTypeId, filterMinPrice, filterMaxPrice, filterSortBy, filterInStock ? "x" : ""].filter(Boolean).length;
     // Modals
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -808,27 +825,115 @@ export default function AdminProductsPage() {
     const [restoreLoading, setRestoreLoading] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState<string | undefined>();
 
+    const clearAdvancedFilters = () => {
+        setFilterBrandId("");
+        setFilterJewelTypeId("");
+        setFilterProductTypeId("");
+        setFilterMinPrice("");
+        setFilterMaxPrice("");
+        setFilterSortBy("");
+        setFilterInStock(false);
+    };
+
+    const handleExport = async () => {
+        try {
+            const toastId = toast.loading("Preparing CSV export...");
+            // Fetch a larger page size for export, keeping current filters
+            const params = {
+                page: 1,
+                pageSize: 1000,
+                searchQuery: searchQuery || undefined,
+                categoryId: categoryId || undefined,
+                brandId: filterBrandId || undefined,
+                jewelTypeId: filterJewelTypeId || undefined,
+                productTypeId: filterProductTypeId || undefined,
+                minPrice: filterMinPrice ? Number(filterMinPrice) : undefined,
+                maxPrice: filterMaxPrice ? Number(filterMaxPrice) : undefined,
+                sortBy: filterSortBy || undefined,
+                inStock: filterInStock ? true : undefined,
+                onlyDeleted: showDeleted
+            };
+            
+            const res = await productService.getAll(params);
+            if (res && res.data && res.data.length > 0) {
+                const data = res.data;
+                const headers = ["ID", "Name", "Style Code", "Category", "Brand", "Estimated Price", "Stock", "Status", "Created At"];
+                const csvContent = [
+                    headers.join(","),
+                    ...data.map(p => [
+                        p.id,
+                        `"${(p.name || '').replace(/"/g, '""')}"`,
+                        p.styleCode || "",
+                        p.categoryName || "",
+                        p.brandName || "",
+                        p.estimatedFinalPrice || 0,
+                        p.quantity || 0,
+                        p.status || "",
+                        p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ""
+                    ].join(","))
+                ].join("\n");
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `yashjewels_products_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success("Catalog exported successfully", { id: toastId });
+            } else {
+                toast.error("No data found to export", { id: toastId });
+            }
+        } catch (error) {
+            console.error("Export failed", error);
+            toast.error("Failed to export products");
+        }
+    };
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
-        const params = {
-            page,
-            pageSize: 10,
-            searchQuery: searchQuery || undefined,
-            categoryId: categoryId || undefined,
-            onlyDeleted: showDeleted
-        };
-        const res = await productService.getAll(params);
-        if (res) {
-            setProducts(res.data);
-            setTotalCount(res.totalCount);
-        }
-        setLoading(false);
-    }, [page, searchQuery, categoryId, showDeleted]);
+        try {
+            const params = {
+                page,
+                pageSize: 10,
+                searchQuery: searchQuery || undefined,
+                categoryId: categoryId || undefined,
+                brandId: filterBrandId || undefined,
+                jewelTypeId: filterJewelTypeId || undefined,
+                productTypeId: filterProductTypeId || undefined,
+                minPrice: filterMinPrice ? Number(filterMinPrice) : undefined,
+                maxPrice: filterMaxPrice ? Number(filterMaxPrice) : undefined,
+                sortBy: filterSortBy || undefined,
+                inStock: filterInStock ? true : undefined,
+                onlyDeleted: showDeleted
+            };
 
+            const res = await productService.getAll(params);
+            if (res) {
+                setProducts(res.data);
+                setTotalCount(res.totalCount);
+            }
+        } catch (error) {
+            console.error("Failed to fetch products", error);
+            toast.error("Connection error. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    }, [page, searchQuery, categoryId, filterBrandId, filterJewelTypeId, filterProductTypeId, filterMinPrice, filterMaxPrice, filterSortBy, filterInStock, showDeleted]);
+
+    // Initial metadata load
+    useEffect(() => {
+        categoryService.getAll().then(setCategories);
+        catalogService.brands.getAll().then(res => res.success && setBrands(res.data));
+        catalogService.jewelTypes.getAll().then(res => res.success && setFilterJewelTypes(res.data));
+        catalogService.productTypes.getAll().then(res => res.success && setFilterProductTypes(res.data));
+    }, []);
+
+    // Data load when filters change
     useEffect(() => {
         fetchProducts();
-        categoryService.getAll().then(setCategories);
     }, [fetchProducts]);
 
     const handleDelete = async () => {
@@ -921,46 +1026,185 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Filtering & Toolbar */}
-            <div className="flex flex-col gap-4 rounded-3xl border border-gray-100 bg-white/50 p-4 backdrop-blur-xl dark:border-gray-800/50 dark:bg-[#0a0a0a]/50 lg:flex-row lg:items-center">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search by Product Name, Style Code, or SKU..."
-                        className="w-full rounded-2xl border border-gray-100 bg-white px-11 py-3 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:outline-none dark:border-gray-800 dark:bg-[#111]"
-                    />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <select
-                        value={categoryId}
-                        onChange={(e) => setCategoryId(e.target.value)}
-                        className="rounded-2xl border border-gray-100 bg-white px-4 py-3 font-plus-jakarta text-xs font-bold text-gray-600 outline-none dark:border-gray-800 dark:bg-[#111] dark:text-gray-400"
-                    >
-                        <option value="">All Categories</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                    <button
-                        onClick={() => setShowDeleted(!showDeleted)}
-                        className={`flex items-center gap-2 rounded-2xl px-4 py-3 font-plus-jakarta text-xs font-bold transition-all ${showDeleted
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
-                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+            <div className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white/50 p-4 backdrop-blur-xl dark:border-gray-800/50 dark:bg-[#0a0a0a]/50">
+                {/* Top bar */}
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                            value={searchQuery}
+                            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                            placeholder="Search by Product Name, Style Code, or SKU..."
+                            className="w-full rounded-2xl border border-gray-100 bg-white px-11 py-3 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:outline-none dark:border-gray-800 dark:bg-[#111]"
+                        />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <select
+                            value={categoryId}
+                            onChange={(e) => { setCategoryId(e.target.value); setPage(1); }}
+                            className="rounded-2xl border border-gray-100 bg-white px-4 py-3 font-plus-jakarta text-xs font-bold text-gray-600 outline-none dark:border-gray-800 dark:bg-[#111] dark:text-gray-400"
+                        >
+                            <option value="">All Categories</option>
+                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                        <button
+                            onClick={() => setShowDeleted(!showDeleted)}
+                            className={`flex items-center gap-2 rounded-2xl px-4 py-3 font-plus-jakarta text-xs font-bold transition-all ${showDeleted ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}
+                        >
+                            {showDeleted ? <Package className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            {showDeleted ? "Viewing Archive" : "Show Archive"}
+                        </button>
+                        <button
+                            onClick={() => setShowFilterPanel(v => !v)}
+                            className={`relative flex items-center gap-2 rounded-2xl px-4 py-3 font-plus-jakarta text-xs font-bold transition-all ${
+                                showFilterPanel || activeFilterCount > 0
+                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
                             }`}
-                        title={showDeleted ? "Hide archived designs" : "Show archived designs"}
-                    >
-                        {showDeleted ? <Package className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        {showDeleted ? "Viewing Archive" : "Show Archive"}
-                    </button>
-                    <button
-                        onClick={() => toast.info("Advanced filtering coming soon in the next update!")}
-                        className="flex items-center gap-2 rounded-2xl bg-gray-100 px-4 py-3 font-plus-jakarta text-xs font-bold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                    >
-                        <Filter className="h-4 w-4" /> Advance Filters
-                    </button>
-                    <button onClick={fetchProducts} className="rounded-2xl bg-blue-50 p-3 text-blue-600 transition-all hover:bg-blue-100 dark:bg-blue-500/10">
-                        <TrendingUp className="h-4 w-4" />
-                    </button>
+                        >
+                            <Filter className="h-4 w-4" />
+                            Advanced Filters
+                            {activeFilterCount > 0 && (
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] font-black text-blue-600">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-plus-jakarta text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400"
+                            title="Export to CSV"
+                        >
+                            <FileJson className="h-4 w-4" />
+                            Export
+                        </button>
+                        <button onClick={fetchProducts} className="rounded-2xl bg-blue-50 p-3 text-blue-600 transition-all hover:bg-blue-100 dark:bg-blue-500/10">
+                            <TrendingUp className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
+
+                {/* Advanced Filter Panel */}
+                {showFilterPanel && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-5 dark:border-blue-900/30 dark:bg-blue-950/20">
+                            <div className="mb-4 flex items-center justify-between">
+                                <span className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-blue-600">Advanced Filters</span>
+                                {activeFilterCount > 0 && (
+                                    <button
+                                        onClick={clearAdvancedFilters}
+                                        className="font-plus-jakarta text-[10px] font-bold text-rose-500 hover:text-rose-600 transition-colors"
+                                    >
+                                        Clear All ({activeFilterCount})
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                                {/* Brand */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Brand</label>
+                                    <select
+                                        value={filterBrandId}
+                                        onChange={(e) => { setFilterBrandId(e.target.value); setPage(1); }}
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    >
+                                        <option value="">All Brands</option>
+                                        {brands.map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Jewel Type */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Material</label>
+                                    <select
+                                        value={filterJewelTypeId}
+                                        onChange={(e) => { setFilterJewelTypeId(e.target.value); setPage(1); }}
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    >
+                                        <option value="">All Materials</option>
+                                        {filterJewelTypes.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Product Type */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Collection</label>
+                                    <select
+                                        value={filterProductTypeId}
+                                        onChange={(e) => { setFilterProductTypeId(e.target.value); setPage(1); }}
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    >
+                                        <option value="">All Collections</option>
+                                        {filterProductTypes.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Min Price */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Min Price (₫)</label>
+                                    <input
+                                        type="number"
+                                        value={filterMinPrice}
+                                        onChange={(e) => { setFilterMinPrice(e.target.value); setPage(1); }}
+                                        placeholder="e.g. 5000000"
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    />
+                                </div>
+
+                                {/* Max Price */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Max Price (₫)</label>
+                                    <input
+                                        type="number"
+                                        value={filterMaxPrice}
+                                        onChange={(e) => { setFilterMaxPrice(e.target.value); setPage(1); }}
+                                        placeholder="e.g. 100000000"
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    />
+                                </div>
+
+                                {/* Sort By */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Sort By</label>
+                                    <select
+                                        value={filterSortBy}
+                                        onChange={(e) => { setFilterSortBy(e.target.value); setPage(1); }}
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    >
+                                        <option value="">Default</option>
+                                        <option value="price_asc">Price: Low → High</option>
+                                        <option value="price_desc">Price: High → Low</option>
+                                        <option value="newest">Newest First</option>
+                                        <option value="popular">Most Viewed</option>
+                                        <option value="sold">Best Selling</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* In-stock toggle */}
+                            <div className="mt-4 flex items-center gap-3">
+                                <button
+                                    onClick={() => { setFilterInStock(v => !v); setPage(1); }}
+                                    className={`relative flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+                                        filterInStock ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700"
+                                    }`}
+                                >
+                                    <span className={`absolute h-3.5 w-3.5 rounded-full bg-white shadow transition-all ${
+                                        filterInStock ? "left-[18px]" : "left-[3px]"
+                                    }`} />
+                                </button>
+                                <span className="font-plus-jakarta text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                    In-stock only
+                                </span>
+                                {activeFilterCount > 0 && (
+                                    <span className="ml-auto font-plus-jakarta text-[10px] text-blue-600">
+                                        {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""} active
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Table Area */}
