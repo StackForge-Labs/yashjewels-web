@@ -193,6 +193,9 @@ export interface InquiryAuditLogDto {
     inquiryStatus?: string;
     inquiryCreatedAt?: string;
     couponCode?: string;
+    replyMessage?: string;
+    discountValue?: number;
+    vendorName?: string;
 }
 
 export const getInquiryLogsApi = (params?: { vendorId?: string; action?: string; from?: string; to?: string }) => {

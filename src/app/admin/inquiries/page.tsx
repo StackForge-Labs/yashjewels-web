@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Shield, Tag, CheckCircle2, Clock, User, Mail, Phone, ChevronDown, RefreshCcw, FileText, Activity, X, MessageSquare, Globe, Ticket, Eye, Send, PhoneOff } from "lucide-react";
+import { Search, Shield, Tag, CheckCircle2, Clock, User, Mail, Phone, ChevronDown, RefreshCcw, FileText, Activity, X, MessageSquare, Ticket, Eye, Send, PhoneOff } from "lucide-react";
 import { adminService, InquiryAuditLogDto } from "@/services/admin.service";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -46,7 +46,6 @@ function DetailDrawer({ log, onClose }: { log: InquiryAuditLogDto; onClose: () =
                             </div>
                         </div>
                         <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Action Time" value={format(new Date(log.createdAt), "dd MMM yyyy, HH:mm:ss")} />
-                        <InfoRow icon={<Globe className="h-3.5 w-3.5" />} label="IP Address" value={log.ipAddress || "—"} />
                         <div className="pt-1"><Badge action={log.action} /></div>
                     </Section>
 
@@ -80,12 +79,32 @@ function DetailDrawer({ log, onClose }: { log: InquiryAuditLogDto; onClose: () =
                         </div>
                     </Section>
 
-                    {/* Section: Vendor Response — placeholder */}
-                    <Section title="Vendor Response">
-                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/30 p-4 dark:border-gray-700 dark:bg-gray-900/30">
-                            <p className="font-plus-jakarta text-xs text-gray-400 italic">Response feature coming soon — will be updated on vendor side.</p>
-                        </div>
-                    </Section>
+                    {/* Section: Vendor Response */}
+                    {(log.replyMessage || log.action === "REPLY_INQUIRY" || log.action === "RESPOND_WITH_COUPON" || log.action === "CONTACT_FAILED") ? (
+                        <Section title="Vendor Response">
+                            {log.replyMessage ? (
+                                <div>
+                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Reply Message</p>
+                                    <div className="rounded-xl border-l-4 border-blue-400 bg-blue-50/30 p-4 dark:bg-blue-500/5">
+                                        <p className="font-plus-jakarta text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                                            {log.replyMessage}
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : log.action === "CONTACT_FAILED" ? (
+                                <div className="flex items-center gap-3 rounded-xl bg-rose-50/50 border border-rose-100 p-4 dark:bg-rose-500/5 dark:border-rose-500/20">
+                                    <PhoneOff className="h-5 w-5 text-rose-500 shrink-0" />
+                                    <p className="font-plus-jakarta text-xs text-rose-600 dark:text-rose-400">Customer was marked as unreachable. A resubmit notification was sent.</p>
+                                </div>
+                            ) : (
+                                <p className="font-plus-jakarta text-xs text-gray-400 italic">No reply message included.</p>
+                            )}
+                        </Section>
+                    ) : (
+                        <Section title="Vendor Response">
+                            <p className="font-plus-jakarta text-xs text-gray-400 italic">No response recorded for this action.</p>
+                        </Section>
+                    )}
 
                     {/* Section: Coupon */}
                     {log.couponCode ? (
@@ -96,13 +115,18 @@ function DetailDrawer({ log, onClose }: { log: InquiryAuditLogDto; onClose: () =
                                 </div>
                                 <div>
                                     <p className="font-mono text-lg font-extrabold text-amber-700 dark:text-amber-400 tracking-wider">{log.couponCode}</p>
-                                    <p className="font-plus-jakarta text-[10px] text-gray-400">Sent to {log.customerEmail}</p>
+                                    <div className="flex items-center gap-2">
+                                        {log.discountValue && (
+                                            <span className="font-plus-jakarta text-xs font-bold text-amber-600">Discount: ${log.discountValue}</span>
+                                        )}
+                                        <span className="font-plus-jakarta text-[10px] text-gray-400">Sent to {log.customerEmail}</span>
+                                    </div>
                                 </div>
                             </div>
                         </Section>
-                    ) : log.action === "RESOLVE_INQUIRY" ? (
+                    ) : (log.action === "RESOLVE_INQUIRY" || log.action === "REPLY_INQUIRY" || log.action === "CONTACT_FAILED") ? (
                         <Section title="Coupon">
-                            <p className="font-plus-jakarta text-xs text-gray-400">No coupon was issued for this inquiry.</p>
+                            <p className="font-plus-jakarta text-xs text-gray-400">No coupon was issued for this action.</p>
                         </Section>
                     ) : null}
                 </div>
