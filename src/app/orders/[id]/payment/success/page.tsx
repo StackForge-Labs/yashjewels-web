@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle, ArrowRight, Package, Calendar } from "lucide-react";
+import { CheckCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function PaymentSuccessPage() {
@@ -105,30 +105,6 @@ export default function PaymentSuccessPage() {
       <p className="text-lg text-gray-600 mb-12 max-w-lg mx-auto">
         Thank you for your order. We've received your deposit and our craftsmen are getting started on your piece.
       </p>
-
-      <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm mb-12 text-left">
-        <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
-          <Package className="text-gold" size={20} />
-          Order Summary
-        </h3>
-        
-        <div className="space-y-4">
-          <div className="flex justify-between py-3 border-b border-gray-50">
-            <span className="text-gray-500">Order ID</span>
-            <span className="font-mono font-medium text-gray-900">#{id?.toString().slice(0, 8).toUpperCase()}</span>
-          </div>
-          <div className="flex justify-between py-3 border-b border-gray-50">
-            <span className="text-gray-500">Status</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Paid
-            </span>
-          </div>
-          <div className="flex justify-between py-3">
-            <span className="text-gray-500">Processing Time</span>
-            <span className="text-gray-900">3-5 Business Days</span>
-          </div>
-        </div>
-      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link

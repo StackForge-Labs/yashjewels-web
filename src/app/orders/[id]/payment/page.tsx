@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -178,7 +179,8 @@ function SePayForm({ qrImageUrl, transactionCode, amountVnd, orderId }: {
         if (response.success && response.data) {
           const status = response.data.status.toLowerCase();
           // Redirect if any 'paid' status is detected
-          if (["deposit_paid", "processing", "full_payment_paid", "fully_paid", "delivered"].includes(status)) {
+          const successStatuses = ["deposit_paid", "depositpaid", "confirmed", "fully_paid", "fullypaid", "preparing", "ship_pending", "shippending", "shipped", "delivered", "completed"];
+          if (successStatuses.includes(status)) {
             setPolling(false);
             toast.success("Payment detected! Redirecting...");
             router.push(`/orders/${orderId}/payment/success`);
@@ -197,13 +199,19 @@ function SePayForm({ qrImageUrl, transactionCode, amountVnd, orderId }: {
     setSimulating(true);
     try {
       // Simulate SePay Webhook call to Backend
-      const response = await axiosInstance.post("/payments/webhook/sepay", {
+      // Use plain axios to bypass the global auth interceptor
+      const response = await axios.post((process.env.NEXT_PUBLIC_API_URL || "http://localhost:5066/api/v1") + "/payments/webhook/sepay", {
         content: transactionCode,
         transferAmount: amountVnd,
         transferType: "in",
         gateway: "VCB", // Mock bank
         id: Math.floor(Math.random() * 1000000).toString(),
         transferDate: new Date().toISOString()
+      }, {
+        headers: {
+          // Send the test API Key so backend accepts the simulation
+          "Authorization": "Bearer spsk_test_Rn2B6MKVeMNL4szCmietc23FBBJCq1DE"
+        }
       });
 
       if (response.status === 200) {
@@ -231,12 +239,12 @@ function SePayForm({ qrImageUrl, transactionCode, amountVnd, orderId }: {
           <img
             src={qrImageUrl}
             alt="VietQR Payment Code"
-            width={220}
-            height={220}
+            width={300}
+            height={300}
             className="block"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
-                `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(transactionCode)}&bgcolor=ffffff&color=000000&margin=10`;
+                `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(transactionCode)}&bgcolor=ffffff&color=000000&margin=10`;
             }}
           />
         </div>
@@ -376,7 +384,7 @@ export default function OrderPaymentPage() {
     if (!isHydrated || !id) return;
 
     const token = getAccessToken();
-    const hubUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5066").replace("/api/v1", "") + "/hubs/order";
+    const hubUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5066").replace("/api/v1", "") + "/hubs/orders";
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
@@ -398,8 +406,9 @@ export default function OrderPaymentPage() {
     connection.on("ReceiveOrderStatusUpdate", (data: any) => {
       console.log("Realtime Update Received:", data);
       const status = data.newStatus?.toLowerCase();
-      if (status === "deposit_paid" || status === "processing" || status === "full_payment_paid" || status === "fully_paid") {
-        toast.success("Payment confirmed! Finishing your order...");
+      const successStatuses = ["deposit_paid", "depositpaid", "confirmed", "fully_paid", "fullypaid", "preparing", "ship_pending", "shippending", "shipped", "delivered", "completed"];
+      if (successStatuses.includes(status)) {
+        toast.success(data.message || "Payment confirmed! Finishing your order...");
         setTimeout(() => {
           router.push(`/orders/${id}/payment/success`);
         }, 1500);
