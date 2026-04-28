@@ -281,38 +281,42 @@ export default function OrderTimelinePage() {
                         <ArrowLeft size={14} /> Back to Maison
                     </button>
 
-                    {/* ── Resume Payment Banner (DEPOSIT_PENDING / FULL_PAYMENT_PENDING / AWAITING_FULL_PAYMENT) ── */}
-                    {(order.status === "DEPOSIT_PENDING" || order.status === "FULL_PAYMENT_PENDING" || order.status === "AWAITING_FULL_PAYMENT") && (
+                    {/* ── Resume Payment Banner (DEPOSIT_PENDING / FULL_PAYMENT_PENDING / AWAITING_FULL_PAYMENT / PAYMENT_FAILED) ── */}
+                    {(order.status === "DEPOSIT_PENDING" || order.status === "FULL_PAYMENT_PENDING" || order.status === "AWAITING_FULL_PAYMENT" || order.status === "PAYMENT_FAILED") && (
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mb-8 rounded-3xl border border-amber-200 bg-amber-50 p-8 shadow-lg shadow-amber-500/10 dark:border-amber-900/30 dark:bg-amber-950/20"
+                            className={`mb-8 rounded-3xl border p-8 shadow-lg ${order.status === "PAYMENT_FAILED" ? "border-rose-200 bg-rose-50 shadow-rose-500/10 dark:border-rose-900/30 dark:bg-rose-950/20" : "border-amber-200 bg-amber-50 shadow-amber-500/10 dark:border-amber-900/30 dark:bg-amber-950/20"}`}
                         >
                             <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/30">
-                                        <Wallet size={28} />
+                                    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg ${order.status === "PAYMENT_FAILED" ? "bg-rose-500 shadow-rose-500/30" : "bg-amber-500 shadow-amber-500/30"}`}>
+                                        {order.status === "PAYMENT_FAILED" ? <AlertCircle size={28} /> : <Wallet size={28} />}
                                     </div>
                                     <div>
-                                        <h3 className="font-serif text-xl text-amber-900 dark:text-amber-400">
+                                        <h3 className={`font-serif text-xl ${order.status === "PAYMENT_FAILED" ? "text-rose-900 dark:text-rose-400" : "text-amber-900 dark:text-amber-400"}`}>
                                             {order.status === "DEPOSIT_PENDING" ? "Deposit Payment Pending" : 
-                                             order.status === "AWAITING_FULL_PAYMENT" ? "Balance Payment Required" : "Payment Pending"}
+                                             order.status === "AWAITING_FULL_PAYMENT" ? "Balance Payment Required" : 
+                                             order.status === "PAYMENT_FAILED" ? "Payment Failed" : "Payment Pending"}
                                         </h3>
-                                        <p className="text-sm text-amber-700/80 dark:text-amber-500/70 leading-relaxed mt-1">
+                                        <p className={`text-sm leading-relaxed mt-1 ${order.status === "PAYMENT_FAILED" ? "text-rose-700/80 dark:text-rose-500/70" : "text-amber-700/80 dark:text-amber-500/70"}`}>
                                             {order.status === "DEPOSIT_PENDING"
                                                 ? "Your order is reserved but awaiting deposit. Complete the payment to secure your jewelry piece."
                                                 : order.status === "AWAITING_FULL_PAYMENT"
                                                 ? "Your order has been confirmed by the vendor! Please settle the remaining balance to initiate shipment."
+                                                : order.status === "PAYMENT_FAILED"
+                                                ? "Your previous payment attempt was unsuccessful. Please try again or use a different payment method to secure your order."
                                                 : "Your order requires payment to proceed. Please complete the payment to continue."}
                                         </p>
                                     </div>
                                 </div>
                                 <Link
                                     href={`/orders/${orderId}/payment`}
-                                    className="flex w-full md:w-auto shrink-0 items-center justify-center gap-3 rounded-2xl bg-amber-500 px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-amber-500/30 transition-all hover:bg-amber-600 active:scale-95"
+                                    className={`flex w-full md:w-auto shrink-0 items-center justify-center gap-3 rounded-2xl px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl transition-all active:scale-95 ${order.status === "PAYMENT_FAILED" ? "bg-rose-500 shadow-rose-500/30 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/30 hover:bg-amber-600"}`}
                                 >
                                     {order.status === "DEPOSIT_PENDING" ? "Pay Deposit Now" : 
-                                     order.status === "AWAITING_FULL_PAYMENT" ? "Pay Balance Now" : "Complete Payment"}
+                                     order.status === "AWAITING_FULL_PAYMENT" ? "Pay Balance Now" : 
+                                     order.status === "PAYMENT_FAILED" ? "Retry Payment" : "Complete Payment"}
                                     <ChevronRight size={18} />
                                 </Link>
                             </div>
@@ -513,12 +517,21 @@ export default function OrderTimelinePage() {
 
                             {order.status === "COMPLETED" && !order.isReviewed && !hasReturnRequest && (
                                 <motion.div className="mb-8 rounded-3xl border border-gold/30 bg-gold/5 p-8 shadow-inner shadow-gold/5">
-                                    <div className="flex items-start gap-6">
-                                        <div className="p-4 rounded-2xl bg-gold text-white shadow-lg shadow-gold/20"><Star size={24} /></div>
-                                        <div>
-                                            <h3 className="mb-2 font-serif text-xl">Share Your Experience</h3>
-                                            <p className="mb-6 text-sm text-gray-500">Rate and upload a photo to receive a <strong>10% OFF reward coupon</strong>.</p>
-                                            <button onClick={() => setIsReviewModalOpen(true)} className="inline-flex items-center gap-3 rounded-xl bg-gold px-8 py-3.5 text-xs font-bold text-white uppercase hover:bg-gold/90 transition-all">
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-serif text-xl">Share Your Experience:</h3>
+                                            <div className="p-4 rounded-2xl bg-gold text-white shadow-lg shadow-gold/20">
+                                                <Star size={24} />
+                                            </div>
+                                        </div>
+                                        <div className="max-w-md">
+                                            <p className="mb-6 text-sm text-gray-500">
+                                                Rate and upload a photo to receive a <strong>10% OFF reward coupon</strong>.
+                                            </p>
+                                            <button 
+                                                onClick={() => setIsReviewModalOpen(true)} 
+                                                className="inline-flex items-center gap-3 rounded-xl bg-gold px-8 py-3.5 text-xs font-bold text-white uppercase hover:bg-gold/90 transition-all shadow-lg shadow-gold/20"
+                                            >
                                                 Rate & Review <Star size={16} fill="currentColor" />
                                             </button>
                                         </div>

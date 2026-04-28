@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { X, Mail, Loader2, RotateCcw, CheckCircle2, AlertCircle, ShieldCheck, QrCode } from "lucide-react";
 import { shipperService } from "@/services/shipper.service";
 import toast from "react-hot-toast";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 
-type ScanState = "idle" | "scanning" | "success" | "error";
+type ScanState = "idle" | "scanning" | "success" | "error" | "invalid";
 
 function ShipperScannerContent() {
     const router = useRouter();
@@ -44,23 +44,21 @@ function ShipperScannerContent() {
             setScanState("scanning");
             isHandlingSuccess.current = false;
 
-            // Chỉ quét định dạng mã QR (bỏ qua mã vạch truyền thống) giúp tăng tốc độ xử lý lên x10 lần
-            const html5QrCode = new Html5Qrcode("reader", {
-                formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                }
-            } as any);
+            // Xóa bỏ các tính năng experimental (useBarCodeDetectorIfSupported) 
+            // vì một số trình duyệt (đặc biệt iOS Safari) hỗ trợ API này nhưng bị lỗi ngầm
+            const html5QrCode = new Html5Qrcode("reader");
             scannerRef.current = html5QrCode;
 
             const config = {
-                fps: 30, // Tốc độ xử lý khung hình tối đa
-                // Tính toán vùng quét động, lấy 70% chiều nhỏ nhất của màn hình
+                fps: 10,
+                // Dùng qrbox linh hoạt theo kích thước màn hình
                 qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+                    const minEdgePercentage = 0.8; // 80% của cạnh ngắn nhất
                     const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                    const qrboxSize = Math.floor(minEdgeSize * 0.7);
+                    const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
                     return { width: qrboxSize, height: qrboxSize };
                 },
+                aspectRatio: window.innerWidth / window.innerHeight,
                 disableFlip: false
             };
 
@@ -86,6 +84,19 @@ function ShipperScannerContent() {
         if (!orderId) {
             toast.error("Thiếu thông tin đơn hàng!");
             isHandlingSuccess.current = false;
+            return;
+        }
+
+        // Validate QR Token format (Backend uses Guid.NewGuid().ToString("N") which has 32 chars and no dashes)
+        if (decodedText.length < 20) {
+            setScanState("invalid");
+            toast.error("Mã QR không đúng định dạng!");
+            
+            // Tạm dừng 2s rồi quét tiếp
+            setTimeout(() => {
+                setScanState("scanning");
+                isHandlingSuccess.current = false;
+            }, 2000);
             return;
         }
 
@@ -199,6 +210,16 @@ function ShipperScannerContent() {
             )}
 
             {/* ── Overlays ── */}
+            {scanState === "invalid" && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-rose-950/90 backdrop-blur-sm transition-all duration-300">
+                    <div className="h-24 w-24 rounded-full bg-rose-500/20 flex items-center justify-center animate-scale-in">
+                        <AlertCircle className="h-12 w-12 text-rose-500" />
+                    </div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter text-center px-4">Mã QR Không Hợp Lệ!</h2>
+                    <p className="text-rose-200 text-sm font-medium text-center px-6">Vui lòng quét đúng mã QR của hệ thống Yash Jewels.</p>
+                </div>
+            )}
+
             {scanState === "success" && (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/95 backdrop-blur-sm">
                     <div className="h-24 w-24 rounded-full bg-teal-500/20 flex items-center justify-center animate-scale-in">
@@ -221,12 +242,19 @@ function ShipperScannerContent() {
 
             {/* ── Global Fix Styles ── */}
             <style jsx global>{`
-                /* Dùng object-fit cover để video tràn viền, khớp chính xác vùng quét (qrbox) với kính ngắm UI */
+                /* Đảm bảo camera cover hết khoảng trống nhưng không bóp méo tọa độ quét */
+                #reader {
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
                 #reader video {
-                    width: 100% !important;
-                    height: 100% !important;
+                    min-width: 100%;
+                    min-height: 100%;
                     object-fit: cover !important;
-                    background: black;
                 }
                 /* CHỈ ẨN các thành phần UI dư thừa của thư viện */
                 #qr-shaded-region { display: none !important; }
