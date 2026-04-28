@@ -64,8 +64,8 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-function formatVnd(n: number) {
-    return new Intl.NumberFormat("vi-VN").format(n) + " ₫";
+function formatUsd(n: number) {
+    return new Intl.NumberFormat("en-US").format(n) + " $";
 }
 
 // ─── Page ──────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ export default function VendorDashboardPage() {
     const kpiCards = [
         {
             title: "Total Revenue",
-            value: formatVnd(stats?.totalRevenue || 0),
+            value: formatUsd(stats?.totalRevenue || 0),
             change: stats?.revenueTrend ? `${stats.revenueTrend > 0 ? "+" : ""}${stats.revenueTrend}%` : "0%",
             positive: (stats?.revenueTrend || 0) >= 0,
             icon: TrendingUp,
@@ -116,7 +116,7 @@ export default function VendorDashboardPage() {
         },
         {
             title: "Avg Order Value",
-            value: formatVnd(stats?.avgOrderValue || 0),
+            value: formatUsd(stats?.avgOrderValue || 0),
             change: stats?.aovTrend ? `${stats.aovTrend > 0 ? "+" : ""}${stats.aovTrend}%` : "0%",
             positive: (stats?.aovTrend || 0) >= 0,
             icon: LayoutDashboard,
@@ -234,7 +234,7 @@ export default function VendorDashboardPage() {
                                         <td className="px-8 py-4 font-plus-jakarta text-sm font-medium text-gray-900 dark:text-white">{order.customerName}</td>
                                         <td className="px-8 py-4 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td>
                                         <td className="px-8 py-4"><StatusBadge status={order.status} /></td>
-                                        <td className="px-8 py-4 text-right font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatVnd(order.totalAmount)}</td>
+                                        <td className="px-8 py-4 text-right font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatUsd(order.totalAmount)}</td>
                                     </tr>
                                 ))
                             )}

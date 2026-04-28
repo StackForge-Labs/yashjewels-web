@@ -425,7 +425,7 @@ export default function ReturnsManagementPage() {
                             </div>
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="text-2xl font-black text-gray-900 dark:text-white">{selectedRequest.totalAmount?.toLocaleString()} VND</p>
+                                    <p className="text-2xl font-black text-gray-900 dark:text-white">{selectedRequest.totalAmount?.toLocaleString()} USD</p>
                                     <p className="text-[10px] font-bold text-gray-400">Total transaction value at risk</p>
                                 </div>
                             </div>

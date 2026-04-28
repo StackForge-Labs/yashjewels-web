@@ -115,7 +115,7 @@ export const OrdersView = () => {
                         <div className="grid grid-cols-2 gap-8 border-t border-gray-50 px-6 py-4 dark:border-white/5">
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Investment</p>
-                                <p className="text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} VND</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} USD</p>
                             </div>
                             <div className="text-right">
                                 {order.status === "AWAITING_FULL_PAYMENT" ? (

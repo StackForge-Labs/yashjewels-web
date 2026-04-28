@@ -13,7 +13,7 @@ export default function SettingsPage() {
         goldRate_IsManual: false,
         goldRate_ManualValue: 0,
         goldRate_PollingIntervalMinutes: 30,
-        currency: "VND"
+        currency: "USD"
     });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -91,7 +91,7 @@ export default function SettingsPage() {
                             <FormField label="Base Currency">
                                 <input className={inputCls} value={settings.currency} disabled />
                                 <p className="text-[10px] text-rose-500 mt-2 flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> Fixed to VND for current region.
+                                    <Lock className="h-3 w-3" /> Fixed to USD for current region.
                                 </p>
                             </FormField>
                         </div>
@@ -125,7 +125,7 @@ export default function SettingsPage() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
-                                <FormField label="Manual Rate (VND per Gram)" required={settings.goldRate_IsManual}>
+                                <FormField label="Manual Rate (USD per Gram)" required={settings.goldRate_IsManual}>
                                     <input 
                                         type="number" 
                                         className={inputCls} 

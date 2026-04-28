@@ -77,7 +77,7 @@ const CURRENCY_LIST = [
   { code: "EUR", name: "Euro", flag: "🇪🇺" },
   { code: "GBP", name: "British Pound", flag: "🇬🇧" },
   { code: "JPY", name: "Japanese Yen", flag: "🇯🇵" },
-  { code: "VND", name: "Vietnamese Dong", flag: "🇻🇳" },
+  { code: "USD", name: "Vietnamese Dong", flag: "🇻🇳" },
   { code: "INR", name: "Indian Rupee", flag: "🇮🇳" },
   { code: "SGD", name: "Singapore Dollar", flag: "🇸🇬" },
   { code: "CHF", name: "Swiss Franc", flag: "🇨🇭" },

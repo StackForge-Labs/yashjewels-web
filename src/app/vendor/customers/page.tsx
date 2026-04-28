@@ -454,7 +454,7 @@ export default function VendorCustomersPage() {
                                             <UserStatusBadge userStatus={c.userStatus} suspendedUntil={c.suspendedUntil} />
                                         </td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">
-                                            {c.lifetimeValue?.toLocaleString() ?? 0} VND
+                                            {c.lifetimeValue?.toLocaleString() ?? 0} USD
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
@@ -541,7 +541,7 @@ export default function VendorCustomersPage() {
                             <p className="mb-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-amber-600/60">Purchase Statistics</p>
                             <div className="grid grid-cols-3 gap-2">
                                 {[
-                                    { label: "Revenue", value: `${selected.lifetimeValue?.toLocaleString() ?? 0} ₫` }, 
+                                    { label: "Revenue", value: `${selected.lifetimeValue?.toLocaleString() ?? 0} $` }, 
                                     { label: "Orders", value: selected.orderCount ?? 0 }, 
                                     { label: "Items", value: selected.totalItemsPurchased ?? 0 }
                                 ].map(({ label, value }) => (

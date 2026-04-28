@@ -399,13 +399,13 @@ export default function OrderTimelinePage() {
                             <div className="rounded-3xl border border-gray-100 bg-white/60 p-6 shadow-sm dark:border-white/5 dark:bg-[#0C0A09]/60">
                                 <h3 className="mb-6 font-serif text-xl flex items-center gap-3"><Receipt className="text-gold" size={20} /> Summary</h3>
                                 <div className="space-y-3 text-sm">
-                                    <div className="flex justify-between"><span>Deposit:</span><span className="font-bold text-emerald-600">{(order.depositAmount || 0).toLocaleString()} VND</span></div>
+                                    <div className="flex justify-between"><span>Deposit:</span><span className="font-bold text-emerald-600">{(order.depositAmount || 0).toLocaleString()} USD</span></div>
 
                                     {order.status !== "DEPOSIT_PAID" && order.status !== "AWAITING_FULL_PAYMENT" && order.status !== "CANCELLED" && (
                                         <div className="space-y-3 pt-3">
                                             <div className="flex justify-between border-t border-gray-100 pt-3 dark:border-white/5">
                                                 <span className="text-gray-500">Balance Paid:</span>
-                                                <span className="font-bold text-emerald-600">{(order.totalAmount - order.depositAmount).toLocaleString()} VND</span>
+                                                <span className="font-bold text-emerald-600">{(order.totalAmount - order.depositAmount).toLocaleString()} USD</span>
                                             </div>
                                             {order.timeline?.find(t => t.status === "PREPARING" || t.status === "FULLY_PAID") && (
                                                 <p className="text-[10px] text-gray-400 text-right italic">
@@ -414,7 +414,7 @@ export default function OrderTimelinePage() {
                                             )}
                                             <div className="flex justify-between bg-gold/5 p-2 rounded-lg border border-gold/10">
                                                 <span className="font-serif text-teal-900 dark:text-gold">Total Paid:</span>
-                                                <span className="font-bold text-teal-600 dark:text-teal-400">{order.totalAmount.toLocaleString()} VND</span>
+                                                <span className="font-bold text-teal-600 dark:text-teal-400">{order.totalAmount.toLocaleString()} USD</span>
                                             </div>
                                         </div>
                                     )}
@@ -422,7 +422,7 @@ export default function OrderTimelinePage() {
                                     {order.status === "AWAITING_FULL_PAYMENT" && (
                                         <div className="mt-6 border-t border-gray-100 pt-6 dark:border-white/5 text-center">
                                             <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest font-bold">Remaining Balance</p>
-                                            <p className="text-xl font-bold text-gold mb-4">{(order.remainingAmount || 0).toLocaleString()} VND</p>
+                                            <p className="text-xl font-bold text-gold mb-4">{(order.remainingAmount || 0).toLocaleString()} USD</p>
                                             <Link href={`/orders/${orderId}/payment`} className="inline-flex w-full justify-center items-center gap-2 rounded-xl bg-gold px-4 py-3 text-xs font-bold text-white uppercase hover:bg-gold/90 transition-all shadow-lg shadow-gold/20">
                                                 Pay Remaining Balance <ChevronRight size={14} />
                                             </Link>

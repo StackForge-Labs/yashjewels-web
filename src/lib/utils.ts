@@ -6,8 +6,10 @@ export function cn(...inputs: any[]) {
 }
 
 export function formatCurrency(amount: number) {
-    return new Intl.NumberFormat("vi-VN", {
+    return new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "VND",
+        currency: "USD",
+        minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
     }).format(amount);
 }

@@ -67,7 +67,7 @@ export default function RecentOrders({ orders = [] }: { orders: any[] }) {
                                 <td className="px-8 py-5">
                                     <StatusBadge status={order.status} />
                                 </td>
-                                <td className="px-8 py-5 text-right font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} VND</td>
+                                <td className="px-8 py-5 text-right font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} USD</td>
                             </tr>
                         )) : (
                             <tr>

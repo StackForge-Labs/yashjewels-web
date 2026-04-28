@@ -52,7 +52,7 @@ const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
             {/* Price Range */}
             <div className="space-y-4">
                 <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                    Price Range (VND)
+                    Price Range (USD)
                 </h3>
                 <div className="flex items-center gap-2">
                     <input

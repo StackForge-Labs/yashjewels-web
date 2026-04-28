@@ -20,7 +20,7 @@ interface WarrantyClaim {
 }
 
 const mockClaims: WarrantyClaim[] = [
-    { id: "CLM-001", customer: "John Anderson", email: "john@example.com", orderId: "YJ-001", product: "Diamond Ring D-VVS1 18K", type: "INSURANCE", issue: "Item lost during transit, requesting full insurance payout.", status: "OPEN", submittedAt: "2025-04-19", claimAmount: 45000000 },
+    { id: "CLM-001", customer: "John Anderson", email: "john@example.com", orderId: "YJ-001", product: "Diamond Ring D-VVS1 18K", type: "INSURANCE", issue: "Item lost during transit, requesting full insurance payout.", status: "OPEN", submittedAt: "2025-04-19", claimAmount: 4500 },
     { id: "CLM-002", customer: "Sarah Miller", email: "sarah@example.com", orderId: "YJ-003", product: "Pearl Earrings", type: "WARRANTY", issue: "Earring post snapped after 2 weeks of normal use.", status: "IN_REVIEW", submittedAt: "2025-04-17" },
     { id: "CLM-003", customer: "David Smith", email: "david@example.com", orderId: "YJ-005", product: "Platinum Wedding Band", type: "WARRANTY", issue: "Rhodium plating chipping off, requires repolishing.", status: "APPROVED", submittedAt: "2025-04-15" },
     { id: "CLM-004", customer: "Emily Davis", email: "emily@example.com", orderId: "YJ-008", product: "22K Gold Bracelet", type: "INSURANCE", issue: "Product heavily scratched upon delivery arrival.", status: "REJECTED", submittedAt: "2025-04-14", claimAmount: 12000000 },
@@ -33,8 +33,8 @@ const statusConfig: Record<WarrantyStatus, { label: string; icon: typeof Clock; 
     REJECTED: { label: "Rejected", icon: XCircle, className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400" },
 };
 
-function formatVnd(n: number) {
-    return new Intl.NumberFormat("vi-VN").format(n) + " ₫";
+function formatUsd(n: number) {
+    return new Intl.NumberFormat("en-US").format(n) + " $";
 }
 
 function ClaimModal({ claim, onClose, onUpdate }: { claim: WarrantyClaim; onClose: () => void; onUpdate: (id: string, status: WarrantyStatus) => void }) {
@@ -76,7 +76,7 @@ function ClaimModal({ claim, onClose, onUpdate }: { claim: WarrantyClaim; onClos
                     {claim.claimAmount && (
                         <div className="flex items-center justify-between rounded-xl bg-amber-50 px-5 py-4 dark:bg-amber-500/10">
                             <p className="font-plus-jakarta text-sm font-bold text-amber-800 dark:text-amber-300">Total Claim Value</p>
-                            <p className="font-plus-jakarta text-lg font-black text-amber-800 dark:text-amber-300">{formatVnd(claim.claimAmount)}</p>
+                            <p className="font-plus-jakarta text-lg font-black text-amber-800 dark:text-amber-300">{formatUsd(claim.claimAmount)}</p>
                         </div>
                     )}
                 </div>
