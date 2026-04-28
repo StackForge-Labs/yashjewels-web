@@ -104,16 +104,16 @@ export default function AdminGoldKaratsPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                     <h1 className="font-serif text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Gold Karats
+                        Materials & Colors
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Manage gold purity standards and karat labels for automated pricing.
+                        Manage gold purity, material types, and color variants (e.g. 18K Yellow Gold, Platinum 950).
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Add Gold Karat
+                    <Plus className="h-4 w-4" /> Add Material
                 </button>
             </div>
 
@@ -123,7 +123,7 @@ export default function AdminGoldKaratsPage() {
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search by label (e.g. 18K)..."
+                        placeholder="Search by material (e.g. 18K Yellow)..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -172,8 +172,8 @@ export default function AdminGoldKaratsPage() {
                         <table className="w-full whitespace-nowrap text-left text-sm">
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                                 <tr>
-                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Karat Label</th>
-                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Purity Content (%)</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Material & Color Label</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Gold/Metal Purity (%)</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
                                 </tr>
@@ -193,7 +193,7 @@ export default function AdminGoldKaratsPage() {
                                                     <span className="font-serif font-bold">{item.caratLabel?.replace('K', '')}</span>
                                                 </div>
                                                 <div>
-                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.caratLabel} Gold</p>
+                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.caratLabel}</p>
                                                     <p className="font-plus-jakarta text-xs text-gray-400">ID: {item.id.substring(0, 8)}</p>
                                                 </div>
                                             </div>
@@ -258,9 +258,9 @@ export default function AdminGoldKaratsPage() {
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "Add New Gold Karat" : "Update Gold Karat"}
+                                    {drawerMode === "CREATE" ? "Add New Material" : "Update Material"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Configure gold purity specifications.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Configure purity and color specifications.</p>
                             </div>
                         </div>
 
@@ -268,14 +268,14 @@ export default function AdminGoldKaratsPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Karat Label <span className="text-rose-500">*</span>
+                                        Material Label <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
                                         name="caratLabel"
                                         required
                                         defaultValue={selectedItem?.caratLabel || ""}
-                                        placeholder="Example: 18K"
+                                        placeholder="Example: 18K Yellow Gold"
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
@@ -331,7 +331,7 @@ export default function AdminGoldKaratsPage() {
                             <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div className="mt-5 text-center">
-                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.caratLabel} Karat?</h3>
+                            <h3 className="font-serif text-xl font-bold text-gray-900 dark:text-white">Delete {selectedItem.caratLabel}?</h3>
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                 This action is high-risk and will affect linked products.
                             </p>
