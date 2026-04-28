@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageSquare, Eye, Check, Tag, ChevronRight, X, Search, Loader2, Sparkles } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MessageSquare, Eye, Check, Tag, ChevronRight, X, Search, Loader2, Sparkles, Send, PhoneOff, Clock, AlertTriangle } from "lucide-react";
 import { vendorService, InquiryDto } from "@/services/vendor.service";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -16,195 +17,360 @@ function DetailDrawer({
     onClose: () => void; 
     onUpdate: () => void 
 }) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    // Unified response state
+    const [replyMessage, setReplyMessage] = useState("");
+    const [includeReply, setIncludeReply] = useState(false);
+    const [includeCoupon, setIncludeCoupon] = useState(false);
     const [coupon, setCoupon] = useState("");
     const [discountValue, setDiscountValue] = useState<number>(10);
     const [discountType, setDiscountType] = useState<"FIXED_AMOUNT" | "PERCENTAGE">("FIXED_AMOUNT");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [contactFailedMode, setContactFailedMode] = useState(false);
+    const [activities, setActivities] = useState<any[]>([]);
+    const [loadingActivity, setLoadingActivity] = useState(false);
+
+    const loadActivity = useCallback(async () => {
+        try {
+            setLoadingActivity(true);
+            const res = await vendorService.getInquiryActivity(inquiry.id);
+            if (res.success) setActivities(res.data || []);
+        } catch { /* silent */ }
+        finally { setLoadingActivity(false); }
+    }, [inquiry.id]);
+
+    useEffect(() => {
+        loadActivity();
+    }, [loadActivity]);
 
     const handleResolve = async () => {
         try {
             setIsSubmitting(true);
             const res = await vendorService.resolveInquiry(inquiry.id);
-            if (res.success) {
-                toast.success("Inquiry marked as resolved");
-                onUpdate();
-                onClose();
-            } else {
-                toast.error(res.message || "Failed to resolve inquiry");
-            }
-        } catch (error) {
-            toast.error("An error occurred");
-        } finally {
-            setIsSubmitting(false);
-        }
+            if (res.success) { toast.success("Inquiry marked as resolved"); onUpdate(); onClose(); }
+            else toast.error(res.message || "Failed to resolve inquiry");
+        } catch { toast.error("An error occurred"); }
+        finally { setIsSubmitting(false); }
     };
 
-    const handleAssignCoupon = async () => {
-        if (!coupon.trim()) {
-            toast.error("Please enter a coupon code");
-            return;
-        }
-        if (discountValue <= 0) {
-            toast.error("Please enter a valid discount value");
-            return;
-        }
+    const handleSendResponse = async () => {
+        if (!includeReply && !includeCoupon) { toast.error("Enable at least one option: Reply or Coupon"); return; }
+        if (includeReply && !replyMessage.trim()) { toast.error("Please enter a reply message"); return; }
+        if (includeCoupon && !coupon.trim()) { toast.error("Please enter a coupon code"); return; }
+        if (includeCoupon && discountValue <= 0) { toast.error("Please enter a valid discount value"); return; }
 
         try {
             setIsSubmitting(true);
-            const res = await vendorService.assignCouponToInquiry(
-                inquiry.id, 
-                coupon, 
-                discountValue, 
-                discountType
-            );
-            if (res.success) {
-                toast.success(res.message || `Coupon ${coupon} assigned successfully`);
-                onUpdate();
-                // We keep the drawer open but the parent will re-render with new data
-                // To show the coupon immediately in the drawer, we could close and re-open 
-                // but since the parent state 'selected' needs to be updated, 
-                // it's better to just close it to force a fresh look next time
-                onClose(); 
-            } else {
-                toast.error(res.message || "Failed to assign coupon");
-            }
-        } catch (error) {
-            toast.error("An error occurred");
-        } finally {
-            setIsSubmitting(false);
-        }
+            const res = await vendorService.respondToInquiry(inquiry.id, {
+                message: includeReply ? replyMessage : undefined,
+                couponCode: includeCoupon ? coupon : undefined,
+                discountValue: includeCoupon ? discountValue : undefined,
+                discountType: includeCoupon ? discountType : undefined,
+            });
+            if (res.success) { toast.success(res.message || "Response sent"); onUpdate(); onClose(); }
+            else toast.error(res.message || "Failed to send response");
+        } catch { toast.error("An error occurred"); }
+        finally { setIsSubmitting(false); }
+    };
+
+    const handleContactFailed = async () => {
+        try {
+            setIsSubmitting(true);
+            const res = await vendorService.contactFailed(inquiry.id);
+            if (res.success) { toast.success(res.message || "Customer notified"); onUpdate(); onClose(); }
+            else toast.error(res.message || "Failed");
+        } catch { toast.error("An error occurred"); }
+        finally { setIsSubmitting(false); }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-sm">
-            <div className="flex h-full w-full max-w-md flex-col bg-white shadow-2xl dark:bg-[#161616] animate-in slide-in-from-right duration-300">
-                <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
-                    <div>
-                        <h2 className="font-plus-jakarta text-lg font-bold text-gray-900 dark:text-white">Inquiry Detail</h2>
-                        <p className="font-plus-jakarta text-xs text-gray-400">{inquiry.id}</p>
-                    </div>
-                    <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
-
-                <div className="flex flex-col gap-6 overflow-y-auto p-6">
-                    <div className="flex flex-col gap-3 rounded-2xl bg-gray-50/50 p-5 dark:bg-gray-900/50">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold">
-                                {inquiry.name[0]}
-                            </div>
-                            <div>
-                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inquiry.name}</p>
-                                <p className="font-plus-jakarta text-xs text-gray-400">{inquiry.email}</p>
-                            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-8" onClick={onClose}>
+            <div className="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-[#161616] animate-in fade-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-gray-100 px-8 py-5 dark:border-gray-800 shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-lg">
+                            {inquiry.name[0]}
                         </div>
-                        {inquiry.phone && (
-                            <a href={`tel:${inquiry.phone}`} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 font-plus-jakarta text-xs font-semibold text-gray-700 shadow-sm hover:bg-amber-50 dark:bg-gray-800 dark:text-gray-300">
-                                📞 {inquiry.phone}
-                            </a>
-                        )}
-                    </div>
-
-                    <div className="space-y-4">
                         <div>
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Subject</p>
-                            <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
-                                <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inquiry.subject}</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Message</p>
-                            <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30">
-                                <p className="font-plus-jakarta text-sm leading-relaxed text-gray-600 dark:text-gray-300 italic">"{inquiry.message}"</p>
-                            </div>
+                            <h2 className="font-plus-jakarta text-lg font-bold text-gray-900 dark:text-white">{inquiry.name}</h2>
+                            <p className="font-plus-jakarta text-xs text-gray-400">{inquiry.email} {inquiry.phone && `• ${inquiry.phone}`}</p>
                         </div>
                     </div>
-
-                    {inquiry.status === "OPEN" && (
-                        <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-amber-300 p-5 dark:border-amber-700/40 bg-amber-50/30 dark:bg-amber-500/5">
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                                Send Compensation Coupon
-                            </p>
-                            
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Coupon Code</label>
-                                    <input
-                                        value={coupon}
-                                        onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-                                        placeholder="Ex: WELCOME10"
-                                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-mono text-sm uppercase focus:border-amber-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
-                                    />
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Value</label>
-                                        <input
-                                            type="number"
-                                            value={discountValue}
-                                            onChange={(e) => setDiscountValue(Number(e.target.value))}
-                                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
-                                        />
-                                    </div>
-                                    <div className="w-1/3">
-                                        <label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Type</label>
-                                        <select
-                                            value={discountType}
-                                            onChange={(e) => setDiscountType(e.target.value as any)}
-                                            className="w-full rounded-xl border border-gray-200 bg-white px-2 py-2.5 text-xs font-bold focus:border-amber-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
-                                        >
-                                            <option value="FIXED_AMOUNT">USD</option>
-                                            <option value="PERCENTAGE">%</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 mt-1">
-                                    <p className="font-plus-jakarta text-[10px] leading-relaxed text-amber-700 dark:text-amber-400 font-medium italic">
-                                        * Note: Every coupon issued must be approved by the Admin. The Vendor is fully responsible for all compensation rewards sent through this system.
-                                    </p>
-                                </div>
-
-                                <button 
-                                    onClick={handleAssignCoupon}
-                                    disabled={isSubmitting}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 py-3 font-plus-jakarta text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-50 transition-all shadow-md shadow-amber-100 dark:shadow-none mt-1"
-                                >
-                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tag className="h-4 w-4" />}
-                                    Generate & Send Reward
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {inquiry.couponAssigned && (
-                        <div className="flex flex-col gap-2 rounded-2xl bg-emerald-50/50 p-5 border border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20">
-                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-emerald-600">Reward Successfully Sent</p>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
-                                    <Sparkles className="h-5 w-5 text-emerald-600" />
-                                </div>
-                                <span className="font-plus-jakarta text-base font-bold text-emerald-900 dark:text-emerald-400">{inquiry.couponAssigned}</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {inquiry.status === "OPEN" && (
-                    <div className="mt-auto border-t border-gray-100 p-6 dark:border-gray-800">
-                        <button
-                            onClick={handleResolve}
-                            disabled={isSubmitting}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 py-4 font-plus-jakarta text-sm font-bold text-white shadow-lg transition-all hover:bg-black active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-                        >
-                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                            Mark as Fully Resolved
+                    <div className="flex items-center gap-3">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-plus-jakarta text-[10px] font-bold uppercase tracking-widest ${inquiry.status === "OPEN" ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${inquiry.status === "OPEN" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
+                            {inquiry.status === "OPEN" ? "Open" : "Resolved"}
+                        </span>
+                        <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <X className="h-5 w-5" />
                         </button>
                     </div>
-                )}
+                </div>
+
+                {/* Body: 2-column grid */}
+                <div className="flex-1 overflow-y-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-0 lg:gap-0 min-h-0">
+                        {/* LEFT: Inquiry Info */}
+                        <div className="flex flex-col gap-6 p-8 lg:border-r border-gray-100 dark:border-gray-800">
+                            <div>
+                                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Subject / City</p>
+                                <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
+                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{inquiry.subject}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Customer Message</p>
+                                <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/30 min-h-[120px]">
+                                    <p className="font-plus-jakarta text-sm leading-relaxed text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{inquiry.message}</p>
+                                </div>
+                            </div>
+
+                            {inquiry.phone && (
+                                <div>
+                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Phone Number</p>
+                                    <a href={`tel:${inquiry.phone}`} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 font-plus-jakarta text-sm font-semibold text-gray-700 shadow-sm border border-gray-100 hover:bg-amber-50 hover:border-amber-200 transition-all dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+                                        📞 {inquiry.phone}
+                                    </a>
+                                </div>
+                            )}
+
+                            {inquiry.submittedAt && (
+                                <div className="flex items-center gap-2 text-gray-400">
+                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest">Submitted:</p>
+                                    <p className="font-plus-jakarta text-xs">{format(new Date(inquiry.submittedAt), "MMM dd, yyyy 'at' HH:mm")}</p>
+                                </div>
+                            )}
+
+                            {inquiry.couponAssigned && (
+                                <div className="flex flex-col gap-2 rounded-2xl bg-emerald-50/50 p-5 border border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20">
+                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-emerald-600">Reward Successfully Sent</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
+                                            <Sparkles className="h-5 w-5 text-emerald-600" />
+                                        </div>
+                                        <span className="font-plus-jakarta text-base font-bold text-emerald-900 dark:text-emerald-400">{inquiry.couponAssigned}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* RIGHT: Response Builder */}
+                        <div className="flex flex-col gap-0 p-8">
+                            {inquiry.status === "OPEN" && (
+                                <>
+                                    <div className="mb-6">
+                                        <h3 className="font-plus-jakarta text-base font-bold text-gray-900 dark:text-white">Compose Response</h3>
+                                        <p className="font-plus-jakarta text-xs text-gray-400 mt-1">Select the actions to include. Everything will be sent as a single email to {inquiry.email}.</p>
+                                    </div>
+
+                                    {contactFailedMode ? (
+                                        /* Contact Failed Mode */
+                                        <div className="flex flex-col gap-5">
+                                            <div className="flex flex-col gap-3 rounded-2xl border-2 border-rose-300 p-6 bg-rose-50/50 dark:bg-rose-500/5 dark:border-rose-500/30">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/20">
+                                                        <PhoneOff className="h-5 w-5 text-rose-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-plus-jakarta text-sm font-bold text-rose-800 dark:text-rose-300">Unable to Contact Customer</p>
+                                                        <p className="font-plus-jakarta text-[10px] text-rose-600/70">Phone: {inquiry.phone}</p>
+                                                    </div>
+                                                </div>
+                                                <p className="font-plus-jakarta text-xs text-gray-500 leading-relaxed mt-1">
+                                                    An email will be sent to notify the customer that their phone number is unreachable and ask them to resubmit a new inquiry with correct contact information.
+                                                </p>
+                                            </div>
+
+                                            <div className="flex gap-3">
+                                                <button onClick={() => setContactFailedMode(false)}
+                                                    className="flex-1 rounded-xl border border-gray-200 py-3 font-plus-jakarta text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all dark:border-gray-700 dark:text-gray-400">
+                                                    Cancel
+                                                </button>
+                                                <button onClick={handleContactFailed} disabled={isSubmitting}
+                                                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-rose-600 py-3 font-plus-jakarta text-xs font-bold text-white hover:bg-rose-700 disabled:opacity-50 transition-all">
+                                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                                    Send Notification
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* Normal Response Builder */
+                                        <div className="flex flex-col gap-4">
+                                            {/* Toggle: Reply Message */}
+                                            <div className={`rounded-2xl border-2 transition-all ${includeReply ? "border-blue-300 bg-blue-50/30 dark:border-blue-500/30 dark:bg-blue-500/5" : "border-gray-100 bg-gray-50/30 dark:border-gray-800 dark:bg-gray-900/20"}`}>
+                                                <button onClick={() => setIncludeReply(!includeReply)}
+                                                    className="flex items-center gap-3 w-full p-4">
+                                                    <div className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all ${includeReply ? "border-blue-500 bg-blue-500" : "border-gray-300 dark:border-gray-600"}`}>
+                                                        {includeReply && <Check className="h-3 w-3 text-white" />}
+                                                    </div>
+                                                    <MessageSquare className={`h-4 w-4 ${includeReply ? "text-blue-600" : "text-gray-400"}`} />
+                                                    <span className={`font-plus-jakarta text-sm font-bold ${includeReply ? "text-blue-700 dark:text-blue-400" : "text-gray-500"}`}>Include Reply Message</span>
+                                                </button>
+                                                {includeReply && (
+                                                    <div className="px-4 pb-4">
+                                                        <textarea value={replyMessage} onChange={e => setReplyMessage(e.target.value)} rows={3}
+                                                            placeholder="Type your response to the customer..."
+                                                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 font-plus-jakarta text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 resize-none" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Toggle: Coupon */}
+                                            <div className={`rounded-2xl border-2 transition-all ${includeCoupon ? "border-amber-300 bg-amber-50/30 dark:border-amber-500/30 dark:bg-amber-500/5" : "border-gray-100 bg-gray-50/30 dark:border-gray-800 dark:bg-gray-900/20"}`}>
+                                                <button onClick={() => setIncludeCoupon(!includeCoupon)}
+                                                    className="flex items-center gap-3 w-full p-4">
+                                                    <div className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all ${includeCoupon ? "border-amber-500 bg-amber-500" : "border-gray-300 dark:border-gray-600"}`}>
+                                                        {includeCoupon && <Check className="h-3 w-3 text-white" />}
+                                                    </div>
+                                                    <Tag className={`h-4 w-4 ${includeCoupon ? "text-amber-600" : "text-gray-400"}`} />
+                                                    <span className={`font-plus-jakarta text-sm font-bold ${includeCoupon ? "text-amber-700 dark:text-amber-400" : "text-gray-500"}`}>Attach Compensation Coupon</span>
+                                                </button>
+                                                {includeCoupon && (
+                                                    <div className="px-4 pb-4 space-y-3">
+                                                        <div>
+                                                            <label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Coupon Code</label>
+                                                            <input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="Ex: WELCOME10"
+                                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-mono text-sm uppercase focus:border-amber-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900" />
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <div className="flex-1">
+                                                                <label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Value</label>
+                                                                <input type="number" value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value))}
+                                                                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900" />
+                                                            </div>
+                                                            <div className="w-1/3">
+                                                                <label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">Type</label>
+                                                                <select value={discountType} onChange={(e) => setDiscountType(e.target.value as any)}
+                                                                    className="w-full rounded-xl border border-gray-200 bg-white px-2 py-2.5 text-xs font-bold focus:border-amber-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900">
+                                                                    <option value="FIXED_AMOUNT">USD</option>
+                                                                    <option value="PERCENTAGE">%</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Summary + Send */}
+                                            {(includeReply || includeCoupon) && (
+                                                <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 dark:bg-gray-900/50 dark:border-gray-800">
+                                                    <p className="font-plus-jakarta text-[10px] text-gray-400 italic leading-relaxed">
+                                                        📧 A single email will be sent to <strong>{inquiry.email}</strong> containing:
+                                                        {includeReply && " your reply message"}
+                                                        {includeReply && includeCoupon && " +"}
+                                                        {includeCoupon && ` coupon ${coupon || "___"}`}.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <button onClick={handleSendResponse} disabled={isSubmitting || (!includeReply && !includeCoupon)}
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-plus-jakarta text-sm font-bold text-white shadow-lg shadow-blue-100 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-40 dark:shadow-none">
+                                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                                Send Response
+                                            </button>
+
+                                            {/* Divider */}
+                                            <div className="flex items-center gap-3 my-1">
+                                                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+                                                <span className="font-plus-jakarta text-[9px] font-bold text-gray-300 uppercase tracking-widest">or</span>
+                                                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+                                            </div>
+
+                                            {/* Contact Failed + Resolve */}
+                                            <div className="flex gap-3">
+                                                {inquiry.phone && (
+                                                    <button onClick={() => setContactFailedMode(true)}
+                                                        className="flex-1 flex items-center justify-center gap-2 rounded-xl border-2 border-rose-200 py-3 font-plus-jakarta text-xs font-bold text-rose-600 hover:bg-rose-50 transition-all dark:border-rose-500/30 dark:hover:bg-rose-500/10">
+                                                        <PhoneOff className="h-3.5 w-3.5" /> Can&apos;t Reach
+                                                    </button>
+                                                )}
+                                                <button onClick={handleResolve} disabled={isSubmitting}
+                                                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 font-plus-jakarta text-xs font-bold text-white hover:bg-black disabled:opacity-50 transition-all dark:bg-white dark:text-black dark:hover:bg-gray-100">
+                                                    <Check className="h-3.5 w-3.5" /> Resolve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {inquiry.status === "RESOLVED" && (
+                                <div className="flex flex-col gap-5">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10">
+                                            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">Inquiry Resolved</p>
+                                            <p className="font-plus-jakarta text-[10px] text-gray-400">All actions completed</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Activity Timeline */}
+                                    <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-gray-900/30">
+                                        <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">Activity History</p>
+                                        {loadingActivity ? (
+                                            <div className="flex items-center justify-center py-6">
+                                                <Loader2 className="h-5 w-5 animate-spin text-gray-300" />
+                                            </div>
+                                        ) : activities.length === 0 ? (
+                                            <p className="font-plus-jakarta text-xs text-gray-400 text-center py-4">No activity recorded.</p>
+                                        ) : (
+                                            <div className="space-y-0">
+                                                {activities.filter(a => a.action !== "RESOLVE_INQUIRY").map((act, idx) => {
+                                                    let parsed: any = {};
+                                                    try { parsed = typeof act.details === "string" ? JSON.parse(act.details) : act.details || {}; } catch {}
+                                                    
+                                                    const actionConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+                                                        REPLY_INQUIRY: { label: "Replied", color: "text-blue-600 bg-blue-50 dark:bg-blue-500/10", icon: <Send className="h-3 w-3" /> },
+                                                        ASSIGN_COUPON: { label: "Coupon Sent", color: "text-amber-600 bg-amber-50 dark:bg-amber-500/10", icon: <Tag className="h-3 w-3" /> },
+                                                        RESPOND_WITH_COUPON: { label: "Reply + Coupon", color: "text-violet-600 bg-violet-50 dark:bg-violet-500/10", icon: <Tag className="h-3 w-3" /> },
+                                                        CONTACT_FAILED: { label: "Contact Failed", color: "text-rose-600 bg-rose-50 dark:bg-rose-500/10", icon: <PhoneOff className="h-3 w-3" /> },
+                                                    };
+                                                    const config = actionConfig[act.action] || { label: act.action, color: "text-gray-500 bg-gray-50", icon: <Clock className="h-3 w-3" /> };
+
+                                                    return (
+                                                        <div key={act.id || idx} className="flex gap-3 py-3 border-b border-gray-100 last:border-0 dark:border-gray-800">
+                                                            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${config.color}`}>
+                                                                {config.icon}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className={`font-plus-jakarta text-xs font-bold ${config.color.split(" ")[0]}`}>{config.label}</span>
+                                                                    <span className="font-plus-jakarta text-[9px] text-gray-300">•</span>
+                                                                    <span className="font-plus-jakarta text-[9px] text-gray-400">{act.actorName}</span>
+                                                                </div>
+                                                                {parsed?.replyMessage && (
+                                                                    <p className="font-plus-jakarta text-xs text-gray-500 leading-relaxed truncate">
+                                                                        &ldquo;{parsed.replyMessage}&rdquo;
+                                                                    </p>
+                                                                )}
+                                                                {parsed?.couponCode && (
+                                                                    <p className="font-plus-jakarta text-xs text-amber-600 font-mono font-bold">
+                                                                        {parsed.couponCode} {parsed.discountValue ? `(${parsed.discountValue})` : ""}
+                                                                    </p>
+                                                                )}
+                                                                {parsed?.reason && (
+                                                                    <p className="font-plus-jakarta text-xs text-rose-500">
+                                                                        {parsed.reason}
+                                                                    </p>
+                                                                )}
+                                                                <p className="font-plus-jakarta text-[9px] text-gray-300 mt-1">
+                                                                    {act.createdAt ? format(new Date(act.createdAt), "MMM dd, yyyy 'at' HH:mm") : ""}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
