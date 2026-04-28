@@ -7,27 +7,89 @@ import { Youtube } from "../_components/icon/Youtube";
 import { useState } from "react";
 import { vendorService } from "@/services/vendor.service";
 import { toast } from "sonner";
+import { isValidPhoneNumber } from "libphonenumber-js";
+import type { CountryCode } from "libphonenumber-js";
+
+const COUNTRIES: { code: CountryCode; dial: string; flag: string; name: string }[] = [
+    { code: "VN", dial: "+84", flag: "🇻🇳", name: "Vietnam" },
+    { code: "US", dial: "+1",  flag: "🇺🇸", name: "United States" },
+    { code: "GB", dial: "+44", flag: "🇬🇧", name: "United Kingdom" },
+    { code: "AU", dial: "+61", flag: "🇦🇺", name: "Australia" },
+    { code: "JP", dial: "+81", flag: "🇯🇵", name: "Japan" },
+    { code: "KR", dial: "+82", flag: "🇰🇷", name: "South Korea" },
+    { code: "CN", dial: "+86", flag: "🇨🇳", name: "China" },
+    { code: "SG", dial: "+65", flag: "🇸🇬", name: "Singapore" },
+    { code: "TH", dial: "+66", flag: "🇹🇭", name: "Thailand" },
+    { code: "MY", dial: "+60", flag: "🇲🇾", name: "Malaysia" },
+    { code: "ID", dial: "+62", flag: "🇮🇩", name: "Indonesia" },
+    { code: "PH", dial: "+63", flag: "🇵🇭", name: "Philippines" },
+    { code: "IN", dial: "+91", flag: "🇮🇳", name: "India" },
+    { code: "DE", dial: "+49", flag: "🇩🇪", name: "Germany" },
+    { code: "FR", dial: "+33", flag: "🇫🇷", name: "France" },
+    { code: "CA", dial: "+1",  flag: "🇨🇦", name: "Canada" },
+];
 
 export default function ContactPage() {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
+        dialCode: "VN" as CountryCode,
         phone: "",
         city: "",
         subject: "General Inquiry",
         message: "",
     });
-
+    const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string; message?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const validate = (): boolean => {
+        const errs: typeof errors = {};
+
+        if (!formData.name.trim())
+            errs.name = "Full name is required.";
+        else if (formData.name.trim().length < 2)
+            errs.name = "Name must be at least 2 characters.";
+
+        if (!formData.email.trim())
+            errs.email = "Email address is required.";
+        else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email.trim()))
+            errs.email = "Please enter a valid email address.";
+
+        if (!formData.phone.trim()) {
+            errs.phone = "Phone number is required.";
+        } else {
+            const country = COUNTRIES.find(c => c.code === formData.dialCode)!;
+            const fullNumber = country.dial + formData.phone.trim();
+            try {
+                if (!isValidPhoneNumber(fullNumber, formData.dialCode))
+                    errs.phone = `Invalid phone number for ${country.name}.`;
+            } catch {
+                errs.phone = "Invalid phone number.";
+            }
+        }
+
+        if (!formData.message.trim())
+            errs.message = "Message is required.";
+        else if (formData.message.trim().length < 10)
+            errs.message = "Message must be at least 10 characters.";
+
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validate()) return;
+
+        const country = COUNTRIES.find(c => c.code === formData.dialCode)!;
+        const fullPhone = country.dial + formData.phone.trim();
+
         try {
             setIsSubmitting(true);
             const res = await vendorService.submitInquiry({
                 name: formData.name,
                 email: formData.email,
-                phone: formData.phone,
+                phone: fullPhone,
                 subject: formData.subject,
                 message: formData.message
             });
@@ -37,15 +99,17 @@ export default function ContactPage() {
                 setFormData({
                     name: "",
                     email: "",
+                    dialCode: "VN",
                     phone: "",
                     city: "",
                     subject: "General Inquiry",
                     message: "",
                 });
+                setErrors({});
             } else {
                 toast.error(res.message || "Failed to send inquiry. Please try again.");
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred. Please try again later.");
         } finally {
             setIsSubmitting(false);
@@ -74,26 +138,26 @@ export default function ContactPage() {
                                             Full Name *
                                         </label>
                                         <input
-                                            required
                                             type="text"
-                                            className="focus:border-gold w-full rounded-xl border border-gray-100 bg-white px-5 py-4 text-sm transition-colors outline-none dark:border-white/5 dark:bg-white/5 dark:text-white"
+                                            className={`w-full rounded-xl border px-5 py-4 text-sm transition-colors outline-none dark:bg-white/5 dark:text-white ${errors.name ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-white focus:border-gold dark:border-white/5"}`}
                                             placeholder="Enter your name"
                                             value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setErrors(p => ({ ...p, name: undefined })); }}
                                         />
+                                        {errors.name && <p className="text-[11px] font-medium text-rose-500">{errors.name}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                                             Email Address *
                                         </label>
                                         <input
-                                            required
-                                            type="email"
-                                            className="focus:border-gold w-full rounded-xl border border-gray-100 bg-white px-5 py-4 text-sm transition-colors outline-none dark:border-white/5 dark:bg-white/5 dark:text-white"
+                                            type="text"
+                                            className={`w-full rounded-xl border px-5 py-4 text-sm transition-colors outline-none dark:bg-white/5 dark:text-white ${errors.email ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-white focus:border-gold dark:border-white/5"}`}
                                             placeholder="email@example.com"
                                             value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors(p => ({ ...p, email: undefined })); }}
                                         />
+                                        {errors.email && <p className="text-[11px] font-medium text-rose-500">{errors.email}</p>}
                                     </div>
                                 </div>
 
@@ -102,14 +166,25 @@ export default function ContactPage() {
                                         <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                                             Phone Number *
                                         </label>
-                                        <input
-                                            required
-                                            type="tel"
-                                            className="focus:border-gold w-full rounded-xl border border-gray-100 bg-white px-5 py-4 text-sm transition-colors outline-none dark:border-white/5 dark:bg-white/5 dark:text-white"
-                                            placeholder="+84 900 000 000"
-                                            value={formData.phone}
-                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        />
+                                        <div className={`flex overflow-hidden rounded-xl border transition-colors ${errors.phone ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-white focus-within:border-gold dark:border-white/5 dark:bg-white/5"}`}>
+                                            <select
+                                                value={formData.dialCode}
+                                                onChange={e => { setFormData({ ...formData, dialCode: e.target.value as CountryCode }); setErrors(p => ({ ...p, phone: undefined })); }}
+                                                className="shrink-0 border-r border-gray-100 bg-transparent px-3 py-4 text-sm text-gray-700 focus:outline-none dark:border-white/5 dark:text-gray-300"
+                                            >
+                                                {COUNTRIES.map(c => (
+                                                    <option key={c.code} value={c.code}>{c.flag} {c.dial}</option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                type="tel"
+                                                value={formData.phone}
+                                                onChange={e => { setFormData({ ...formData, phone: e.target.value }); setErrors(p => ({ ...p, phone: undefined })); }}
+                                                className="min-w-0 flex-1 bg-transparent px-4 py-4 text-sm focus:outline-none dark:text-white"
+                                                placeholder="912 345 678"
+                                            />
+                                        </div>
+                                        {errors.phone && <p className="text-[11px] font-medium text-rose-500">{errors.phone}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
@@ -147,13 +222,13 @@ export default function ContactPage() {
                                         Message *
                                     </label>
                                     <textarea
-                                        required
-                                        className="focus:border-gold w-full rounded-xl border border-gray-100 bg-white px-5 py-4 text-sm transition-colors outline-none dark:border-white/5 dark:bg-white/5 dark:text-white"
+                                        className={`w-full rounded-xl border px-5 py-4 text-sm transition-colors outline-none dark:bg-white/5 dark:text-white ${errors.message ? "border-rose-400 bg-rose-50/50" : "border-gray-100 bg-white focus:border-gold dark:border-white/5"}`}
                                         rows={5}
                                         placeholder="How can we assist you today?"
                                         value={formData.message}
-                                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                        onChange={(e) => { setFormData({ ...formData, message: e.target.value }); setErrors(p => ({ ...p, message: undefined })); }}
                                     />
+                                    {errors.message && <p className="text-[11px] font-medium text-rose-500">{errors.message}</p>}
                                 </div>
 
                                 <button

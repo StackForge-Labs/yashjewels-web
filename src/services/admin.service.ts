@@ -176,6 +176,41 @@ export const exportInsuranceApi = (from?: string, to?: string) =>
         link.remove();
     });
 
+// ── Inquiry Audit Logs ────────────────────────────────────────
+export interface InquiryAuditLogDto {
+    id: string;
+    actorId?: string;
+    actorName?: string;
+    actorEmail?: string;
+    actorRole?: string;
+    action: string;
+    createdAt: string;
+    ipAddress?: string;
+    details?: string;
+    inquiryId: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    inquirySubject?: string;
+    inquiryMessage?: string;
+    inquiryStatus?: string;
+    inquiryCreatedAt?: string;
+    couponCode?: string;
+    replyMessage?: string;
+    discountValue?: number;
+    vendorName?: string;
+}
+
+export const getInquiryLogsApi = (params?: { vendorId?: string; action?: string; from?: string; to?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.vendorId) searchParams.set("vendorId", params.vendorId);
+    if (params?.action) searchParams.set("action", params.action);
+    if (params?.from) searchParams.set("from", params.from);
+    if (params?.to) searchParams.set("to", params.to);
+    const qs = searchParams.toString();
+    return apiClient.get<ApiResponse<InquiryAuditLogDto[]>>(`/admin/inquiries/logs${qs ? `?${qs}` : ""}`).then(r => r.data);
+};
+
 export const adminService = {
     getPendingKycApi,
     approveKycApi,
@@ -206,6 +241,7 @@ export const adminService = {
     finalizeReturnApi,
     getFinanceStatsApi,
     exportInsuranceApi,
+    getInquiryLogsApi,
 
     // Phase 5 Structured
     vendors: {
@@ -231,5 +267,10 @@ export const adminService = {
         create: (data: any) => apiClient.post<ApiResponse<string>>("/coupons", data).then(r => r.data),
         toggle: (id: string) => apiClient.put<ApiResponse<boolean>>(`/coupons/${id}/toggle`).then(r => r.data),
         delete: (id: string) => apiClient.delete<ApiResponse<boolean>>(`/coupons/${id}`).then(r => r.data)
+    },
+
+    inquiryLogs: {
+        getAll: (params?: { vendorId?: string; action?: string; from?: string; to?: string }) => getInquiryLogsApi(params),
     }
 };
+
