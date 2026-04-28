@@ -6,6 +6,10 @@ export interface GetProductsParams {
   pageSize?: number;
   categoryId?: string;
   brandId?: string;
+  jewelTypeId?: string;
+  productTypeId?: string;
+  minPrice?: number;
+  maxPrice?: number;
   searchQuery?: string;
   sortBy?: string;
   inStock?: boolean;
