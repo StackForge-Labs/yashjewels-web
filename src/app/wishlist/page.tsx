@@ -1,62 +1,44 @@
 "use client";
 
+import { useEffect } from "react";
 import { PageHero } from "../_components/PageHero";
-import ProductCard from "../(home)/_components/ProductCard";
-import { Heart, ArrowRight, Share2 } from "lucide-react";
+import { Heart, ArrowRight, Share2, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-
-const MOCK_WISHLIST = [
-    {
-        sku: "NNU1544",
-        productId: "NNU1544",
-        name: "Mia Natural Diamond Ring in 14K White Gold",
-        category: "Rings",
-        original: "25,500,000 VND",
-        sale: "21,675,000 VND",
-        discount: "-15%",
-        image1: "https://images.pexels.com/photos/2735970/pexels-photo-2735970.jpeg?auto=compress&cs=tinysrgb&w=600",
-        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-        badge: "NEW ARRIVAL",
-    },
-    {
-        sku: "NNU1545",
-        productId: "NNU1545",
-        name: "Artisan Solitaire Diamond Necklace",
-        category: "Necklaces",
-        original: "45,000,000 VND",
-        sale: "38,250,000 VND",
-        discount: "-15%",
-        image1: "https://images.pexels.com/photos/1733604/pexels-photo-1733604.jpeg?auto=compress&cs=tinysrgb&w=600",
-        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-    },
-    {
-        sku: "NNU1546",
-        productId: "NNU1546",
-        name: "Classic Tennis Bracelet with Natural Diamonds",
-        category: "Bracelets",
-        original: "89,000,000 VND",
-        sale: "75,650,000 VND",
-        discount: "-15%",
-        image1: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=600",
-        image2: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-        badge: "BESTSELLER",
-    },
-    {
-        sku: "NNU1547",
-        productId: "NNU1547",
-        name: "Floral Halo Diamond Earrings",
-        category: "Earrings",
-        original: "18,000,000 VND",
-        sale: "15,300,000 VND",
-        discount: "-15%",
-        image1: "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",
-        image2: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=600",
-    },
-];
+import { useWishlist } from "@/hooks/useWishlist";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
+import ProductCard from "@/app/(home)/_components/ProductCard";
 
 export default function WishlistPage() {
-    const [items] = useState(MOCK_WISHLIST);
+    const { items, isLoading, loadWishlist, toggle } = useWishlist();
+    const { addToCart } = useCart();
+
+    useEffect(() => {
+        loadWishlist();
+    }, []);
+
+    const handleAddAllToCart = async () => {
+        if (items.length === 0) return;
+        let added = 0;
+        for (const item of items) {
+            const ok = await addToCart(item.productId);
+            if (ok) added++;
+        }
+        if (added > 0) toast.success(`Đã thêm ${added} sản phẩm vào giỏ hàng.`);
+    };
+
+    if (isLoading) {
+        return (
+            <>
+                <PageHero title="My Wishlist" breadcrumbs={[{ label: "Wishlist" }]} />
+                <section className="bg-white py-24 transition-colors dark:bg-dark-bg">
+                    <div className="container mx-auto flex flex-col items-center px-4 py-16 text-center lg:px-12">
+                        <Loader2 size={40} className="animate-spin text-gold" />
+                    </div>
+                </section>
+            </>
+        );
+    }
 
     if (items.length === 0) {
         return (
@@ -102,7 +84,10 @@ export default function WishlistPage() {
                             <button className="flex items-center gap-2 rounded-lg border border-gray-200 px-5 py-2.5 text-[11px] font-bold tracking-wider text-gray-600 uppercase transition-colors hover:bg-gray-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5">
                                 <Share2 size={14} /> Share List
                             </button>
-                            <button className="bg-gold flex items-center gap-2 rounded-lg px-5 py-2.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105">
+                            <button
+                                onClick={handleAddAllToCart}
+                                className="bg-gold flex items-center gap-2 rounded-lg px-5 py-2.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-lg shadow-gold/20 transition-all hover:brightness-105"
+                            >
                                 Add All to Cart
                             </button>
                         </div>
@@ -110,8 +95,17 @@ export default function WishlistPage() {
 
                     {/* Product Grid */}
                     <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8">
-                        {items.map((product) => (
-                            <ProductCard key={product.sku} {...product} />
+                        {items.map((item) => (
+                            <Link key={item.wishlistItemId} href={`/products/${item.slug}`}>
+                                <ProductCard
+                                    sku={item.productId}
+                                    productId={item.productId}
+                                    name={item.productName}
+                                    category={item.categoryName ?? ""}
+                                    image1={item.primaryImageUrl ?? "/placeholder.jpg"}
+                                    image2={item.primaryImageUrl ?? "/placeholder.jpg"}
+                                />
+                            </Link>
                         ))}
                     </div>
                 </div>

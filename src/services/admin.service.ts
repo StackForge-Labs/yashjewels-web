@@ -146,6 +146,9 @@ export const recordOrderContactApi = (data: { orderId: string, attemptNumber: nu
 export const updateOrderDocumentsApi = (orderId: string, data: any) =>
     apiClient.put<ApiResponse<boolean>>(`/admin/orders/${orderId}/documents`, data).then((r) => r.data);
 
+export const assignShipperApi = (orderId: string, shipperId: string) =>
+    apiClient.put<ApiResponse<boolean>>(`/admin/orders/${orderId}/assign-shipper`, { shipperId }).then((r) => r.data);
+
 // --- Phase 4: Finance & Returns ---
 export const getReturnsApi = () =>
     apiClient.get<ApiResponse<any[]>>("/admin/returns/all").then((r) => r.data);
@@ -232,6 +235,7 @@ export const adminService = {
     confirmOrderDecisionApi,
     recordOrderContactApi,
     updateOrderDocumentsApi,
+    assignShipperApi,
     getReturnsApi,
     processReturnApi,
     finalizeReturnApi,

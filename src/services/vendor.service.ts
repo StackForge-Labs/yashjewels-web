@@ -116,6 +116,13 @@ export const vendorService = {
         return res.data;
     },
 
+    assignShipper: async (orderId: string, shipperId: string) => {
+        const res = await apiClient.put<ApiResponse<boolean>>(`/vendor/orders/${orderId}/assign-shipper`, {
+            shipperId
+        });
+        return res.data;
+    },
+
     getPendingKyc: async () => {
         const res = await apiClient.get<ApiResponse<any[]>>("/admin/kyc/pending");
         return res.data;
