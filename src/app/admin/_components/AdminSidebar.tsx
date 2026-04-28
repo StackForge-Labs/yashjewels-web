@@ -54,11 +54,10 @@ const navGroups = [
             },
             {
                 name: "Jewelry Attributes", icon: Gem, subItems: [
-                    { name: "Gold Karats", href: "/admin/gold-karats" },
-                    { name: "Diamond Qualities", href: "/admin/diamond-qualities" },
+                    { name: "Materials & Colors", href: "/admin/gold-karats" },
+                    { name: "Diamond Quality (Color/Clarity)", href: "/admin/diamond-qualities" },
                     { name: "Diamond Cuts", href: "/admin/diamond-cuts" },
-                    { name: "Stone Types", href: "/admin/stone-types" },
-                    { name: "Stone Qualities", href: "/admin/gemstones" },
+                    { name: "Gemstones & Stones", href: "/admin/gemstones" },
                     { name: "Certifications", href: "/admin/certifications" },
                 ]
             },

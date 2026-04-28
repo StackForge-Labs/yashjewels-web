@@ -24,12 +24,8 @@ export default function AdminDiamondCutsPage() {
 
     const fetchData = async () => {
         setIsLoading(true);
-        const [cutsRes, qualitiesRes] = await Promise.all([
-            specService.diamondSubTypes.getAll(),
-            specService.diamondQualities.getAll()
-        ]);
+        const cutsRes = await specService.diamondSubTypes.getAll();
         setDiamondCuts(cutsRes.data);
-        setQualities(qualitiesRes.data);
         setIsLoading(false);
     };
 
@@ -38,9 +34,7 @@ export default function AdminDiamondCutsPage() {
     }, []);
 
     const filtered = diamondCuts.filter(d => {
-        const nameMatch = (d.subTypeCode || "").toLowerCase().includes(search.toLowerCase());
-        const qualityMatch = qualities.find(q => q.id === d.diamondQualityId)?.gradeCode?.toLowerCase().includes(search.toLowerCase()) || false;
-        const matchSearch = nameMatch || qualityMatch;
+        const matchSearch = (d.subTypeCode || "").toLowerCase().includes(search.toLowerCase());
         const matchStatus = filterStatus === "ALL" ? true : filterStatus === "ACTIVE" ? d.isActive : !d.isActive;
         return matchSearch && matchStatus;
     });
@@ -69,17 +63,10 @@ export default function AdminDiamondCutsPage() {
         const formData = new FormData(form);
         
         const payload = {
-            diamondQualityId: formData.get("diamondQualityId") as string,
             subTypeCode: formData.get("subTypeCode") as string,
             description: formData.get("description") as string,
             isActive: drawerMode === "EDIT" ? formData.get("isActive") === "on" : true,
         };
-
-        if (!payload.diamondQualityId && drawerMode === "CREATE") {
-            toast.error("Please select a Diamond Quality");
-            setIsSaving(false);
-            return;
-        }
 
         let res;
         if (drawerMode === "CREATE") {
@@ -186,7 +173,6 @@ export default function AdminDiamondCutsPage() {
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                                 <tr>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Cut Name / Shape</th>
-                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Quality Grade</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Description</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
@@ -213,11 +199,7 @@ export default function AdminDiamondCutsPage() {
                                             </div>
                                         </td>
 
-                                        <td className="px-6 py-4">
-                                            <div className="inline-flex items-center rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                                {qualities.find(q => q.id === item.diamondQualityId)?.gradeCode || item.diamondQuality?.gradeCode || "Unknown"}
-                                            </div>
-                                        </td>
+
                                         
                                         <td className="px-6 py-4">
                                             <p className="max-w-[280px] overflow-hidden text-ellipsis whitespace-nowrap font-plus-jakarta text-xs text-gray-500 dark:text-gray-400">
@@ -269,32 +251,15 @@ export default function AdminDiamondCutsPage() {
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "New Cut Shape" : "Update Cut Shape"}
+                                    {drawerMode === "CREATE" ? "New Cut Style" : "Update Cut Style"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Manage technical shapes for diamond inventory.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Manage technical shapes and faceting styles.</p>
                             </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-6 py-6 font-plus-jakarta">
                             <div className="flex flex-col gap-5">
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Diamond Quality Grade <span className="text-rose-500">*</span>
-                                    </label>
-                                    <select
-                                        name="diamondQualityId"
-                                        required
-                                        defaultValue={selectedItem?.diamondQualityId || ""}
-                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
-                                    >
-                                        <option value="">Select Quality...</option>
-                                        {qualities.map((q) => (
-                                            <option key={q.id} value={q.id}>
-                                                {q.gradeCode}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
                                         Cut Shape Name / Code <span className="text-rose-500">*</span>

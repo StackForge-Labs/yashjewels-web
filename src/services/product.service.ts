@@ -13,6 +13,8 @@ export interface GetProductsParams {
   searchQuery?: string;
   sortBy?: string;
   inStock?: boolean;
+  goldKaratId?: string;
+  diamondQualityId?: string;
   includeDeleted?: boolean;
   onlyDeleted?: boolean;
 }

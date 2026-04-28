@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { productService } from "@/services/product.service";
 import { categoryService } from "@/services/category.service";
 import { catalogService } from "@/services/catalog.service";
-import { specService } from "@/services/spec.service";
+import { specService, JewelrySpecItem } from "@/services/spec.service";
 import { adminService } from "@/services/admin.service";
 import {
     Product, ProductCreateRequest, ProductUpdateRequest,
@@ -96,7 +96,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     const [vendors, setVendors] = useState<any[]>([]);
 
     // Form State
-    const [formData, setFormData] = useState<ProductCreateRequest & { status?: string, otherMakingCharge?: number }>({
+    const [formData, setFormData] = useState<ProductCreateRequest & { id?: string; status?: string }>({
         styleCode: "", name: "", slug: "", description: "", prodQuality: "High Premium",
         vendorId: "", brandId: "", categoryId: "",
         productTypeId: "", jewelTypeId: "", goldKaratId: "", certificationId: "",
@@ -104,7 +104,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
         goldMakingCharge: 0, stoneMakingCharge: 0, diamondMakingCharge: 0, otherMakingCharge: 0, vatRate: 10,
         quantity: 1, pairs: 1, status: "ACTIVE",
         stones: [], diamonds: []
-    } as any);
+    });
 
     const [productImages, setProductImages] = useState<any[]>([]);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -163,27 +163,49 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                     const data = await productService.getById(productId!);
                     if (data) {
                         setFormData({
-                            ...data,
+                            id: data.id,
+                            styleCode: data.styleCode || "",
+                            name: data.name || "",
+                            slug: data.slug || "",
+                            description: data.description || "",
+                            prodQuality: data.prodQuality || "High Premium",
                             brandId: data.brandId || "",
                             categoryId: data.categoryId || "" ,
                             productTypeId: data.productTypeId || "",
                             jewelTypeId: data.jewelTypeId || "",
                             goldKaratId: data.goldKaratId || "",
                             certificationId: data.certificationId || "",
+                            vendorId: data.vendorId || "",
+                            goldWeightGm: data.goldWeightGm || 0,
+                            stoneWeightGm: data.stoneWeightGm || 0,
+                            diamondWeightCts: data.diamondWeightCts || 0,
+                            netGoldGm: data.netGoldGm || 0,
+                            wastagePct: data.wastagePct || 0,
+                            wastageGm: data.wastageGm || 0,
+                            totalGrossWeightGm: data.totalGrossWeightGm || 0,
+                            goldMakingCharge: data.goldMakingCharge || 0,
+                            stoneMakingCharge: data.stoneMakingCharge || 0,
+                            diamondMakingCharge: data.diamondMakingCharge || 0,
+                            otherMakingCharge: data.otherMakingCharge || 0,
+                            vatRate: data.vatRate || 10,
+                            quantity: data.quantity || 1,
+                            pairs: 1, // Default or map if exists
                             status: data.status,
-                            stones: (data.stones || []).map((s: any) => ({
-                                ...s,
+                            stones: (data.stones || []).map(s => ({
                                 name: s.name || "",
-                                // Nếu Backend trả về object lồng nhau, lấy gradeCode, nếu không lấy trực tiếp giá trị
-                                stoneQuality: (typeof s.stoneQuality === 'object' ? s.stoneQuality?.gradeCode : s.stoneQuality) || s.quality || ""
+                                stoneQuality: s.stoneQualityId || "",
+                                quantity: s.quantity || 0,
+                                weightGm: s.weightGm || 0,
+                                ratePerGm: s.ratePerGm || 0
                             })),
-                            diamonds: (data.diamonds || []).map((d: any) => ({
-                                ...d,
-                                diamondQuality: (typeof d.diamondQuality === 'object' ? d.diamondQuality?.gradeCode : d.diamondQuality) || d.quality || "",
-                                diamondCut: (typeof d.diamondCut === 'object' ? d.diamondCut?.subTypeCode : d.diamondCut) || d.cut || ""
-                            })),
-                            diamondWeightCts: data.diamonds?.reduce((sum, d) => sum + (d.weightCts || 0), 0) || 0
-                        } as any);
+                            diamonds: (data.diamonds || []).map(d => ({
+                                diamondQuality: d.diamondQualityId || "",
+                                diamondCut: d.diamondSubTypeId || "",
+                                quantity: d.quantity || 0,
+                                weightCts: d.weightCts || 0,
+                                ratePerCt: d.ratePerCt || 0
+                            }))
+                        });
                         setProductImages(data.images || []);
                     }
                 } catch (e) {
@@ -221,7 +243,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
             // ─── Auto-Calculation Logic ───
             // 1. Update Total Gross Weight (1 Carat = 0.2 Grams)
             if (name === "goldWeightGm" || name === "stoneWeightGm" || name === "diamondWeightCts") {
-                const diamondInGm = (next as any).diamondWeightCts * 0.2 || 0;
+                const diamondInGm = (next.diamondWeightCts || 0) * 0.2;
                 next.totalGrossWeightGm = Number((next.goldWeightGm + next.stoneWeightGm + diamondInGm).toFixed(3));
                 next.netGoldGm = next.goldWeightGm;
             }
@@ -263,9 +285,11 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
         const nextDiamonds = [...(formData.diamonds || [])];
 
         if (type === "stone") {
-            (nextStones[index] as any)[field] = field === "name" || field === "stoneQuality" ? value : parseFloat(value) || 0;
+            const stone = nextStones[index];
+            (stone as any)[field] = field === "name" || field === "stoneQuality" ? value : parseFloat(value) || 0;
         } else {
-            (nextDiamonds[index] as any)[field] = field === "diamondQuality" || field === "diamondCut" ? value : parseFloat(value) || 0;
+            const diamond = nextDiamonds[index];
+            (diamond as any)[field] = field === "diamondQuality" || field === "diamondCut" ? value : parseFloat(value) || 0;
         }
 
         // Auto-aggregate weights
@@ -416,16 +440,16 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                             </FormSelect>
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <FormLabel required>Product Type</FormLabel>
+                                            <FormLabel required>Collection / Style</FormLabel>
                                             <FormSelect name="productTypeId" value={formData.productTypeId} onChange={handleChange}>
-                                                <option value="">Select Type</option>
+                                                <option value="">Select Collection</option>
                                                 {productTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                             </FormSelect>
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <FormLabel required>Jewel Type</FormLabel>
+                                            <FormLabel required>Main Focus</FormLabel>
                                             <FormSelect name="jewelTypeId" value={formData.jewelTypeId} onChange={handleChange}>
-                                                <option value="">Select Jewel Type</option>
+                                                <option value="">Select Main Component</option>
                                                 {jewelTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                             </FormSelect>
                                         </div>
@@ -457,10 +481,10 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                     <div className="space-y-10">
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="flex flex-col gap-1.5">
-                                                <FormLabel required>Gold Karat</FormLabel>
+                                                <FormLabel required>Material & Color</FormLabel>
                                                 <FormSelect name="goldKaratId" value={formData.goldKaratId} onChange={handleChange}>
-                                                    <option value="">Select Karat</option>
-                                                    {karats.map(k => <option key={k.id} value={k.id}>{k.karatLabel} ({k.karatValue}K)</option>)}
+                                                    <option value="">Select Material</option>
+                                                    {karats.map(k => <option key={k.id} value={k.id}>{k.karatLabel}</option>)}
                                                 </FormSelect>
                                             </div>
                                             <div className="flex flex-col gap-1.5">
@@ -489,7 +513,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                         <FormInput
                                                             type="number"
                                                             name="diamondWeightCts"
-                                                            value={(formData as any).diamondWeightCts || 0}
+                                                            value={formData.diamondWeightCts || 0}
                                                             onChange={handleChange}
                                                             step="0.01"
                                                         />
@@ -506,12 +530,15 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                             name="totalGrossWeightGm"
                                                             value={formData.totalGrossWeightGm}
                                                             disabled
-                                                            className="bg-gray-100/80 cursor-not-allowed dark:bg-gray-800/80"
+                                                            className="bg-gray-100/80 cursor-not-allowed dark:bg-gray-800/80 font-medium"
                                                         />
                                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                                                             <Lock className="h-3 w-3" />
                                                         </div>
                                                     </div>
+                                                    <p className="px-1 text-[10px] leading-relaxed text-gray-400/80 italic">
+                                                        * Physical mass = Gold + Stones + (Diamond Cts × 0.2)
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -529,7 +556,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel>Diamond Making Charge</FormLabel>
-                                                    <FormInput type="number" name="diamondMakingCharge" value={(formData as any).diamondMakingCharge} onChange={handleChange} />
+                                                    <FormInput type="number" name="diamondMakingCharge" value={formData.diamondMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel>Other Charge</FormLabel>
@@ -584,13 +611,17 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                                 {stoneTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                                                             </FormSelect>
                                                         </div>
-                                                        <div>
-                                                            <FormLabel>Quality</FormLabel>
-                                                            <FormSelect value={s.stoneQuality} onChange={(e) => handleComponentChange("stone", i, "stoneQuality", e.target.value)}>
-                                                                <option value="">Select</option>
-                                                                {stoneQualities.map(q => <option key={q.id} value={q.gradeCode || q.grade || ""}>{q.gradeCode || q.grade}</option>)}
-                                                            </FormSelect>
-                                                        </div>
+                                                         <div>
+                                                             <FormLabel>Quality</FormLabel>
+                                                             <FormSelect value={s.stoneQuality} onChange={(e) => handleComponentChange("stone", i, "stoneQuality", e.target.value)}>
+                                                                 <option value="">Select</option>
+                                                                 {stoneQualities.filter(q => q.stoneType === s.name).map(q => (
+                                                                     <option key={q.id} value={q.id}>
+                                                                         {q.gradeCode || q.grade}
+                                                                     </option>
+                                                                 ))}
+                                                             </FormSelect>
+                                                         </div>
                                                         <div>
                                                             <FormLabel>Qty</FormLabel>
                                                             <FormInput type="number" value={s.quantity} onChange={(e) => handleComponentChange("stone", i, "quantity", e.target.value)} />
@@ -627,17 +658,17 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                 {formData.diamonds?.map((d, i) => (
                                                     <div key={i} className="group relative grid grid-cols-4 gap-3 rounded-xl border border-gray-100 bg-gray-50/30 p-4 transition-all hover:border-blue-200 dark:border-gray-800 dark:bg-gray-900/40">
                                                         <div>
-                                                            <FormLabel>Quality</FormLabel>
+                                                            <FormLabel>Quality (Color/Clarity)</FormLabel>
                                                             <FormSelect value={d.diamondQuality} onChange={(e) => handleComponentChange("diamond", i, "diamondQuality", e.target.value)}>
-                                                                <option value="">Select</option>
-                                                                {diamondQualities.map(q => <option key={q.id} value={q.gradeCode || q.grade || ""}>{q.gradeCode || q.grade}</option>)}
+                                                                <option value="">Select Grade</option>
+                                                                {diamondQualities.map(q => <option key={q.id} value={q.id}>{q.gradeCode || q.grade}</option>)}
                                                             </FormSelect>
                                                         </div>
                                                         <div>
                                                             <FormLabel>Cut</FormLabel>
                                                             <FormSelect value={d.diamondCut} onChange={(e) => handleComponentChange("diamond", i, "diamondCut", e.target.value)}>
                                                                 <option value="">Select</option>
-                                                                {diamondCuts.map(c => <option key={c.id} value={c.subTypeCode || c.name || ""}>{c.subTypeCode || c.name}</option>)}
+                                                                {diamondCuts.map(c => <option key={c.id} value={c.id}>{c.subTypeCode || c.name}</option>)}
                                                             </FormSelect>
                                                         </div>
                                                         <div>
@@ -809,14 +840,18 @@ export default function AdminProductsPage() {
     const [filterMaxPrice, setFilterMaxPrice] = useState("");
     const [filterSortBy, setFilterSortBy] = useState("");
     const [filterInStock, setFilterInStock] = useState(false);
+    const [filterGoldKaratId, setFilterGoldKaratId] = useState("");
+    const [filterDiamondQualityId, setFilterDiamondQualityId] = useState("");
 
     // Catalog lists for filter dropdowns
     const [brands, setBrands] = useState<any[]>([]);
     const [filterJewelTypes, setFilterJewelTypes] = useState<any[]>([]);
     const [filterProductTypes, setFilterProductTypes] = useState<any[]>([]);
+    const [goldKarats, setGoldKarats] = useState<JewelrySpecItem[]>([]);
+    const [diamondQualities, setDiamondQualities] = useState<JewelrySpecItem[]>([]);
 
     // Derived: count active non-basic filters
-    const activeFilterCount = [filterBrandId, filterJewelTypeId, filterProductTypeId, filterMinPrice, filterMaxPrice, filterSortBy, filterInStock ? "x" : ""].filter(Boolean).length;
+    const activeFilterCount = [filterBrandId, filterJewelTypeId, filterProductTypeId, filterMinPrice, filterMaxPrice, filterSortBy, filterInStock ? "x" : "", filterGoldKaratId, filterDiamondQualityId].filter(Boolean).length;
     // Modals
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -833,6 +868,8 @@ export default function AdminProductsPage() {
         setFilterMaxPrice("");
         setFilterSortBy("");
         setFilterInStock(false);
+        setFilterGoldKaratId("");
+        setFilterDiamondQualityId("");
     };
 
     const handleExport = async () => {
@@ -851,13 +888,15 @@ export default function AdminProductsPage() {
                 maxPrice: filterMaxPrice ? Number(filterMaxPrice) : undefined,
                 sortBy: filterSortBy || undefined,
                 inStock: filterInStock ? true : undefined,
+                goldKaratId: filterGoldKaratId || undefined,
+                diamondQualityId: filterDiamondQualityId || undefined,
                 onlyDeleted: showDeleted
             };
             
             const res = await productService.getAll(params);
             if (res && res.data && res.data.length > 0) {
                 const data = res.data;
-                const headers = ["ID", "Name", "Style Code", "Category", "Brand", "Estimated Price", "Stock", "Status", "Created At"];
+                const headers = ["ID", "Name", "Style Code", "Category", "Brand", "Gold Karat", "Diamond Quality", "Gold Weight (g)", "Estimated Price", "Stock", "Status", "Created At"];
                 const csvContent = [
                     headers.join(","),
                     ...data.map(p => [
@@ -866,6 +905,9 @@ export default function AdminProductsPage() {
                         p.styleCode || "",
                         p.categoryName || "",
                         p.brandName || "",
+                        p.goldKaratName || "",
+                        p.diamondQualityName || "",
+                        p.goldWeightGm || 0,
                         p.estimatedFinalPrice || 0,
                         p.quantity || 0,
                         p.status || "",
@@ -907,6 +949,8 @@ export default function AdminProductsPage() {
                 maxPrice: filterMaxPrice ? Number(filterMaxPrice) : undefined,
                 sortBy: filterSortBy || undefined,
                 inStock: filterInStock ? true : undefined,
+                goldKaratId: filterGoldKaratId || undefined,
+                diamondQualityId: filterDiamondQualityId || undefined,
                 onlyDeleted: showDeleted
             };
 
@@ -921,7 +965,7 @@ export default function AdminProductsPage() {
         } finally {
             setLoading(false);
         }
-    }, [page, searchQuery, categoryId, filterBrandId, filterJewelTypeId, filterProductTypeId, filterMinPrice, filterMaxPrice, filterSortBy, filterInStock, showDeleted]);
+    }, [page, searchQuery, categoryId, filterBrandId, filterJewelTypeId, filterProductTypeId, filterMinPrice, filterMaxPrice, filterSortBy, filterInStock, filterGoldKaratId, filterDiamondQualityId, showDeleted]);
 
     // Initial metadata load
     useEffect(() => {
@@ -929,6 +973,8 @@ export default function AdminProductsPage() {
         catalogService.brands.getAll().then(res => res.success && setBrands(res.data));
         catalogService.jewelTypes.getAll().then(res => res.success && setFilterJewelTypes(res.data));
         catalogService.productTypes.getAll().then(res => res.success && setFilterProductTypes(res.data));
+        specService.goldKarats.getAll().then(res => res.success && setGoldKarats(res.data));
+        specService.diamondQualities.getAll().then(res => res.success && setDiamondQualities(res.data));
     }, []);
 
     // Data load when filters change
@@ -1177,6 +1223,32 @@ export default function AdminProductsPage() {
                                         <option value="newest">Newest First</option>
                                         <option value="popular">Most Viewed</option>
                                         <option value="sold">Best Selling</option>
+                                    </select>
+                                </div>
+
+                                {/* Gold Karat */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Material & Color</label>
+                                    <select
+                                        value={filterGoldKaratId}
+                                        onChange={(e) => { setFilterGoldKaratId(e.target.value); setPage(1); }}
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    >
+                                        <option value="">All Materials</option>
+                                        {goldKarats.map((k: any) => <option key={k.id} value={k.id}>{k.caratLabel || k.name}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Diamond Quality */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Diamond Quality</label>
+                                    <select
+                                        value={filterDiamondQualityId}
+                                        onChange={(e) => { setFilterDiamondQualityId(e.target.value); setPage(1); }}
+                                        className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                    >
+                                        <option value="">All Qualities</option>
+                                        {diamondQualities.map((q: any) => <option key={q.id} value={q.id}>{q.gradeCode || q.gradeName || q.grade}</option>)}
                                     </select>
                                 </div>
                             </div>

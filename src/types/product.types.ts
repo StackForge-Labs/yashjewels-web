@@ -11,6 +11,8 @@ export interface Product {
   categoryName?: string;
   brandId: string;
   brandName?: string;
+  goldKaratName?: string;
+  diamondQualityName?: string;
   productTypeId: string;
   jewelTypeId: string;
   goldKaratId: string;
@@ -24,6 +26,7 @@ export interface Product {
   
   goldWeightGm: number;
   stoneWeightGm: number;
+  diamondWeightCts: number;
   netGoldGm: number;
   wastagePct: number;
   wastageGm: number;
@@ -31,6 +34,7 @@ export interface Product {
   
   goldMakingCharge: number;
   stoneMakingCharge: number;
+  diamondMakingCharge: number;
   otherMakingCharge: number;
   vatRate: number;
   
@@ -52,6 +56,7 @@ export interface ProductStone {
   id: string;
   name: string;
   stoneQuality: string;
+  stoneQualityId?: string;
   quantity: number;
   weightGm: number;
   ratePerGm: number;
@@ -61,7 +66,9 @@ export interface ProductStone {
 export interface ProductDiamond {
   id: string;
   diamondQuality: string;
+  diamondQualityId?: string;
   diamondCut: string;
+  diamondSubTypeId?: string;
   quantity: number;
   weightCts: number;
   ratePerCt: number;
@@ -99,12 +106,14 @@ export interface ProductCreateRequest {
   prodQuality: string;
   goldWeightGm: number;
   stoneWeightGm: number;
+  diamondWeightCts: number;
   netGoldGm: number;
   wastagePct: number;
   wastageGm: number;
   totalGrossWeightGm: number;
   goldMakingCharge: number;
   stoneMakingCharge: number;
+  diamondMakingCharge: number;
   otherMakingCharge: number;
   vatRate: number;
   quantity: number;

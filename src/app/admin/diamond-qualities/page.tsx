@@ -104,16 +104,16 @@ export default function AdminDiamondQualitiesPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                     <h1 className="font-serif text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Diamond Grading (4Cs)
+                        Diamond Quality (Color/Clarity)
                     </h1>
                     <p className="mt-1 font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
-                        Manage diamond quality attributes based on GIA&apos;s 4Cs standards.
+                        Manage combined diamond quality grades (e.g. D/VVS1, G/VS2).
                     </p>
                 </div>
                 <button 
                     onClick={openCreate}
                     className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-plus-jakarta text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-blue-500/20 active:scale-95">
-                    <Plus className="h-4 w-4" /> Add Grading
+                    <Plus className="h-4 w-4" /> Add Quality Grade
                 </button>
             </div>
 
@@ -123,7 +123,7 @@ export default function AdminDiamondQualitiesPage() {
                     <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search grading levels..."
+                        placeholder="Search quality grades (e.g. D/VVS1)..."
                         className="w-full rounded-xl border border-gray-200 bg-white/50 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-gray-800 dark:bg-[#111]/50 dark:focus:bg-[#111]"
                     />
                 </div>
@@ -172,8 +172,8 @@ export default function AdminDiamondQualitiesPage() {
                         <table className="w-full whitespace-nowrap text-left text-sm">
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#111]/50">
                                 <tr>
-                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Grading Category</th>
-                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Description</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Quality Grade (Color/Clarity)</th>
+                                    <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Tech Description / Sparkle</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Status</th>
                                     <th className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 text-right">Actions</th>
                                 </tr>
@@ -249,9 +249,9 @@ export default function AdminDiamondQualitiesPage() {
                         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-800">
                             <div>
                                 <h2 className="font-serif text-xl font-bold dark:text-white">
-                                    {drawerMode === "CREATE" ? "New Grade Level" : "Update Grade Level"}
+                                    {drawerMode === "CREATE" ? "New Quality Grade" : "Update Quality Grade"}
                                 </h2>
-                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Manage 4Cs grading specification.</p>
+                                <p className="font-plus-jakarta text-xs text-gray-500 mt-1">Manage color and clarity combinations.</p>
                             </div>
                         </div>
 
@@ -259,14 +259,14 @@ export default function AdminDiamondQualitiesPage() {
                             <div className="flex flex-col gap-5">
                                 <div>
                                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                                        Grade Level Code <span className="text-rose-500">*</span>
+                                        Quality Grade Code <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         type="text" 
                                         name="gradeCode"
                                         required
                                         defaultValue={selectedItem?.gradeCode || ""}
-                                        placeholder="Enter grade (e.g. VVS2)..."
+                                        placeholder="Enter grade (e.g. D/VVS1)..."
                                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-white dark:focus:border-blue-500"
                                     />
                                 </div>
