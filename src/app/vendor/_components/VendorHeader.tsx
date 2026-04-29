@@ -35,7 +35,7 @@ export default function VendorHeader({ onToggleSidebar, onToggleCollapse, isColl
     }, []);
 
     const mockNotifications = [
-        { id: 1, type: 'order', title: 'New Order Received', desc: 'Order #ORD-7721 (24,500,000 VND) needs processing.', time: '5 mins ago', icon: <ShoppingBag className="h-4 w-4 text-amber-600" />, bg: 'bg-amber-50' },
+        { id: 1, type: 'order', title: 'New Order Received', desc: 'Order #ORD-7721 (24,500,000 USD) needs processing.', time: '5 mins ago', icon: <ShoppingBag className="h-4 w-4 text-amber-600" />, bg: 'bg-amber-50' },
         { id: 2, type: 'inquiry', title: 'New Customer Inquiry', desc: 'Customer asking about diamond ring sizing.', time: '30 mins ago', icon: <AlertTriangle className="h-4 w-4 text-blue-600" />, bg: 'bg-blue-50' },
         { id: 3, type: 'system', title: 'KYC Verified', desc: 'Your uploaded ID document was verified by Admin.', time: '2 hours ago', icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />, bg: 'bg-emerald-50' },
     ];

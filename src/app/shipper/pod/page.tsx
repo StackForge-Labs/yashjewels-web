@@ -9,8 +9,8 @@ import { getErrorMessage } from "@/lib/api-client";
 
 type PodState = "loading" | "error" | "review" | "capture" | "confirm" | "done";
 
-function formatVnd(n: number) {
-    return new Intl.NumberFormat("vi-VN").format(n) + " ₫";
+function formatUsd(n: number) {
+    return new Intl.NumberFormat("en-US").format(n) + " $";
 }
 
 // ─── Swipe Slider ─────────────────────────────────────────
@@ -268,7 +268,7 @@ function ShipperPodContent() {
                         </div>
                         {orderInfo.isCod && (
                             <span className="rounded-xl bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 flex items-center justify-center">
-                                Thu Hộ: {formatVnd(orderInfo.remainingAmount || 0)}
+                                Thu Hộ: {formatUsd(orderInfo.remainingAmount || 0)}
                             </span>
                         )}
                     </div>

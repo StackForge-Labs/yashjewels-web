@@ -39,7 +39,7 @@ export default function GoldRatesPage() {
                 // Set form defaults from current active rate if it's manual
                 const current = res.data[0];
                 if (current) {
-                    setValue("manualRate", current.rateVnd);
+                    setValue("manualRate", current.rateUsd);
                 }
             }
         } catch (error) {
@@ -79,7 +79,7 @@ export default function GoldRatesPage() {
 
     const current = rates[0];
     const previous = rates[1];
-    const change = current && previous ? ((current.rateVnd - previous.rateVnd) / previous.rateVnd * 100).toFixed(2) : null;
+    const change = current && previous ? ((current.rateUsd - previous.rateUsd) / previous.rateUsd * 100).toFixed(2) : null;
 
     return (
         <div className="flex flex-col gap-8">
@@ -107,7 +107,7 @@ export default function GoldRatesPage() {
                             {current.source === "Manual" ? <ShieldAlert className="h-4 w-4 text-rose-500" /> : <ShieldCheck className="h-4 w-4 text-emerald-500" />}
                         </div>
                         <p className={`mt-2 font-plus-jakarta text-4xl font-bold ${current.source === "Manual" ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400"}`}>
-                            {current.rateVnd.toLocaleString()} VND
+                            {current.rateUsd.toLocaleString("en-US", { style: "currency", currency: "USD" })}
                         </p>
                         <p className={`mt-1 font-plus-jakarta text-sm font-medium ${current.source === "Manual" ? "text-rose-600/70" : "text-amber-600/70"}`}>
                             per gram · {current.source} Mode
@@ -117,7 +117,9 @@ export default function GoldRatesPage() {
                         <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Previous Rate</p>
                         {previous ? (
                             <>
-                                <p className="mt-2 font-plus-jakarta text-2xl font-bold text-gray-900 dark:text-white">{previous.rateVnd.toLocaleString()} VND</p>
+                                <p className="mt-2 font-plus-jakarta text-2xl font-bold text-gray-900 dark:text-white">
+                                    {previous.rateUsd.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                                </p>
                                 <p className="mt-1 font-plus-jakarta text-xs text-gray-400">{new Date(previous.recordedAt).toLocaleString()}</p>
                             </>
                         ) : <p className="mt-2 text-gray-400 text-sm">No previous rate</p>}
@@ -135,13 +137,15 @@ export default function GoldRatesPage() {
                     <div className="overflow-x-auto">
                         <table className="w-full whitespace-nowrap text-left text-sm">
                             <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                                <tr>{["Rate (VND/gm)", "Source", "Status", "Recorded At"].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
+                                <tr>{["Rate (USD/gm)", "Source", "Status", "Recorded At"].map(h => <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>)}</tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
                                 {rates.map((rate, i) => (
                                     <tr key={rate.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
                                         <td className="px-6 py-4">
-                                            <span className={`font-plus-jakarta text-base font-bold ${i === 0 ? "text-amber-600" : "text-gray-700 dark:text-gray-200"}`}>{rate.rateVnd.toLocaleString()}</span>
+                                            <span className={`font-plus-jakarta text-base font-bold ${i === 0 ? "text-amber-600" : "text-gray-700 dark:text-gray-200"}`}>
+                                                {rate.rateUsd.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                                            </span>
                                             {i === 0 && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 font-plus-jakarta text-[10px] font-bold text-amber-600">ACTIVE</span>}
                                         </td>
                                         <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{rate.source}</td>
@@ -173,10 +177,10 @@ export default function GoldRatesPage() {
                         <p className="text-[11px] text-blue-700/70 font-medium">When active, the system will ignore external live prices and use your manual rate for all product calculations.</p>
                     </div>
 
-                    <FormField label="Manual Rate (VND per gram)" required={isManualMode}>
+                    <FormField label="Manual Rate (USD per gram)" required={isManualMode}>
                         <div className="relative">
-                            <input type="number" disabled={!isManualMode} className={`${inputCls} ${!isManualMode ? "opacity-50" : ""}`} placeholder="8500000" {...register("manualRate")} />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">VND</span>
+                            <input type="number" disabled={!isManualMode} className={`${inputCls} ${!isManualMode ? "opacity-50" : ""}`} placeholder="100.00" {...register("manualRate")} />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">USD</span>
                         </div>
                         {errors.manualRate && <p className="text-rose-500 text-xs mt-1">{errors.manualRate.message}</p>}
                     </FormField>

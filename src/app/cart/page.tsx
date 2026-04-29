@@ -57,7 +57,7 @@ export default function CartPage() {
     };
 
     const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
     };
 
     if (cart.isLoading && cart.items.length === 0) {
@@ -188,7 +188,7 @@ export default function CartPage() {
                             <div className="sticky top-32">
                                 <CartSummary
                                     subtotal={formatCurrency(selectedSubtotal)}
-                                    shipping={selectedItemCount > 0 ? "Free" : "0 ₫"}
+                                    shipping={selectedItemCount > 0 ? "Free" : "0 $"}
                                     tax={formatCurrency(tax)} // Calculate VAT based on selection
                                     total={formatCurrency(total)}
                                     itemCount={selectedItemCount}

@@ -2,9 +2,13 @@
 import { TrendingUp } from "lucide-react";
 import { useGoldRate } from "@/hooks/useGoldRate";
 
-/** Format VND with dot separators, e.g. 8.520.000 */
-const formatVnd = (n: number) =>
-  n.toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+/** Format USD with 2 decimals */
+const formatUsd = (n: number) =>
+  n.toLocaleString("en-US", { 
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2 
+  });
 
 /** Skeleton shimmer span */
 const Shimmer = () => (
@@ -38,29 +42,19 @@ export function GoldTicker() {
 
           {/* 24K */}
           <RateCell
-            label="Gold 24K / chỉ"
+            label="Gold 24K / gram"
             isLoading={isLoading}
-            value={snapshot ? `${formatVnd(snapshot.rate24kPerChi)} ₫` : null}
+            value={snapshot ? formatUsd(snapshot.currentGoldRateUsd) : null}
           />
 
           <span className="hidden h-3 w-px shrink-0 bg-gray-200 sm:block dark:bg-white/10" />
 
-          {/* 18K */}
+          {/* 18K (Estimate) */}
           <RateCell
             label="Gold 18K / gram"
             isLoading={isLoading}
-            value={snapshot ? `${formatVnd(snapshot.rate18kPerGram)} ₫` : null}
+            value={snapshot ? formatUsd(snapshot.currentGoldRateUsd * 0.75) : null}
             className="hidden sm:flex"
-          />
-
-          <span className="hidden h-3 w-px shrink-0 bg-gray-200 md:block dark:bg-white/10" />
-
-          {/* USD/VND */}
-          <RateCell
-            label="USD / VND"
-            isLoading={isLoading}
-            value={snapshot ? `${formatVnd(snapshot.usdToVnd)} ₫` : null}
-            className="hidden md:flex"
           />
         </div>
 

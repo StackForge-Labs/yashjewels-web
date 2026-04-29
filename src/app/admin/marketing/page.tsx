@@ -556,7 +556,7 @@ export default function MarketingPage() {
                         <FormField label="Discount Type">
                             <select className={selectCls} {...campaignForm.register("discountType")}>
                                 <option value="0">Percentage (%)</option>
-                                <option value="1">Fixed Amount (VND)</option>
+                                <option value="1">Fixed Amount (USD)</option>
                                 <option value="2">Free Shipping</option>
                             </select>
                         </FormField>

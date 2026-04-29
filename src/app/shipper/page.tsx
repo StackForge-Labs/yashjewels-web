@@ -25,8 +25,8 @@ const statusConfig: Record<string, { label: string; className: string; dot: stri
     REFUNDED: { label: "Đã Hoàn Tiền", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
 };
 
-function formatVnd(n: number) {
-    return new Intl.NumberFormat("vi-VN").format(n) + " ₫";
+function formatUsd(n: number) {
+    return new Intl.NumberFormat("en-US").format(n) + " $";
 }
 
 // ─── Trip Card ────────────────────────────────────────────────
@@ -44,7 +44,7 @@ function TripCard({
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.shippingAddress)}`;
 
     // Fallback schedule display
-    const scheduledTime = new Date(order.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const scheduledTime = new Date(order.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
     return (
         <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#111]">
@@ -89,7 +89,7 @@ function TripCard({
                     <p className="font-plus-jakarta text-[10px] uppercase tracking-wider text-gray-400">Tổng Thu</p>
                     {/* For COD, show remaining amount. Else 0 */}
                     <p className="font-plus-jakarta text-base font-black text-gray-900 dark:text-white">
-                        {order.isCod ? formatVnd(order.remainingAmount) : "0 ₫"}
+                        {order.isCod ? formatUsd(order.remainingAmount) : "0 $"}
                     </p>
                 </div>
                 <div className="flex items-center flex-wrap justify-end gap-2 shrink-0">

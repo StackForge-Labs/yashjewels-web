@@ -43,6 +43,13 @@ const STATUS_OPTIONS = [
     { value: "COMING_SOON", label: "Coming Soon", color: "indigo" },
 ];
 
+const TABS = [
+    { id: "general", label: "General Information", icon: LayoutGrid },
+    { id: "specs", label: "Technical Specs", icon: Settings2 },
+    { id: "components", label: "Stones & Diamonds", icon: Gem },
+    { id: "gallery", label: "Image Gallery", icon: ImageIcon },
+];
+
 // ─── Form Components ───────────────────────────────────────────
 
 interface FormLabelProps { children: React.ReactNode; required?: boolean }
@@ -109,12 +116,6 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     const [productImages, setProductImages] = useState<any[]>([]);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-    const TABS: { id: "general" | "specs" | "components" | "gallery", label: string }[] = [
-        { id: "general", label: "General Info" },
-        { id: "specs", label: "Technical Specs" },
-        { id: "components", label: "Stones & Diamonds" },
-        { id: "gallery", label: "Image Gallery" }
-    ];
 
     // Load Metadata
     useEffect(() => {
@@ -227,7 +228,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        const val = type === "number" ? parseFloat(value) || 0 : value;
+        const val = type === "number" ? Math.max(0, parseFloat(value) || 0) : value;
 
         setFormData(prev => {
             const next = { ...prev, [name]: val };
@@ -238,6 +239,24 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
             // If user manually edits slug, stop auto-sync
             if (name === "slug") {
                 setIsSlugCustomized(true);
+            }
+
+            // ─── Smart Sync Logic for Material & Color ───
+            if (name === "jewelTypeId") {
+                const selectedJewel = jewelTypes.find(j => j.id === val);
+                if (selectedJewel) {
+                    const jewelName = selectedJewel.name.toLowerCase();
+                    const isMaterialFocus = jewelName.includes("gold") || jewelName.includes("platinum");
+                    if (isMaterialFocus) {
+                        const matchingKarat = karats.find(k => {
+                            const kName = (k.caratLabel || k.name || "").toLowerCase();
+                            return kName.includes(jewelName) || jewelName.includes(kName);
+                        });
+                        if (matchingKarat) {
+                            next.goldKaratId = matchingKarat.id;
+                        }
+                    }
+                }
             }
 
             // ─── Auto-Calculation Logic ───
@@ -286,10 +305,10 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
 
         if (type === "stone") {
             const stone = nextStones[index];
-            (stone as any)[field] = field === "name" || field === "stoneQuality" ? value : parseFloat(value) || 0;
+            (stone as any)[field] = field === "name" || field === "stoneQuality" ? value : Math.max(0, parseFloat(value) || 0);
         } else {
             const diamond = nextDiamonds[index];
-            (diamond as any)[field] = field === "diamondQuality" || field === "diamondCut" ? value : parseFloat(value) || 0;
+            (diamond as any)[field] = field === "diamondQuality" || field === "diamondCut" ? value : Math.max(0, parseFloat(value) || 0);
         }
 
         // Auto-aggregate weights
@@ -317,13 +336,24 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
     };
 
     const handleSubmit = async () => {
-        // Validation logic
+        // ─── Core Validation ───
         if (!formData.name) return toast.error("Product name is required");
-        if (!formData.styleCode) return toast.error("Style code is required");
-        if (!formData.categoryId) return toast.error("Category is required");
+        if (!formData.styleCode) return toast.error("Style code (SKU) is required");
+        if (!formData.slug) return toast.error("URL Slug is required for SEO");
+        if (!formData.brandId) return toast.error("Brand selection is required");
+        if (!formData.categoryId) return toast.error("Category selection is required");
         if (!formData.productTypeId) return toast.error("Product type is required");
-        if (!formData.slug) return toast.error("Slug is required for SEO routing");
-        if (formData.goldWeightGm <= 0) return toast.error("Gold weight must be greater than 0");
+        if (!formData.jewelTypeId) return toast.error("Main Focus (Jewel Type) is required");
+        
+        // ─── Technical Validation ───
+        if (!formData.goldKaratId) return toast.error("Material & Color (Gold Karat) is required");
+        if (!formData.certificationId) return toast.error("Certification is required");
+        if (!formData.prodQuality) return toast.error("Product Quality string is required");
+        if (formData.goldWeightGm <= 0) return toast.error("Gold weight must be a positive value (Grams)");
+
+        // ─── Component Validation ───
+        if (formData.stones.some(s => !s.stoneQuality)) return toast.error("Please specify Quality for all additional stones");
+        if (formData.diamonds.some(d => !d.diamondQuality || !d.diamondCut)) return toast.error("Please specify Quality and Cut for all diamonds");
 
         setSubmitting(true);
         try {
@@ -372,14 +402,8 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                         </button>
                     </div>
 
-                    {/* Tabs */}
                     <div className="flex gap-8 border-b border-gray-100 px-8 dark:border-gray-800">
-                        {[
-                            { id: "general", label: "General Information", icon: LayoutGrid },
-                            { id: "specs", label: "Technical Specs", icon: Settings2 },
-                            { id: "components", label: "Stones & Diamonds", icon: Gem },
-                            { id: "gallery", label: "Image Gallery", icon: ImageIcon },
-                        ].map(t => (
+                        {TABS.map(t => (
                             <button
                                 key={t.id}
                                 onClick={() => setActiveTab(t.id as any)}
@@ -484,7 +508,20 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                 <FormLabel required>Material & Color</FormLabel>
                                                 <FormSelect name="goldKaratId" value={formData.goldKaratId} onChange={handleChange}>
                                                     <option value="">Select Material</option>
-                                                    {karats.map(k => <option key={k.id} value={k.id}>{k.karatLabel}</option>)}
+                                                    {karats.map(k => {
+                                                        const selectedJewelType = jewelTypes.find(j => j.id === formData.jewelTypeId);
+                                                        const jewelName = selectedJewelType?.name.toLowerCase() || "";
+                                                        const isMaterialFocus = jewelName.includes("gold") || jewelName.includes("platinum");
+                                                        const kName = (k.caratLabel || k.name || "").toLowerCase();
+                                                        const isMatch = kName.includes(jewelName) || jewelName.includes(kName);
+                                                        const isDisabled = isMaterialFocus && !isMatch;
+                                                        
+                                                        return (
+                                                            <option key={k.id} value={k.id} disabled={isDisabled}>
+                                                                {k.caratLabel || k.name || k.id} {isDisabled ? "(Mismatched)" : ""}
+                                                            </option>
+                                                        );
+                                                    })}
                                                 </FormSelect>
                                             </div>
                                             <div className="flex flex-col gap-1.5">
@@ -544,27 +581,27 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                         </div>
 
                                         <div className="rounded-2xl border border-gray-100 bg-gray-50/30 p-6 dark:border-gray-800/50">
-                                            <h3 className="mb-6 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-blue-600">Pricing & Commercials (VND)</h3>
+                                            <h3 className="mb-6 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-blue-600">Pricing & Commercials (USD)</h3>
                                             <div className="grid grid-cols-2 gap-6">
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel required>Gold Making Charge</FormLabel>
-                                                    <FormInput type="number" name="goldMakingCharge" value={formData.goldMakingCharge} onChange={handleChange} />
+                                                    <FormInput type="number" min="0" name="goldMakingCharge" value={formData.goldMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel required>Stone Making Charge</FormLabel>
-                                                    <FormInput type="number" name="stoneMakingCharge" value={formData.stoneMakingCharge} onChange={handleChange} />
+                                                    <FormInput type="number" min="0" name="stoneMakingCharge" value={formData.stoneMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel>Diamond Making Charge</FormLabel>
-                                                    <FormInput type="number" name="diamondMakingCharge" value={formData.diamondMakingCharge} onChange={handleChange} />
+                                                    <FormInput type="number" min="0" name="diamondMakingCharge" value={formData.diamondMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel>Other Charge</FormLabel>
-                                                    <FormInput type="number" name="otherMakingCharge" value={formData.otherMakingCharge} onChange={handleChange} />
+                                                    <FormInput type="number" min="0" name="otherMakingCharge" value={formData.otherMakingCharge} onChange={handleChange} />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     <FormLabel>VAT Rate (%)</FormLabel>
-                                                    <FormInput type="number" name="vatRate" value={formData.vatRate} onChange={handleChange} />
+                                                    <FormInput type="number" min="0" name="vatRate" value={formData.vatRate} onChange={handleChange} />
                                                 </div>
                                             </div>
                                         </div>
@@ -615,9 +652,9 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                              <FormLabel>Quality</FormLabel>
                                                              <FormSelect value={s.stoneQuality} onChange={(e) => handleComponentChange("stone", i, "stoneQuality", e.target.value)}>
                                                                  <option value="">Select</option>
-                                                                 {stoneQualities.filter(q => q.stoneType === s.name).map(q => (
+                                                                 {stoneQualities.map(q => (
                                                                      <option key={q.id} value={q.id}>
-                                                                         {q.gradeCode || q.grade}
+                                                                         {q.stoneType} - {q.gradeCode || q.grade}
                                                                      </option>
                                                                  ))}
                                                              </FormSelect>
@@ -699,6 +736,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                     <Upload className="h-8 w-8 text-blue-600" />
                                                     <p className="mt-4 font-plus-jakarta text-sm font-bold text-gray-600 dark:text-gray-300">Stage Photography for Upload</p>
                                                     <p className="font-plus-jakarta text-xs text-gray-400 mt-1 text-center">Selected images will be uploaded once you establish the entry.</p>
+                                                    <p className="font-plus-jakarta text-[10px] text-blue-500 mt-2 text-center italic bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-full">Note: The first image in the sequence will be automatically set as the primary product thumbnail.</p>
                                                     <input type="file" multiple className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => {
                                                         if (e.target.files?.length) {
                                                             setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
@@ -711,6 +749,9 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                                                         {selectedFiles.map((file, i) => (
                                                             <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
                                                                 <img src={URL.createObjectURL(file)} className="h-full w-full object-cover" alt="Preview" />
+                                                                {i === 0 && (
+                                                                    <div className="absolute left-2 top-2 rounded-lg bg-blue-600 px-2 py-0.5 font-plus-jakarta text-[8px] font-bold uppercase text-white shadow-xl">Thumbnail</div>
+                                                                )}
                                                                 <button
                                                                     onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))}
                                                                     className="absolute right-1 top-1 rounded-full bg-rose-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
@@ -772,7 +813,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                             <button
                                 onClick={() => {
                                     const currentIndex = TABS.findIndex(t => t.id === activeTab);
-                                    setActiveTab(TABS[currentIndex - 1].id);
+                                    setActiveTab(TABS[currentIndex - 1].id as any);
                                 }}
                                 className="flex-1 rounded-xl border border-gray-200 py-3 font-plus-jakarta text-sm font-bold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800"
                             >
@@ -802,7 +843,7 @@ function ProductDrawer({ productId, onClose, onSuccess }: ProductDrawerProps) {
                             <button
                                 onClick={() => {
                                     const currentIndex = TABS.findIndex(t => t.id === activeTab);
-                                    setActiveTab(TABS[currentIndex + 1].id);
+                                    setActiveTab(TABS[currentIndex + 1].id as any);
                                 }}
                                 className="flex-[2] rounded-xl bg-blue-600 py-3 font-plus-jakarta text-sm font-bold text-white transition-all hover:bg-blue-700"
                             >
@@ -1019,7 +1060,7 @@ export default function AdminProductsPage() {
     };
 
 
-    const formatVnd = (n: number) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
+    const formatUsd = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(n);
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-full">
@@ -1187,24 +1228,24 @@ export default function AdminProductsPage() {
 
                                 {/* Min Price */}
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Min Price (₫)</label>
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Min Price ($)</label>
                                     <input
                                         type="number"
                                         value={filterMinPrice}
                                         onChange={(e) => { setFilterMinPrice(e.target.value); setPage(1); }}
-                                        placeholder="e.g. 5000000"
+                                        placeholder="e.g. 500"
                                         className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                     />
                                 </div>
 
                                 {/* Max Price */}
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Max Price (₫)</label>
+                                    <label className="font-plus-jakarta text-[9px] font-bold uppercase tracking-wider text-gray-500">Max Price ($)</label>
                                     <input
                                         type="number"
                                         value={filterMaxPrice}
                                         onChange={(e) => { setFilterMaxPrice(e.target.value); setPage(1); }}
-                                        placeholder="e.g. 100000000"
+                                        placeholder="e.g. 10000"
                                         className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 font-plus-jakarta text-xs text-gray-700 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                     />
                                 </div>
@@ -1351,7 +1392,7 @@ export default function AdminProductsPage() {
                                     </td>
                                     <td className="px-2 py-5">
                                         <div className="font-plus-jakarta min-w-0">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{formatVnd(p.estimatedFinalPrice)}</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{formatUsd(p.estimatedFinalPrice)}</p>
                                             <p className="text-[9px] text-gray-400 flex items-center gap-1"><TrendingUp className="h-2.5 w-2.5 text-emerald-500" /> MSRP</p>
                                         </div>
                                     </td>

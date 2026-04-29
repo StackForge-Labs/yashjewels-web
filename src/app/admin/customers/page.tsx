@@ -531,7 +531,7 @@ export default function CustomersPage() {
                                         <td className="px-6 py-4">
                                             <UserStatusBadge userStatus={(c as any).userStatus || (c as any).UserStatus} suspendedUntil={c.suspendedUntil} />
                                         </td>
-                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.lifetimeValue?.toLocaleString() ?? 0} VND</td>
+                                        <td className="px-6 py-4 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{c.lifetimeValue?.toLocaleString() ?? 0} USD</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5">
                                                 <button onClick={() => handleViewProfile(c.id)}
@@ -604,7 +604,7 @@ export default function CustomersPage() {
                         <div className="rounded-2xl bg-gray-50/50 p-4 dark:bg-gray-800/20">
                             <p className="mb-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Shopping Vitality</p>
                             <div className="grid grid-cols-3 gap-2">
-                                {[{ label: "LTV", value: `${selected.lifetimeValue?.toLocaleString() ?? 0} VND` }, { label: "Orders", value: selected.orderCount }, { label: "Items", value: selected.totalItemsPurchased }].map(({ label, value }) => (
+                                {[{ label: "LTV", value: `${selected.lifetimeValue?.toLocaleString() ?? 0} USD` }, { label: "Orders", value: selected.orderCount }, { label: "Items", value: selected.totalItemsPurchased }].map(({ label, value }) => (
                                     <div key={label} className="text-center">
                                         <p className="font-plus-jakarta text-lg font-black text-gray-900 dark:text-white">{value}</p>
                                         <p className="text-[9px] font-bold uppercase text-gray-400">{label}</p>
@@ -635,7 +635,7 @@ export default function CustomersPage() {
                                         <p className="text-[10px] text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-plus-jakarta text-xs font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} VND</p>
+                                        <p className="font-plus-jakarta text-xs font-bold text-gray-900 dark:text-white">{order.totalAmount.toLocaleString()} USD</p>
                                         <span className="text-[9px] font-bold uppercase text-gray-400">{order.status}</span>
                                     </div>
                                 </div>

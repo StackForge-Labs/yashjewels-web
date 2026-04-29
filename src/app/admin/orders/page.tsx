@@ -307,7 +307,7 @@ export default function OrdersPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount?.toLocaleString()} VND</span>
+                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{order.totalAmount?.toLocaleString()} USD</span>
                                             <div className="flex items-center gap-1.5 mt-0.5">
                                                 <span className="font-plus-jakarta text-[10px] font-bold text-blue-500 uppercase">{order.depositPct}% Dep.</span>
                                                 {order.isCod && <span className="bg-amber-50 text-amber-600 text-[8px] font-bold uppercase border border-amber-100 rounded px-1">COD</span>}
@@ -370,7 +370,7 @@ export default function OrdersPage() {
                             <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
                                 <p className="text-[10px] font-bold uppercase text-gray-400">Settlement Status</p>
                                 <p className="mt-1 font-plus-jakarta text-lg font-bold text-gray-900 dark:text-white">{detail.depositPct}% Paid</p>
-                                <p className="text-[10px] font-semibold text-blue-500">{(detail.totalAmount - detail.depositAmount).toLocaleString()} VND Remaining</p>
+                                <p className="text-[10px] font-semibold text-blue-500">{(detail.totalAmount - detail.depositAmount).toLocaleString()} USD Remaining</p>
                             </div>
                             <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
                                 <p className="text-[10px] font-bold uppercase text-gray-400">Shipping Mode</p>
@@ -392,7 +392,7 @@ export default function OrdersPage() {
                                             <p className="font-plus-jakarta text-[11px] text-gray-400 uppercase tracking-widest leading-none mt-1">{item.styleCode} x {item.quantity}</p>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.unitPrice.toLocaleString()} VND</span>
+                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{item.unitPrice.toLocaleString()} USD</span>
                                         </div>
                                     </div>
                                     

@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { ChevronRight, Search, RotateCcw, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
+import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import ProductCard from "../../(home)/_components/ProductCard";
-import FilterDropdown from "../_components/FilterDropdown";
 import MobileFilterDrawer from "../_components/MobileFilterDrawer";
 import CollectionSidebar from "../_components/CollectionSidebar";
 import Pagination from "../_components/Pagination";
@@ -18,6 +17,7 @@ import { Category } from "@/types/category.types";
 
 const CollectionsPage = () => {
     const params = useParams();
+    const searchParams = useSearchParams();
     const slug = params.slug as string;
 
     const [loading, setLoading] = useState(true);
@@ -30,13 +30,14 @@ const CollectionsPage = () => {
     // Filters
     const [brands, setBrands] = useState<RefItem[]>([]);
 
-    // Search & Filter State
-    const [searchQuery, setSearchQuery] = useState("");
+    // Search & Filter State — initialized from URL searchParams (from SearchModal)
+    const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
     const [selectedBrand, setSelectedBrand] = useState("All");
+    const [selectedGoldKarat, _setSelectedGoldKarat] = useState(() => searchParams.get("goldKaratId") ?? "");
     const [isReadyOnly, setIsReadyOnly] = useState(false);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
+    const [minPrice, setMinPrice] = useState(() => searchParams.get("minPrice") ?? "");
+    const [maxPrice, setMaxPrice] = useState(() => searchParams.get("maxPrice") ?? "");
     const [sortBy, setSortBy] = useState("New Arrivals");
 
     // Load category and brands once
@@ -88,6 +89,9 @@ const CollectionsPage = () => {
                 searchQuery: searchQuery || undefined,
                 sortBy: sortMap[sortBy],
                 inStock: isReadyOnly || undefined,
+                goldKaratId: selectedGoldKarat || undefined,
+                minPrice: minPrice ? Number(minPrice) : undefined,
+                maxPrice: maxPrice ? Number(maxPrice) : undefined,
             });
 
             if (result && result.success) {
@@ -103,7 +107,7 @@ const CollectionsPage = () => {
         };
 
         fetchProducts();
-    }, [currentCategory, currentPage, selectedBrand, searchQuery, sortBy, isReadyOnly, brands]);
+    }, [currentCategory, currentPage, selectedBrand, searchQuery, sortBy, isReadyOnly, brands, selectedGoldKarat, minPrice, maxPrice]);
 
     // Reset page to 1 on filter change
     const handleFilterChange = () => {
@@ -116,8 +120,8 @@ const CollectionsPage = () => {
             sku: p.styleCode,
             name: p.name,
             category: currentCategory?.name || "Jewelry",
-            original: Number(p.estimatedFinalPrice * 1.2).toLocaleString() + " VND",
-            sale: Number(p.estimatedFinalPrice).toLocaleString() + " VND",
+            original: Number(p.estimatedFinalPrice * 1.2).toLocaleString() + " USD",
+            sale: Number(p.estimatedFinalPrice).toLocaleString() + " USD",
             discount: "15%",
             image1: p.images?.find(i => i.isPrimary)?.imageUrl || p.images?.[0]?.imageUrl || "https://tamluxury.vn/wp-content/uploads/2025/12/Nhan-nu-kim-cuong-thien-nhien-Mia-Ma-SP-NNU1544-scaled.jpg",
             image2: p.images?.[1]?.imageUrl || p.images?.[0]?.imageUrl || "https://images.pexels.com/photos/1458867/pexels-photo-1458867.jpeg?auto=compress&cs=tinysrgb&w=600",

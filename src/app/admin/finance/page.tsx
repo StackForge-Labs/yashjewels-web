@@ -109,7 +109,7 @@ export default function FinanceHubPage() {
                         </div>
                         <div className="text-sm font-semibold text-slate-500 dark:text-slate-400">{m.label}</div>
                         <div className="text-2xl font-bold mt-1">
-                            {typeof m.value === 'number' ? `${m.value.toLocaleString()} VND` : m.value}
+                            {typeof m.value === 'number' ? `${m.value.toLocaleString()} USD` : m.value}
                         </div>
                     </div>
                 ))}
@@ -157,7 +157,7 @@ export default function FinanceHubPage() {
                             <div key={i} className="space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="font-medium text-slate-600 dark:text-slate-400 capitalize">{pm.method}</span>
-                                    <span className="font-bold">{pm.total.toLocaleString()} VND</span>
+                                    <span className="font-bold">{pm.total.toLocaleString()} USD</span>
                                 </div>
                                 <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                     <div 
@@ -218,7 +218,7 @@ export default function FinanceHubPage() {
                                             {t.paymentMethod}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 font-bold">{t.amount.toLocaleString()} VND</td>
+                                    <td className="px-6 py-4 font-bold">{t.amount.toLocaleString()} USD</td>
                                     <td className="px-6 py-4">
                                         <div className={`px-3 py-1 rounded-full text-[10px] font-bold w-fit uppercase ${
                                             t.status === 'SUCCEEDED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
