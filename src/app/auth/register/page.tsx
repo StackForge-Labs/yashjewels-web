@@ -72,15 +72,19 @@ const RegisterPage = () => {
     });
 
     const onSubmit = (values: RegisterFormValues) => {
-        // Find dial_code from the selected ISO code
-        const selectedCountry = countries.find(c => c.code === values.countryCode);
-        const dialCode = selectedCountry?.dial_code || "+84";
+        // The backend expects exactly 10 digits for the phone number and doesn't accept countryCode.
+        // We strip any non-digit characters just in case, though the input already handles this.
+        const cleanPhone = values.phone.replace(/\D/g, "");
 
-        // Correctly combine country code and phone for the API
         const submitData = {
-            ...values,
-            phone: `${dialCode}${values.phone}`
+            fullName: values.fullName,
+            email: values.email,
+            phone: cleanPhone,
+            dateOfBirth: values.dateOfBirth,
+            password: values.password,
+            confirmPassword: values.confirmPassword,
         };
+
         registerMutation.mutate(submitData);
     };
 

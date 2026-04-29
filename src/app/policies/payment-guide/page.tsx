@@ -39,7 +39,7 @@ export default function PaymentGuidePage() {
                             {[
                                 { icon: CreditCard, title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX. Secured with 3D Secure authentication. Instant processing.", tag: "Most Popular" },
                                 { icon: Building2, title: "Bank Transfer", desc: "Transfer directly to our verified bank account. Auto-verified via webhook within minutes.", tag: "Recommended" },
-                                { icon: Wallet, title: "Cash on Delivery", desc: "Pay in cash when your order arrives. Available for orders under 2,000,000 đ only.", tag: "Limited" },
+                                { icon: Wallet, title: "Cash on Delivery", desc: "Pay in cash when your order arrives. Available for orders under $80 only.", tag: "Limited" },
                             ].map((m) => (
                                 <div key={m.title} className="group rounded-2xl border border-gray-100 p-8 transition-all hover:border-gold/20 dark:border-white/5">
                                     <div className="mb-4 flex items-center justify-between">
@@ -70,17 +70,17 @@ export default function PaymentGuidePage() {
                                 </thead>
                                 <tbody>
                                     <tr className="border-b border-gold/5">
-                                        <td className="py-4 font-medium text-gray-900 dark:text-white">Under 10,000,000 đ</td>
+                                        <td className="py-4 font-medium text-gray-900 dark:text-white">Under $400</td>
                                         <td className="py-4 text-gold font-bold">30% or Full Payment</td>
                                         <td className="py-4 text-gray-500">2 hours</td>
                                     </tr>
                                     <tr className="border-b border-gold/5">
-                                        <td className="py-4 font-medium text-gray-900 dark:text-white">10,000,000 đ – 50,000,000 đ</td>
+                                        <td className="py-4 font-medium text-gray-900 dark:text-white">$400 – $2,000</td>
                                         <td className="py-4 text-gold font-bold">50%</td>
                                         <td className="py-4 text-gray-500">2 hours</td>
                                     </tr>
                                     <tr>
-                                        <td className="py-4 font-medium text-gray-900 dark:text-white">Above 50,000,000 đ</td>
+                                        <td className="py-4 font-medium text-gray-900 dark:text-white">Above $2,000</td>
                                         <td className="py-4 text-gold font-bold">100%</td>
                                         <td className="py-4 text-gray-500">2 hours</td>
                                     </tr>

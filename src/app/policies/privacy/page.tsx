@@ -16,7 +16,7 @@ const SECTIONS = [
         title: "2. How We Use Your Information",
         content: [
             "To ship your orders and process payments",
-            "To verify your identity for expensive orders (over 5,000,000 đ)",
+            "To verify your identity for expensive orders (over $200)",
             "To send you updates about your package or special deals",
             "To make our website and service better for you",
             "To keep your account safe and prevent fraud",
