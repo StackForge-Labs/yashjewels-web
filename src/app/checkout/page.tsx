@@ -17,7 +17,7 @@ import { RootState } from "@/store";
 import { useCart } from "@/hooks/useCart";
 import axiosInstance from "@/lib/api-client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUpdateProfile } from "@/hooks/useUser";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/userSlice";
@@ -32,6 +32,17 @@ export default function CheckoutPage() {
     const dispatch = useDispatch();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.user);
     const { cart, fetchCart } = useCart();
+    const searchParams = useSearchParams();
+    const selectedItemIds = searchParams.get("items")?.split(",") || [];
+
+    // Filter items based on selection from cart
+    const checkoutItems = selectedItemIds.length > 0
+        ? cart.items.filter(item => selectedItemIds.includes(item.cartItemId))
+        : cart.items;
+
+    // Recalculate total for only selected items
+    const checkoutTotalLiveMrp = checkoutItems.reduce((acc, item) => acc + (item.currentLiveMrp * item.quantity), 0);
+
     const updateProfile = useUpdateProfile();
 
     const [step, setStep] = useState(0);
@@ -69,20 +80,18 @@ export default function CheckoutPage() {
             [selectedAddress.province, selectedAddress.district, selectedAddress.addressLine1].join(' ')
         );
         setIsInternationalAddress(!isVietnamAddr);
-        // Use saved distanceKm from DB as the initial value
-        if (selectedAddress.distanceKm && selectedAddress.distanceKm > 0) {
-            setEstimatedDistance(Number(selectedAddress.distanceKm));
-        }
+        // Note: We used to seed from DB distanceKm here, but it caused stale/wrong shipping fees to show
+        // until Mapbox finished. Now we wait for onDistanceChange from AddressSection for accuracy.
     }, [selectedAddress]);
 
-    // Handle COD constraints (Limit 2,000,000 USD)
+    // Handle COD constraints (Limit 80 USD)
     useEffect(() => {
         const insuranceFee = getInsuranceFee(insurance);
-        const grandTotal = cart.totalLiveMrp + insuranceFee;
-        if (grandTotal > 2000000 && payment === "cod") {
+        const currentTotal = checkoutTotalLiveMrp + insuranceFee;
+        if (currentTotal > 80 && payment === "cod") {
             setPayment("card");
         }
-    }, [insurance, cart.totalLiveMrp, payment]);
+    }, [insurance, checkoutTotalLiveMrp, payment]);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
@@ -90,7 +99,7 @@ export default function CheckoutPage() {
 
     // Calculate dynamic insurance fees based on cart total
     const getInsuranceFee = (type: string) => {
-        const total = cart.totalLiveMrp;
+        const total = checkoutTotalLiveMrp;
         if (type === "shipping") return Math.round(total * 0.005); // 0.5%
         if (type === "full") return Math.round(total * 0.015);    // 1.5%
         return 0;
@@ -101,16 +110,16 @@ export default function CheckoutPage() {
 
     // Apply Coupon Discount
     let discountAmount = 0;
-    if (appliedCoupon && cart.totalLiveMrp > 0) {
-        if (appliedCoupon.minOrderAmount && cart.totalLiveMrp < appliedCoupon.minOrderAmount) {
+    if (appliedCoupon && checkoutTotalLiveMrp > 0) {
+        if (appliedCoupon.minOrderAmount && checkoutTotalLiveMrp < appliedCoupon.minOrderAmount) {
             // Does not meet minimum order required. Silently fail discount here but we shouldn't apply it anyway
         } else {
             if (appliedCoupon.discountType === 0) { // percentage
-                discountAmount = (cart.totalLiveMrp * appliedCoupon.discountValue) / 100;
+                discountAmount = (checkoutTotalLiveMrp * appliedCoupon.discountValue) / 100;
             } else if (appliedCoupon.discountType === 1) { // fixed
                 discountAmount = appliedCoupon.discountValue;
             }
-            if (discountAmount > cart.totalLiveMrp) discountAmount = cart.totalLiveMrp;
+            if (discountAmount > checkoutTotalLiveMrp) discountAmount = checkoutTotalLiveMrp;
         }
     }
 
@@ -118,7 +127,7 @@ export default function CheckoutPage() {
         const priority = type === "priority";
         if (isInternational) {
             return {
-                cost: 500 + (priority ? 1000000 : 0),
+                cost: 150 + (priority ? 50 : 0),
                 method: priority ? "Priority Global Express" : "International VIP Transport",
                 description: priority ? "Next-flight-out Secure Air Transport" : "FedEx/DHL Secure Transport with Insurance",
                 eta: priority ? "3 - 5 Business Days" : "7 - 10 Business Days",
@@ -128,7 +137,7 @@ export default function CheckoutPage() {
         }
         if (distance < 15) {
             return {
-                cost: 0 + (priority ? 200000 : 0),
+                cost: 0 + (priority ? 10 : 0),
                 method: priority ? "Priority Urban Express" : "Urban VIP Delivery",
                 description: priority ? "Dedicated Instant Dispatch" : "Complimentary White-glove Service",
                 eta: priority ? "2 - 4 Hours" : "12 - 24 Hours",
@@ -138,7 +147,7 @@ export default function CheckoutPage() {
         }
         if (distance < 50) {
             return {
-                cost: 500000 + (priority ? 200000 : 0),
+                cost: 20 + (priority ? 10 : 0),
                 method: priority ? "Priority Suburban Express" : "Suburban Secure Delivery",
                 description: priority ? "Direct Dedicated Armored Car" : "In-house Armored Fleet Delivery",
                 eta: priority ? "6 - 12 Hours" : "1 - 2 Days",
@@ -148,7 +157,7 @@ export default function CheckoutPage() {
         }
         if (distance < 150) {
             return {
-                cost: 1500000 + (priority ? 200000 : 0),
+                cost: 60 + (priority ? 15 : 0),
                 method: priority ? "Priority Regional Express" : "Inter-provincial VIP Transport",
                 description: priority ? "Dedicated Security Team" : "Dedicated Security Escort",
                 eta: priority ? "24 Hours" : "2 - 3 Days",
@@ -157,7 +166,7 @@ export default function CheckoutPage() {
             };
         }
         return {
-            cost: 2500000 + (priority ? 500000 : 0),
+            cost: 100 + (priority ? 25 : 0),
             method: priority ? "Priority Airline Express" : "Airline Secure Courier",
             description: priority ? "Hand-carried Security Staff" : "3rd Party Insured Airline Transport",
             eta: priority ? "2 Days" : "3 - 5 Days",
@@ -172,19 +181,22 @@ export default function CheckoutPage() {
         : null;
 
     const shippingFee = shippingEstimate ? shippingEstimate.cost : 0;
-    const grandTotal = cart.totalLiveMrp + insuranceFee + shippingFee - discountAmount;
-
-    // Calculate VAT amount included in MRP: VAT_AMT = TOTAL - (TOTAL / (1 + RATE/100))
-    const calculatedVat = cart.totalLiveMrp - (cart.totalLiveMrp / (1 + cart.vatRate / 100));
+    
+    // VAT calculation: Additive (Tax = Price * Rate/100)
+    const calculatedVat = (checkoutTotalLiveMrp * cart.vatRate) / 100;
+    
+    const grandTotal = checkoutTotalLiveMrp + calculatedVat + insuranceFee + shippingFee - discountAmount;
 
     // Calculate dynamic deposit based on exact backend logic
+    const baseTotalForDeposit = checkoutTotalLiveMrp + calculatedVat - discountAmount;
+    
     const getDepositRequired = () => {
-        if (grandTotal >= 5000) return grandTotal; // 100%
-        if (grandTotal >= 1000) return grandTotal * 0.5; // 50%
-        return grandTotal * 0.3; // 30%
+        if (baseTotalForDeposit >= 2000) return baseTotalForDeposit + insuranceFee + shippingFee; // 100%
+        if (baseTotalForDeposit >= 1000) return (baseTotalForDeposit * 0.5) + insuranceFee + shippingFee; // 50%
+        return (baseTotalForDeposit * 0.3) + insuranceFee + shippingFee; // 30%
     };
     const depositAmount = getDepositRequired();
-    const depositPct = depositAmount === grandTotal ? "100%" : depositAmount === grandTotal * 0.5 ? "50%" : "30%";
+    const depositPct = baseTotalForDeposit >= 2000 ? "100%" : baseTotalForDeposit >= 1000 ? "50%" : "30%";
 
     // KYC Tier System logic
     const kycStatus = user?.kycStatus?.toLowerCase();
@@ -216,7 +228,8 @@ export default function CheckoutPage() {
                 shippingFee: shippingFee,
                 estimatedDistanceKm: estimatedDistance,
                 paymentMethod: payment,
-                pay100Percent: depositPct === "100%"
+                pay100Percent: depositPct === "100%",
+                cartItemIds: selectedItemIds.length > 0 ? selectedItemIds : undefined
             });
 
             if (data.success) {
@@ -240,7 +253,7 @@ export default function CheckoutPage() {
         try {
             const { data } = await axiosInstance.post("/coupons/validate", {
                 code: couponCode,
-                orderTotal: cart.totalLiveMrp
+                orderTotal: checkoutTotalLiveMrp
             });
             if (data.success && data.data?.isValid) {
                 setAppliedCoupon(data.data.coupon);
@@ -346,11 +359,11 @@ export default function CheckoutPage() {
         );
     }
 
-    if (cart.items.length === 0) {
+    if (checkoutItems.length === 0) {
         return (
             <section className="py-24 text-center">
-                <h2 className="text-2xl mb-4 font-serif">Your Cart is Empty</h2>
-                <Link href="/collections" className="text-gold">Return to Shop</Link>
+                <h2 className="text-2xl mb-4 font-serif">Your Cart is Empty or no items selected</h2>
+                <Link href="/cart" className="text-gold">Return to Cart</Link>
             </section>
         );
     }
@@ -402,10 +415,7 @@ export default function CheckoutPage() {
                                         selectedId={selectedAddress?.id}
                                         onSelect={(addr) => {
                                             setSelectedAddress(addr);
-                                            // Immediately use saved distance from DB (will be overridden by Mapbox later)
-                                            if (addr.distanceKm && addr.distanceKm > 0) {
-                                                setEstimatedDistance(Number(addr.distanceKm));
-                                            }
+                                            // We no longer immediately set distance from DB to avoid stale expensive shipping display
                                         }}
                                         onFormToggle={(isOpen) => setIsAddressFormOpen(isOpen)}
                                         onDistanceChange={(distance, isIntl) => {
@@ -573,7 +583,7 @@ export default function CheckoutPage() {
                                     {[
                                         { id: "card", title: "Credit / Debit Card", desc: "Visa, Mastercard, AMEX", disabled: false },
                                         { id: "bank", title: "Bank Transfer", desc: "Direct bank transfer with auto-verification", disabled: false },
-                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under 2,000,000 USD", disabled: grandTotal > 2000000 },
+                                        { id: "cod", title: "Cash on Delivery", desc: "Available for orders under $80", disabled: grandTotal > 80 },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
@@ -614,7 +624,7 @@ export default function CheckoutPage() {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
                                             {isGift
                                                 ? "As the sender, you are responsible for the deposit. The recipient will receive the gift fully paid once you complete the final balance."
-                                                : "For orders above 10,000,000 USD, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order."}
+                                                : "For orders above $1,000, you may choose to pay a deposit and complete the remaining payment after vendor confirms your order."}
                                         </p>
                                         <div className="flex justify-between items-center rounded-lg bg-gold text-white px-4 py-3 font-bold text-sm">
                                             <span>To Pay Now:</span>
@@ -760,7 +770,7 @@ export default function CheckoutPage() {
                                 <h3 className="mb-6 font-serif text-lg text-gray-900 dark:text-white">Order Summary</h3>
 
                                 <div className="mb-6 space-y-3">
-                                    {cart.items.map((item) => (
+                                    {checkoutItems.map((item) => (
                                         <div key={item.cartItemId} className="flex items-center gap-3">
                                             <img src={item.primaryImageUrl || "/images/placeholder-jewelry.png"} alt={item.productName} className="h-12 w-12 rounded-lg object-cover" />
                                             <div className="flex-1 text-sm">
@@ -787,19 +797,23 @@ export default function CheckoutPage() {
                                 )}
 
                                 <div className="space-y-3 border-t border-gray-100 pt-4 dark:border-white/5">
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(cart.totalLiveMrp)}</span></div>
+                                    <div className="justify-between text-sm text-gray-500 flex"><span>Subtotal</span><span className="text-gray-900 dark:text-white">{formatCurrency(checkoutTotalLiveMrp)}</span></div>
                                     <div className="flex justify-between text-sm text-gray-500">
                                         <span>Shipping ({shipping === "priority" ? "Priority" : "Standard"})</span>
-                                        <span className={shippingFee === 0 ? "text-green-600 font-medium" : "text-gray-900 dark:text-white"}>
-                                            {shippingFee === 0 ? "Free" : formatCurrency(shippingFee)}
+                                        <span className={!shippingEstimate ? "text-gray-400" : shippingFee === 0 ? "text-green-600 font-medium" : "text-gray-900 dark:text-white"}>
+                                            {!shippingEstimate ? "-" : shippingFee === 0 ? "Free" : formatCurrency(shippingFee)}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between text-sm text-gray-500"><span>Insurance ({insurance})</span><span className="text-gray-900 dark:text-white">{insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}</span></div>
+                                    <div className="flex justify-between text-sm text-gray-500">
+                                        <span>Insurance ({insurance})</span>
+                                        <span className={insurance === "none" ? "text-gray-400" : "text-gray-900 dark:text-white"}>
+                                            {insurance === "none" ? "-" : `+${formatCurrency(insuranceFee)}`}
+                                        </span>
+                                    </div>
                                     <div className="flex justify-between text-sm text-gray-500">
                                         <span>VAT ({cart.vatRate}%)</span>
                                         <div className="text-right">
-                                            <span className="text-gray-900 dark:text-white block">{formatCurrency(calculatedVat)}</span>
-                                            <span className="text-[10px] text-green-600 dark:text-green-400 font-medium tracking-wide">Included in MRP</span>
+                                            <span className="text-gray-900 dark:text-white">+{formatCurrency(calculatedVat)}</span>
                                         </div>
                                     </div>
                                     {appliedCoupon && (

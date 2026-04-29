@@ -425,7 +425,9 @@ export default function OrderPaymentPage() {
     startConnection();
 
     return () => {
-      connection.stop();
+      if (connection.state !== signalR.HubConnectionState.Disconnected) {
+        connection.stop();
+      }
     };
   }, [id, isHydrated, router]);
 

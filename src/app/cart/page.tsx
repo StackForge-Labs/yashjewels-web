@@ -44,8 +44,7 @@ export default function CartPage() {
     const selectedCartItems = cart.items.filter((i) => selectedItems.includes(i.cartItemId));
     const selectedSubtotal = selectedCartItems.reduce((acc, item) => acc + (item.currentLiveMrp * item.quantity), 0);
     const selectedItemCount = selectedCartItems.reduce((acc, item) => acc + item.quantity, 0);
-    const tax = selectedSubtotal > 0 ? selectedSubtotal * 0.1 : 0;
-    const total = selectedSubtotal > 0 ? selectedSubtotal + tax : 0;
+    const total = selectedSubtotal; // In cart, we show subtotal as total, taxes added in checkout
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) {
@@ -187,9 +186,6 @@ export default function CartPage() {
                         <div className="lg:col-span-4">
                             <div className="sticky top-32">
                                 <CartSummary
-                                    subtotal={formatCurrency(selectedSubtotal)}
-                                    shipping={selectedItemCount > 0 ? "Free" : "0 $"}
-                                    tax={formatCurrency(tax)} // Calculate VAT based on selection
                                     total={formatCurrency(total)}
                                     itemCount={selectedItemCount}
                                     checkoutBlocked={cart.checkoutBlocked}
