@@ -76,7 +76,7 @@ export default function CheckoutPage() {
     // Seed estimatedDistance from DB value as soon as address is selected (before Mapbox geocoding)
     useEffect(() => {
         if (!selectedAddress) return;
-        const isVietnamAddr = /(việt nam|viet nam|vietnam|hồ chí minh|ho chi minh|hà nội|ha noi|đà nẵng|da nang|hải phòng|thành phố|tỉnh|quận)/i.test(
+        const isVietnamAddr = /(viet nam|vietnam|ho chi minh|ha noi|da nang|hai phong|city|province|district)/i.test(
             [selectedAddress.province, selectedAddress.district, selectedAddress.addressLine1].join(' ')
         );
         setIsInternationalAddress(!isVietnamAddr);

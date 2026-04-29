@@ -76,13 +76,13 @@ function ShipperScannerContent() {
             console.error("Scanner Start Failed:", err);
             setHasCamera(false);
             setScanState("error");
-            setErrorMsg("Không thể khởi động camera. Vui lòng cấp quyền và thử lại.");
+            setErrorMsg("Cannot start camera. Please grant permissions and try again.");
         }
     };
 
     const onScanSuccess = async (decodedText: string) => {
         if (!orderId) {
-            toast.error("Thiếu thông tin đơn hàng!");
+            toast.error("Missing order information!");
             isHandlingSuccess.current = false;
             return;
         }
@@ -90,7 +90,7 @@ function ShipperScannerContent() {
         // Validate QR Token format (Backend uses Guid.NewGuid().ToString("N") which has 32 chars and no dashes)
         if (decodedText.length < 20) {
             setScanState("invalid");
-            toast.error("Mã QR không đúng định dạng!");
+            toast.error("Invalid QR format!");
             
             // Tạm dừng 2s rồi quét tiếp
             setTimeout(() => {
@@ -102,7 +102,7 @@ function ShipperScannerContent() {
 
         // Thông báo ngay lập tức cho người dùng biết là đã "ăn"
         setScanState("success");
-        toast.success("Mã QR hợp lệ!");
+        toast.success("Valid QR Code!");
 
         // Dọn dẹp scanner sau khi thành công
         await cleanupScanner();
@@ -127,13 +127,13 @@ function ShipperScannerContent() {
         try {
             const res = await shipperService.resendQrCode(orderId);
             if (res.success) {
-                toast.success("Mã QR mới đã được gửi!");
+                toast.success("New QR Code sent!");
                 setResendCount((c) => c - 1);
             } else {
-                toast.error(res.message || "Gửi thất bại.");
+                toast.error(res.message || "Failed to send.");
             }
         } catch (error: any) {
-            toast.error("Lỗi kết nối máy chủ.");
+            toast.error("Server connection error.");
         } finally {
             setIsResending(false);
         }
@@ -154,7 +154,7 @@ function ShipperScannerContent() {
                     {/* Scan Target Area */}
                     <div className="relative z-20 flex flex-col items-center">
                         <p className="mb-6 text-[10px] font-black text-white/90 tracking-[0.3em] uppercase drop-shadow-md">
-                            Xác thực đơn hàng
+                            Order Verification
                         </p>
 
                         <div className="relative h-64 w-64">
@@ -174,7 +174,7 @@ function ShipperScannerContent() {
 
                         <div className="mt-12 flex items-center gap-3 rounded-full bg-black/60 px-6 py-3 border border-white/10 backdrop-blur-xl">
                             <div className="h-2 w-2 rounded-full bg-teal-400 animate-pulse shadow-[0_0_8px_#2dd4bf]" />
-                            <span className="text-[10px] font-bold text-white tracking-widest uppercase">Đang nhận diện...</span>
+                            <span className="text-[10px] font-bold text-white tracking-widest uppercase">Scanning...</span>
                         </div>
                     </div>
                 </div>
@@ -204,7 +204,7 @@ function ShipperScannerContent() {
                         className="flex w-full items-center justify-center gap-3 rounded-[2rem] bg-white/10 py-5 font-bold text-white backdrop-blur-3xl border border-white/10 transition active:scale-95 disabled:opacity-30"
                     >
                         {isResending ? <Loader2 className="h-4 w-4 animate-spin text-teal-400" /> : <Mail className="h-4 w-4 text-teal-400" />}
-                        Gửi lại mã QR cho khách ({resendCount})
+                        Resend QR to Customer ({resendCount})
                     </button>
                 </div>
             )}
@@ -215,8 +215,8 @@ function ShipperScannerContent() {
                     <div className="h-24 w-24 rounded-full bg-rose-500/20 flex items-center justify-center animate-scale-in">
                         <AlertCircle className="h-12 w-12 text-rose-500" />
                     </div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter text-center px-4">Mã QR Không Hợp Lệ!</h2>
-                    <p className="text-rose-200 text-sm font-medium text-center px-6">Vui lòng quét đúng mã QR của hệ thống Yash Jewels.</p>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter text-center px-4">Invalid QR Code!</h2>
+                    <p className="text-rose-200 text-sm font-medium text-center px-6">Please scan a valid Yash Jewels QR code.</p>
                 </div>
             )}
 
@@ -225,17 +225,17 @@ function ShipperScannerContent() {
                     <div className="h-24 w-24 rounded-full bg-teal-500/20 flex items-center justify-center animate-scale-in">
                         <CheckCircle2 className="h-12 w-12 text-teal-400" />
                     </div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Xác thực thành công</h2>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Verification Successful</h2>
                 </div>
             )}
 
             {!hasCamera && (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black p-10 text-center">
                     <AlertCircle className="h-16 w-16 text-rose-500" />
-                    <h2 className="text-xl font-bold text-white">Lỗi Camera</h2>
+                    <h2 className="text-xl font-bold text-white">Camera Error</h2>
                     <p className="text-gray-400 text-sm leading-relaxed">{errorMsg}</p>
                     <button onClick={startScanner} className="mt-4 rounded-2xl bg-teal-600 px-10 py-4 font-bold text-white active:scale-95 transition">
-                        <RotateCcw className="w-4 h-4 inline mr-2" /> Thử Lại
+                        <RotateCcw className="w-4 h-4 inline mr-2" /> Try Again
                     </button>
                 </div>
             )}

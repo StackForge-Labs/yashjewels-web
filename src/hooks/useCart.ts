@@ -19,7 +19,7 @@ export const useCart = () => {
 
     const addToCart = async (productId: string, quantity: number = 1, isGift: boolean = false, giftMessage?: string) => {
         if (!isAuthenticated) {
-            toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
+            toast.error("Please login to add products to your cart.");
             sessionStorage.setItem("redirect_after_login", window.location.pathname + window.location.search);
             router.push("/auth/login");
             return false;
@@ -34,7 +34,7 @@ export const useCart = () => {
             });
 
             if (data.success) {
-                toast.success("Thêm vào giỏ hàng thành công");
+                toast.success("Added to cart successfully");
                 await fetchCart();
                 return true;
             } else {

@@ -193,18 +193,18 @@ export default function AddressSection({ onSelect, selectedId, onFormToggle, onD
         const d = countryStr.toLowerCase().normalize("NFD").trim();
 
         const keywords = [
-            "vn", "vnm", "vietnam", "việt nam", "viet nam",
-            "hồ chí minh", "ho chi minh", "hcm", "saigon", "sài gòn",
-            "hà nội", "ha noi", "đà nẵng", "da nang", "hải phòng", "hai phong",
-            "cần thơ", "can tho", "vũng tàu", "vung tau",
-            "thành phố", "tỉnh", "quận", "huyện", "phường", "xã"
+            "vn", "vnm", "vietnam", "viet nam",
+            "ho chi minh", "hcm", "saigon",
+            "ha noi", "da nang", "hai phong",
+            "can tho", "vung tau",
+            "city", "province", "district", "ward"
         ];
 
         const isMatch = keywords.some(k => c.includes(k) || d.includes(k));
 
-        // Extra check for "Chợ Bến Thành" specifically or HCM district names
+        // Extra check for "Ben Thanh Market" specifically or HCM district names
         if (!isMatch) {
-            const extraKeywords = ["bến thành", "quận 1", "district 1", "thủ đức", "bình dương", "đồng nai"];
+            const extraKeywords = ["ben thanh", "district 1", "thu duc", "binh duong", "dong nai"];
             return extraKeywords.some(k => c.includes(k) || d.includes(k));
         }
 

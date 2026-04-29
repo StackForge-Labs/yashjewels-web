@@ -25,110 +25,110 @@ import {
 const apiModules = [
   {
     name: "Authentication & Security",
-    description: "Xác thực & Bảo mật",
+    description: "Authentication & Security",
     icon: Shield,
     endpoints: [
-      { method: "POST", path: "/api/v1/auth/register", desc: "Đăng ký tài khoản người dùng mới (Role mặc định là Customer)." },
-      { method: "POST", path: "/api/v1/auth/verify-email", desc: "Xác thực tài khoản qua mã OTP gửi về email." },
-      { method: "POST", path: "/api/v1/auth/login", desc: "Đăng nhập hệ thống, cấp Access Token và Refresh Token." },
-      { method: "POST", path: "/api/v1/auth/refresh-token", desc: "Cấp mới Access Token (JWT) bằng Refresh Token." },
-      { method: "POST", path: "/api/v1/auth/logout", desc: "Đăng xuất người dùng và thu hồi (revoke) các token hợp lệ." },
-      { method: "POST", path: "/api/v1/auth/forgot-password", desc: "Yêu cầu lấy lại mật khẩu (gửi token đặt lại mật khẩu)." },
-      { method: "POST", path: "/api/v1/auth/reset-password", desc: "Đặt lại mật khẩu mới bằng token đã được cấp." },
-      { method: "POST", path: "/api/v1/auth/kyc/submit", desc: "Gửi hồ sơ eKYC (CMND/CCCD, ảnh khuôn mặt) để xác minh danh tính." },
+      { method: "POST", path: "/api/v1/auth/register", desc: "Register a new user account (Default role is Customer)." },
+      { method: "POST", path: "/api/v1/auth/verify-email", desc: "Verify account via OTP sent to email." },
+      { method: "POST", path: "/api/v1/auth/login", desc: "Log into the system, get Access Token and Refresh Token." },
+      { method: "POST", path: "/api/v1/auth/refresh-token", desc: "Issue a new Access Token (JWT) using a Refresh Token." },
+      { method: "POST", path: "/api/v1/auth/logout", desc: "Log out user and revoke valid tokens." },
+      { method: "POST", path: "/api/v1/auth/forgot-password", desc: "Request password reset (sends password reset token)." },
+      { method: "POST", path: "/api/v1/auth/reset-password", desc: "Reset password using the provided token." },
+      { method: "POST", path: "/api/v1/auth/kyc/submit", desc: "Submit eKYC profile (ID card, face photo) for identity verification." },
     ]
   },
   {
     name: "Catalog",
-    description: "Dữ liệu nền tảng",
+    description: "Platform Data",
     icon: Database,
     endpoints: [
-      { method: "GET", path: "/api/v1/catalog/categories", desc: "Lấy danh sách tất cả danh mục (Nhẫn, Dây chuyền,...)." },
-      { method: "POST", path: "/api/v1/catalog/categories", desc: "Thêm mới một danh mục sản phẩm." },
-      { method: "PUT", path: "/api/v1/catalog/categories/{id}", desc: "Cập nhật thông tin của một danh mục." },
-      { method: "DELETE", path: "/api/v1/catalog/categories/{id}", desc: "Xóa (mềm) một danh mục khỏi hệ thống." },
-      { method: "GET", path: "/api/v1/catalog/brands", desc: "Lấy danh sách tất cả thương hiệu (Asmi, PNJ,...)." },
-      { method: "POST", path: "/api/v1/catalog/brands", desc: "Thêm mới một thương hiệu." },
-      { method: "PUT", path: "/api/v1/catalog/brands/{id}", desc: "Cập nhật thông tin thương hiệu." },
-      { method: "DELETE", path: "/api/v1/catalog/brands/{id}", desc: "Xóa (mềm) một thương hiệu." },
-      { method: "GET", path: "/api/v1/catalog/gold-types", desc: "Lấy danh sách các loại vàng (18K, 24K,...)." },
-      { method: "POST", path: "/api/v1/catalog/gold-types", desc: "Thêm mới một loại vàng." },
-      { method: "GET", path: "/api/v1/catalog/certifications", desc: "Lấy danh sách quy chuẩn giấy chứng nhận (GIA, SJC,...)." },
-      { method: "POST", path: "/api/v1/catalog/certifications", desc: "Thêm mới một loại giấy chứng nhận." },
-      { method: "GET", path: "/api/v1/catalog/jewel-types", desc: "Lấy danh sách kiểu trang sức (Vòng tay, Bông tai,...)." },
-      { method: "POST", path: "/api/v1/catalog/jewel-types", desc: "Thêm mới một kiểu trang sức." },
-      { method: "GET", path: "/api/v1/catalog/diamond-qualities", desc: "Lấy danh sách tiêu chuẩn chất lượng kim cương." },
-      { method: "POST", path: "/api/v1/catalog/diamond-qualities", desc: "Thêm mới tiêu chuẩn chất lượng kim cương." },
-      { method: "GET", path: "/api/v1/catalog/stone-qualities", desc: "Lấy danh sách tiêu chuẩn chất lượng đá quý." },
-      { method: "POST", path: "/api/v1/catalog/stone-qualities", desc: "Thêm mới tiêu chuẩn chất lượng đá quý." },
-      { method: "GET", path: "/api/v1/catalog/product-types", desc: "Lấy danh sách dòng sản phẩm (Nam, Nữ, Trẻ em,...)." },
-      { method: "POST", path: "/api/v1/catalog/product-types", desc: "Thêm mới dòng sản phẩm." },
+      { method: "GET", path: "/api/v1/catalog/categories", desc: "Get a list of all categories (Rings, Necklaces,...)." },
+      { method: "POST", path: "/api/v1/catalog/categories", desc: "Add a new product category." },
+      { method: "PUT", path: "/api/v1/catalog/categories/{id}", desc: "Update category information." },
+      { method: "DELETE", path: "/api/v1/catalog/categories/{id}", desc: "Soft delete a category from the system." },
+      { method: "GET", path: "/api/v1/catalog/brands", desc: "Get a list of all brands (Asmi, PNJ,...)." },
+      { method: "POST", path: "/api/v1/catalog/brands", desc: "Add a new brand." },
+      { method: "PUT", path: "/api/v1/catalog/brands/{id}", desc: "Update brand information." },
+      { method: "DELETE", path: "/api/v1/catalog/brands/{id}", desc: "Soft delete a brand." },
+      { method: "GET", path: "/api/v1/catalog/gold-types", desc: "Get a list of gold types (18K, 24K,...)." },
+      { method: "POST", path: "/api/v1/catalog/gold-types", desc: "Add a new gold type." },
+      { method: "GET", path: "/api/v1/catalog/certifications", desc: "Get a list of certification standards (GIA, SJC,...)." },
+      { method: "POST", path: "/api/v1/catalog/certifications", desc: "Add a new certification standard." },
+      { method: "GET", path: "/api/v1/catalog/jewel-types", desc: "Get a list of jewelry types (Bracelets, Earrings,...)." },
+      { method: "POST", path: "/api/v1/catalog/jewel-types", desc: "Add a new jewelry type." },
+      { method: "GET", path: "/api/v1/catalog/diamond-qualities", desc: "Get a list of diamond quality standards." },
+      { method: "POST", path: "/api/v1/catalog/diamond-qualities", desc: "Add a new diamond quality standard." },
+      { method: "GET", path: "/api/v1/catalog/stone-qualities", desc: "Get a list of gemstone quality standards." },
+      { method: "POST", path: "/api/v1/catalog/stone-qualities", desc: "Add a new gemstone quality standard." },
+      { method: "GET", path: "/api/v1/catalog/product-types", desc: "Get a list of product lines (Men's, Women's, Kids,...)." },
+      { method: "POST", path: "/api/v1/catalog/product-types", desc: "Add a new product line." },
     ]
   },
   {
     name: "Product & Inventory",
-    description: "Sản phẩm & Tồn kho",
+    description: "Products & Inventory",
     icon: Box,
     endpoints: [
-      { method: "GET", path: "/api/v1/products", desc: "Lấy danh sách sản phẩm (có hỗ trợ phân trang)." },
-      { method: "POST", path: "/api/v1/products", desc: "Tạo hồ sơ sản phẩm mới (dựa trên StyleCode)." },
-      { method: "GET", path: "/api/v1/products/{styleCode}", desc: "Xem chi tiết toàn bộ thông tin của một sản phẩm." },
-      { method: "PUT", path: "/api/v1/products/{styleCode}", desc: "Cập nhật thông tin chi tiết của sản phẩm." },
-      { method: "DELETE", path: "/api/v1/products/{styleCode}", desc: "Xóa (chuyển trạng thái ẩn) sản phẩm khỏi hệ thống." },
-      { method: "GET", path: "/api/v1/products/{styleCode}/price", desc: "Tính toán và truy xuất biểu giá MRP linh động cập nhật theo giá vàng." },
-      { method: "POST", path: "/api/v1/products/{styleCode}/images", desc: "Tải lên hình ảnh mới cho sản phẩm." },
-      { method: "POST", path: "/api/v1/products/{styleCode}/reviews", desc: "Gửi đánh giá (Rating & Feedback) cho sản phẩm." },
+      { method: "GET", path: "/api/v1/products", desc: "Get a list of products (supports pagination)." },
+      { method: "POST", path: "/api/v1/products", desc: "Create a new product profile (based on StyleCode)." },
+      { method: "GET", path: "/api/v1/products/{styleCode}", desc: "View detailed information of a product." },
+      { method: "PUT", path: "/api/v1/products/{styleCode}", desc: "Update detailed product information." },
+      { method: "DELETE", path: "/api/v1/products/{styleCode}", desc: "Delete (hide) a product from the system." },
+      { method: "GET", path: "/api/v1/products/{styleCode}/price", desc: "Calculate and retrieve dynamic MRP based on live gold price." },
+      { method: "POST", path: "/api/v1/products/{styleCode}/images", desc: "Upload new images for a product." },
+      { method: "POST", path: "/api/v1/products/{styleCode}/reviews", desc: "Submit a review (Rating & Feedback) for a product." },
     ]
   },
   {
     name: "Search Engine",
-    description: "Bộ máy cấu hình lọc",
+    description: "Filter Configuration Engine",
     icon: Search,
     endpoints: [
-      { method: "GET", path: "/api/v1/search", desc: "Tìm kiếm theo từ khóa kết hợp bộ lọc đa tầng (Facet & Combinatorial Filter)." },
+      { method: "GET", path: "/api/v1/search", desc: "Search by keyword combined with multi-level filters (Facet & Combinatorial Filter)." },
     ]
   },
   {
     name: "Gold Price",
-    description: "Biến động giá vàng",
+    description: "Gold Price Fluctuations",
     icon: TrendingUp,
     endpoints: [
-      { method: "GET", path: "/api/v1/gold-price/current", desc: "Lấy giá vàng mới nhất đang được áp dụng để tính MRP." },
-      { method: "GET", path: "/api/v1/gold-price/history", desc: "Xem biểu đồ lịch sử thay đổi giá vàng trong 24h qua." },
+      { method: "GET", path: "/api/v1/gold-price/current", desc: "Get the latest gold price currently applied to calculate MRP." },
+      { method: "GET", path: "/api/v1/gold-price/history", desc: "View historical chart of gold price changes over the past 24h." },
     ]
   },
   {
     name: "User Profile",
-    description: "Cá nhân & Địa chỉ",
+    description: "Personal & Address",
     icon: User,
     endpoints: [
-      { method: "GET", path: "/api/v1/users/me", desc: "Lấy thông tin cá nhân của người dùng đang đăng nhập." },
-      { method: "PUT", path: "/api/v1/users/me", desc: "Cập nhật thông tin (Họ tên, ngày sinh, số điện thoại,...)." },
-      { method: "PUT", path: "/api/v1/users/me/change-password", desc: "Thay đổi mật khẩu tài khoản." },
-      { method: "GET", path: "/api/v1/users/me/addresses", desc: "Lấy danh sách sổ địa chỉ nhận hàng của người dùng." },
-      { method: "POST", path: "/api/v1/users/me/addresses", desc: "Thêm một địa chỉ nhận hàng mới." },
-      { method: "PUT", path: "/api/v1/users/me/addresses/{id}", desc: "Cập nhật thông tin địa chỉ đã có." },
-      { method: "DELETE", path: "/api/v1/users/me/addresses/{id}", desc: "Xóa một địa chỉ khỏi sổ địa chỉ giao hàng." },
+      { method: "GET", path: "/api/v1/users/me", desc: "Get personal information of the currently logged-in user." },
+      { method: "PUT", path: "/api/v1/users/me", desc: "Update information (Full name, Date of birth, Phone number,...)." },
+      { method: "PUT", path: "/api/v1/users/me/change-password", desc: "Change account password." },
+      { method: "GET", path: "/api/v1/users/me/addresses", desc: "Get the user's list of shipping addresses." },
+      { method: "POST", path: "/api/v1/users/me/addresses", desc: "Add a new shipping address." },
+      { method: "PUT", path: "/api/v1/users/me/addresses/{id}", desc: "Update an existing address." },
+      { method: "DELETE", path: "/api/v1/users/me/addresses/{id}", desc: "Delete an address from the shipping address book." },
     ]
   },
   {
     name: "Admin Management",
-    description: "Quản trị người dùng",
+    description: "User Administration",
     icon: ShieldCheck,
     endpoints: [
-      { method: "GET", path: "/api/v1/admin/users", desc: "Danh sách tất cả người dùng trong hệ thống (dành cho Admin)." },
-      { method: "GET", path: "/api/v1/admin/users/{id}", desc: "Xem chi tiết thông tin của một người dùng bất kỳ." },
-      { method: "PUT", path: "/api/v1/admin/users/{id}/status", desc: "Khóa (Block) hoặc Mở khóa tài khoản người dùng." },
-      { method: "GET", path: "/api/v1/admin/users/kyc-pending", desc: "Danh sách các khách hàng đang chờ duyệt hồ sơ KYC." },
-      { method: "PUT", path: "/api/v1/admin/users/{id}/kyc", desc: "Phê duyệt (Approve) hoặc Từ chối (Reject) yêu cầu eKYC." },
+      { method: "GET", path: "/api/v1/admin/users", desc: "List of all users in the system (for Admin)." },
+      { method: "GET", path: "/api/v1/admin/users/{id}", desc: "View detailed information of any user." },
+      { method: "PUT", path: "/api/v1/admin/users/{id}/status", desc: "Block or Unblock a user account." },
+      { method: "GET", path: "/api/v1/admin/users/kyc-pending", desc: "List of customers waiting for KYC approval." },
+      { method: "PUT", path: "/api/v1/admin/users/{id}/kyc", desc: "Approve or Reject an eKYC request." },
     ]
   },
   {
     name: "Others",
-    description: "API Khác",
+    description: "Other APIs",
     icon: Activity,
     endpoints: [
-      { method: "GET", path: "/WeatherForecast", desc: "API mẫu của project template (áp dụng cho việc test health check)." },
+      { method: "GET", path: "/WeatherForecast", desc: "Project template sample API (used for health checks)." },
     ]
   }
 ];
@@ -136,7 +136,7 @@ const apiModules = [
 const coreFeatures = [
   {
     title: "Global Exception Pipeline",
-    description: "Middleware tự động đánh chặn 100% các lỗi không xác định. Trả về JSON chuẩn RFC thay vì Stack Trace đỏ lòm, giữ nguyên cấu trúc UI luôn an toàn dù Backend crash.",
+    description: "Middleware automatically intercepts 100% of unknown errors. Returns standard RFC JSON instead of a red stack trace, keeping the UI structure safe even if the Backend crashes.",
     icon: AlertCircle,
     color: "from-rose-500/10 to-transparent",
     iconColor: "text-rose-400 border-rose-500/30 bg-rose-500/10",
@@ -145,7 +145,7 @@ const coreFeatures = [
   },
   {
     title: "Redis Distributed Cache",
-    description: "Lưu trữ biểu giá Vàng linh động theo thời gian thực (TTL: 20 phút). Giảm 90% tải cho MySQL, giúp API tìm kiếm và tính toán giá phản hồi siêu tốc dưới 50 mili-giây.",
+    description: "Real-time dynamic gold price caching (TTL: 20 minutes). Reduces MySQL load by 90%, enabling search APIs and price calculations to respond at ultra-high speeds under 50 milliseconds.",
     icon: Zap,
     color: "from-amber-500/10 to-transparent",
     iconColor: "text-amber-400 border-amber-500/30 bg-amber-500/10",
@@ -154,7 +154,7 @@ const coreFeatures = [
   },
   {
     title: "Background Job",
-    description: "Luồng xử lý bất đồng bộ Worker tự động Request cào chuỗi tỷ giá Vàng mỗi 2 giờ. Điều chỉnh giá MRP toàn hệ thống thụ động 24/7 mà không cần Admin can thiệp.",
+    description: "Asynchronous Worker process automatically requests and scrapes the gold exchange rate chain every 2 hours. Passively adjusts the system-wide MRP price 24/7 without requiring Admin intervention.",
     icon: Clock,
     color: "from-blue-500/10 to-transparent",
     iconColor: "text-blue-400 border-blue-500/30 bg-blue-500/10",
@@ -163,7 +163,7 @@ const coreFeatures = [
   },
   {
     title: "Advanced Auth & Security",
-    description: "Với thuật toán băm BCrypt mã hóa Work Factor 12. Vòng đời bảo mật khép kín với Access Token / Refresh Token, cùng lúc hỗ trợ hệ thống Phân tầng 9 quyền khắt khe.",
+    description: "Using BCrypt hashing algorithm with Work Factor 12. A closed security lifecycle with Access Token / Refresh Token, simultaneously supporting a strict 9-tier authorization system.",
     icon: Lock,
     color: "from-emerald-500/10 to-transparent",
     iconColor: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
@@ -213,8 +213,8 @@ export default function ApiDocsPage() {
                 API Documentation <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600 font-semibold">40% Milestone</span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
-                Hệ thống tài liệu tích hợp toàn bộ API endpoint của dự án Yash Gems & Jewelleries.
-                Được xây dựng trên nền tảng .NET 8 với quy chuẩn kiến trúc hiện đại, đảm bảo tính ổn định và khả năng mở rộng cao.
+                Integrated documentation system containing all API endpoints for the Yash Gems & Jewelleries project.
+                Built on the .NET 8 platform with modern architectural standards, ensuring high stability and scalability.
               </p>
             </div>
 

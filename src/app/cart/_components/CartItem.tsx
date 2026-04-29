@@ -179,9 +179,9 @@ export const CartItem = ({
                     setIsRemoveConfirmOpen(false);
                     onRemove?.(id);
                 }} 
-                title="Xác nhận bỏ sản phẩm"
-                description={`Bạn có chắc chắn muốn bỏ "${name}" khỏi giỏ hàng không?`}
-                confirmLabel="Bỏ sản phẩm"
+                title="Confirm removal"
+                description={`Are you sure you want to remove "${name}" from your cart?`}
+                confirmLabel="Remove item"
                 isDestructive={true}
             />
         </div>

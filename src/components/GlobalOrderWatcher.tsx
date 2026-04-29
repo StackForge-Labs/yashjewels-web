@@ -61,63 +61,63 @@ export function GlobalOrderWatcher() {
         switch (urgentOrder.status) {
             case "AWAITING_FULL_PAYMENT":
                 return {
-                    title: "Bắt Buộc Thanh Toán",
+                    title: "Payment Required",
                     icon: Clock,
                     color: "text-amber-500",
                     bg: "bg-amber-500/10",
                     border: "border-amber-200 dark:border-amber-800/30",
-                    desc: "Đơn hàng bạn đặt đã được chuẩn bị xong. Bạn cần thanh toán số tiền còn lại trong vòng 72 giờ kể từ lúc tạo đơn để tránh việc huỷ đơn làm mất cọc.",
-                    actionText: "Thanh Toán Ngay"
+                    desc: "Your order is ready. Please pay the remaining balance within 72 hours of order creation to avoid cancellation and loss of deposit.",
+                    actionText: "Pay Now"
                 };
             case "VENDOR_REJECTED":
                 return {
-                    title: "Đơn Hàng Bị Từ Chối",
+                    title: "Order Rejected",
                     icon: ShieldAlert,
                     color: "text-red-500",
                     bg: "bg-red-500/10",
                     border: "border-red-200 dark:border-red-800/30",
-                    desc: "Người bán đã từ chối đơn hàng của bạn. Số tiền cọc của bạn đang được hoàn lại vào thẻ tín dụng. Vui lòng kiểm tra chi tiết đơn hàng.",
-                    actionText: "Xem Chi Tiết"
+                    desc: "The vendor has rejected your order. Your deposit is being refunded to your credit card. Please check order details.",
+                    actionText: "View Details"
                 };
             case "RETURN_APPROVED":
                 return {
-                    title: "Yêu Cầu Trả Hàng Được Duyệt",
+                    title: "Return Request Approved",
                     icon: ShieldAlert,
                     color: "text-emerald-500",
                     bg: "bg-emerald-500/10",
                     border: "border-emerald-200 dark:border-emerald-800/30",
-                    desc: "Yêu cầu trả hàng và hoàn tiền của bạn đã được kiểm duyệt bởi đội ngũ chuyên gia của Yash Jewels. Bạn hãy nhấn nút bên dưới để nhận lại tiền hoàn ngay lập tức.",
-                    actionText: "Nhận Hoàn Tiền Ngay"
+                    desc: "Your return and refund request has been approved by the Yash Jewels expert team. Click below to receive your refund immediately.",
+                    actionText: "Get Refund Now"
                 };
             case "DELIVERED":
                 return {
-                    title: "Đơn Hàng Đã Giao",
+                    title: "Order Delivered",
                     icon: Truck,
                     color: "text-emerald-500",
                     bg: "bg-emerald-500/10",
                     border: "border-emerald-200 dark:border-emerald-800/30",
-                    desc: "Vui lòng kiểm tra hàng hóa. Bạn có 7 ngày để 'Xác Nhận Đã Nhận Hàng' hoặc 'Yêu Cầu Hoàn Trả'. Sau 7 ngày, đơn hàng sẽ tự động hoàn tất.",
-                    actionText: "Kiểm Tra Ngay"
+                    desc: "Please inspect your items. You have 7 days to 'Confirm Receipt' or 'Request Return'. After 7 days, the order will be automatically completed.",
+                    actionText: "Check Now"
                 };
             case "REDELIVERED":
                 return {
-                    title: "Đã Trả Lại Hàng Cho Bạn",
+                    title: "Item Returned to You",
                     icon: Truck,
                     color: "text-blue-500",
                     bg: "bg-blue-500/10",
                     border: "border-blue-200 dark:border-blue-800/30",
-                    desc: "Món trang sức đã được giao lại tận tay bạn sau khi quá trình kiểm định trả hàng không được duyệt. Đơn hàng hiện đã chính thức kết thúc.",
-                    actionText: "Xem Chi Tiết"
+                    desc: "Your jewelry has been returned to you after the return inspection was not approved. The order is now officially closed.",
+                    actionText: "View Details"
                 };
             default:
                 return {
-                    title: "Cập Nhật Đơn Hàng",
+                    title: "Order Updated",
                     icon: AlertTriangle,
                     color: "text-blue-500",
                     bg: "bg-blue-500/10",
                     border: "border-blue-200 dark:border-blue-800/30",
-                    desc: "Có cập nhật quan trọng từ đơn hàng của bạn.",
-                    actionText: "Xem Chi Tiết"
+                    desc: "There is an important update regarding your order.",
+                    actionText: "View Details"
                 };
         }
     };

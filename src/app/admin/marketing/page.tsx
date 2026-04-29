@@ -549,7 +549,7 @@ export default function MarketingPage() {
                     {campaignForm.watch("targetAudienceType") === "BIRTHDAY" && (
                         <FormField label="Coupon Duration (Days)" required>
                             <input type="number" className={inputCls} placeholder="30" {...campaignForm.register("targetAudienceConfig")} />
-                            <p className="text-[10px] text-gray-400 mt-1 italic">Mã quà tặng sẽ hết hạn sau từng này ngày kể từ ngày sinh nhật của khách.</p>
+                            <p className="text-[10px] text-gray-400 mt-1 italic">The gift code will expire after this many days from the customer's birthday.</p>
                         </FormField>
                     )}
                     <div className="grid grid-cols-2 gap-4">
@@ -580,7 +580,7 @@ export default function MarketingPage() {
                     </div>
                     {campaignForm.watch("targetAudienceType") === "BIRTHDAY" && (
                         <p className="text-[10px] text-blue-500 italic mt-1">
-                            * Với chiến dịch sinh nhật, Start/End là thời gian chương trình này diễn ra. Việc gửi mã sẽ diễn ra hàng ngày cho khách hàng có sinh nhật trong khoảng thời gian này.
+                            * For birthday campaigns, Start/End is the program duration. Codes are sent daily to customers with birthdays during this period.
                         </p>
                     )}
                 </form>

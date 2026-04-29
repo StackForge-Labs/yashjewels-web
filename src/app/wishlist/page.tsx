@@ -24,7 +24,7 @@ export default function WishlistPage() {
             const ok = await addToCart(item.productId);
             if (ok) added++;
         }
-        if (added > 0) toast.success(`Đã thêm ${added} sản phẩm vào giỏ hàng.`);
+        if (added > 0) toast.success(`Added ${added} items to cart.`);
     };
 
     if (isLoading) {

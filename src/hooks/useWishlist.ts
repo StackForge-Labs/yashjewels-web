@@ -19,7 +19,7 @@ export const useWishlist = () => {
 
     const toggle = async (productId: string, productName?: string) => {
         if (!isAuthenticated) {
-            toast.error("Vui lòng đăng nhập để lưu sản phẩm yêu thích.");
+            toast.error("Please login to save favorite products.");
             sessionStorage.setItem("redirect_after_login", window.location.pathname);
             router.push("/auth/login");
             return;
@@ -32,13 +32,13 @@ export const useWishlist = () => {
                 dispatch(fetchWishlist());
                 toast.error(result.message);
             } else {
-                toast.success("Đã xóa khỏi danh sách yêu thích.");
+                toast.success("Removed from wishlist.");
             }
         } else {
             const result = await wishlistService.addToWishlist(productId);
             if (result.success && result.data) {
                 dispatch(addItemLocally(result.data));
-                toast.success(`Đã thêm "${productName ?? "sản phẩm"}" vào yêu thích.`);
+                toast.success(`Added "${productName ?? "product"}" to wishlist.`);
             } else {
                 toast.error(result.message);
             }

@@ -31,12 +31,12 @@ export const AccountInfoSection = ({ user }: AccountInfoSectionProps) => {
             });
 
             if (res.success) {
-                setToast({ message: "Thông tin cá nhân đã được cập nhật!", type: "success" });
+                setToast({ message: "Personal information has been updated!", type: "success" });
             } else {
-                setToast({ message: res.errors?.[0] || "Cập nhật thất bại", type: "error" });
+                setToast({ message: res.errors?.[0] || "Update failed", type: "error" });
             }
         } catch (err) {
-            setToast({ message: "Đã có lỗi xảy ra. Vui lòng thử lại.", type: "error" });
+            setToast({ message: "An error occurred. Please try again.", type: "error" });
         }
     };
 

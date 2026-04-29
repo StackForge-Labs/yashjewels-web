@@ -17,7 +17,7 @@ function KycMobileContent() {
 
     useEffect(() => {
         if (!sessionToken) {
-            setError("Mã phiên xác thực không hợp lệ. Vui lòng quét lại mã QR.");
+            setError("Invalid authentication session. Please scan the QR code again.");
         }
     }, [sessionToken]);
 
@@ -37,11 +37,11 @@ function KycMobileContent() {
             if (res.success) {
                 setStep(3);
             } else {
-                setError(res.message || "Gửi hồ sơ thất bại. Thử lại sau.");
+                setError(res.message || "Profile submission failed. Try again later.");
                 setStep(1);
             }
         } catch (err: any) {
-            setError("Lỗi kết nối máy chủ. Vui lòng kiểm tra mạng.");
+            setError("Server connection error. Please check your network.");
             setStep(1);
         }
     };
@@ -52,13 +52,13 @@ function KycMobileContent() {
                 <Card className="w-full max-w-sm border-white/10 bg-white/5">
                     <CardContent className="pt-10 text-center space-y-4">
                         <AlertCircle className="w-16 h-16 text-red-500 mx-auto" />
-                        <h2 className="text-xl font-bold text-white">Lỗi hệ thống</h2>
+                        <h2 className="text-xl font-bold text-white">System Error</h2>
                         <p className="text-slate-400 text-sm">{error}</p>
                         <button 
                             onClick={() => window.location.reload()} 
                             className="px-6 py-2 rounded-full bg-yellow-500 text-black font-bold"
                         >
-                            Tử lại
+                            Try again
                         </button>
                     </CardContent>
                 </Card>
@@ -77,22 +77,22 @@ function KycMobileContent() {
                     </div>
 
                     <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold text-yellow-400">Xác thực danh tính</h1>
-                        <p className="text-slate-400 text-sm">Vui lòng chuẩn bị sẵn CMND/CCCD</p>
+                        <h1 className="text-3xl font-bold text-yellow-400">Identity Verification</h1>
+                        <p className="text-slate-400 text-sm">Please prepare your ID/Passport</p>
                     </div>
 
                     <div className="w-full space-y-4 text-sm text-slate-400">
                         <div className="flex items-center space-x-3">
                             <div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px]">1</div>
-                            <span>Chụp mặt trước & sau CMND/CCCD</span>
+                            <span>Capture front & back of ID/Passport</span>
                         </div>
                         <div className="flex items-center space-x-3">
                             <div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px]">2</div>
-                            <span>Chụp ảnh khuôn mặt chính chủ</span>
+                            <span>Capture portrait of yourself</span>
                         </div>
                         <div className="flex items-center space-x-3">
                             <div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px]">3</div>
-                            <span>AI so sánh và hoàn tất hồ sơ</span>
+                            <span>AI comparison & profile completion</span>
                         </div>
                     </div>
 
@@ -100,7 +100,7 @@ function KycMobileContent() {
                         onClick={() => setStep(2)}
                         className="w-full max-w-xs h-14 rounded-full font-bold bg-yellow-500 text-black shadow-lg shadow-yellow-500/20"
                     >
-                        Bắt đầu
+                        Start
                     </button>
                 </div>
             )}
@@ -117,8 +117,8 @@ function KycMobileContent() {
                     <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/20">
                         <ShieldCheck className="w-12 h-12 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white font-serif">Đã nộp hồ sơ!</h2>
-                    <p className="text-slate-400 text-sm">Hệ thống đang tiến hành đối soát khuôn mặt. Kết quả sẽ được cập nhật trên máy tính trong giây lát.</p>
+                    <h2 className="text-2xl font-bold text-white font-serif">Profile Submitted!</h2>
+                    <p className="text-slate-400 text-sm">The system is performing face matching. Results will be updated on your computer shortly.</p>
                 </div>
             )}
         </div>

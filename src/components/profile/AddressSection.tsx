@@ -74,23 +74,23 @@ export const AddressSection = () => {
                 res = await createAddress.mutateAsync(formData);
             }
             if (res.success) {
-                setToast({ message: editingId ? "Địa chỉ đã được cập nhật!" : "Địa chỉ mới đã được thêm!", type: "success" });
+                setToast({ message: editingId ? "Address updated!" : "New address added!", type: "success" });
                 resetForm();
             }
         } catch (err) {
-            setToast({ message: "Không thể lưu địa chỉ. Vui lòng kiểm tra lại.", type: "error" });
+            setToast({ message: "Could not save address. Please check again.", type: "error" });
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
+        if (!confirm("Are you sure you want to delete this address?")) return;
         try {
             const res = await deleteAddress.mutateAsync(id);
             if (res.success) {
-                setToast({ message: "Đã xóa địa chỉ thành công.", type: "success" });
+                setToast({ message: "Address deleted successfully.", type: "success" });
             }
         } catch (err) {
-            setToast({ message: "Lỗi khi xóa địa chỉ.", type: "error" });
+            setToast({ message: "Error deleting address.", type: "error" });
         }
     };
 
@@ -98,10 +98,10 @@ export const AddressSection = () => {
         try {
             const res = await setDefault.mutateAsync(id);
             if (res.success) {
-                setToast({ message: "Đã cập nhật địa chỉ mặc định.", type: "success" });
+                setToast({ message: "Default address updated.", type: "success" });
             }
         } catch (err) {
-            setToast({ message: "Lỗi khi cập nhật.", type: "error" });
+            setToast({ message: "Error updating address.", type: "error" });
         }
     };
 

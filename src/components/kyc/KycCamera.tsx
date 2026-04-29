@@ -54,7 +54,7 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
                 videoRef.current.srcObject = newStream;
             }
         } catch {
-            setError("Không thể truy cập Camera. Vui lòng cấp quyền.");
+            setError("Cannot access Camera. Please grant permission.");
         }
     };
 
@@ -83,7 +83,7 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
                 setFaceApi(faceapi);
                 setIsModelsLoaded(true);
             } catch {
-                if (!cancelled) setError("Không thể khởi động AI. Vui lòng thử lại.");
+                if (!cancelled) setError("Cannot initialize AI. Please try again.");
             }
         };
 
@@ -227,10 +227,10 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
 
     const getInstruction = () => {
         switch (step) {
-            case "front": return "Chụp mặt TRƯỚC CMND/CCCD";
-            case "back": return "Chụp mặt SAU CMND/CCCD";
-            case "face": return "Chụp khuôn mặt của bạn";
-            case "review": return "Kiểm tra lại hình ảnh";
+            case "front": return "Capture FRONT of ID/Passport";
+            case "back": return "Capture BACK of ID/Passport";
+            case "face": return "Capture your face";
+            case "review": return "Review images";
         }
     };
 
@@ -273,7 +273,7 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
                                         {!isModelsLoaded ? (
                                             <div className="flex flex-col items-center gap-2 text-white">
                                                 <Loader2 className="animate-spin text-yellow-400" size={22} />
-                                                <span className="text-xs font-bold tracking-widest uppercase">Đang khởi động AI...</span>
+                                                <span className="text-xs font-bold tracking-widest uppercase">Initializing AI...</span>
                                             </div>
                                         ) : error ? (
                                             <div className="flex flex-col items-center gap-2 text-red-400">
@@ -282,18 +282,18 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
                                             </div>
                                         ) : livenessStep === 1 ? (
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-bold tracking-widest text-white/50 uppercase">Bước 1 / 3</p>
-                                                <p className="text-sm font-bold text-yellow-400 uppercase animate-pulse">← Quay mặt sang TRÁI</p>
+                                                <p className="text-[10px] font-bold tracking-widest text-white/50 uppercase">Step 1 / 3</p>
+                                                <p className="text-sm font-bold text-yellow-400 uppercase animate-pulse">← Turn face LEFT</p>
                                             </div>
                                         ) : livenessStep === 2 ? (
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-bold tracking-widest text-white/50 uppercase">Bước 2 / 3</p>
-                                                <p className="text-sm font-bold text-yellow-400 uppercase animate-pulse">Quay mặt sang PHẢI →</p>
+                                                <p className="text-[10px] font-bold tracking-widest text-white/50 uppercase">Step 2 / 3</p>
+                                                <p className="text-sm font-bold text-yellow-400 uppercase animate-pulse">Turn face RIGHT →</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-3">
-                                                <p className="text-[10px] font-bold tracking-widest text-white/50 uppercase">Bước cuối</p>
-                                                <p className="text-sm font-bold text-white uppercase">Nhìn thẳng vào camera</p>
+                                                <p className="text-[10px] font-bold tracking-widest text-white/50 uppercase">Final step</p>
+                                                <p className="text-sm font-bold text-white uppercase">Look straight at camera</p>
                                                 <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full bg-yellow-400 transition-all duration-100 shadow-[0_0_8px_#facc15]"
@@ -308,7 +308,7 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
 
                             {step !== "face" && (
                                 <p className="mt-8 text-yellow-400 font-bold bg-black/60 px-4 py-2 rounded-full">
-                                    Căn chỉnh vừa khung hình
+                                    Align within the frame
                                 </p>
                             )}
                         </div>
@@ -316,15 +316,15 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
                 ) : (
                     <div className="grid grid-cols-1 gap-4 p-6 overflow-y-auto h-full w-full">
                         <div className="space-y-2">
-                            <p className="text-xs text-slate-400">Mặt trước</p>
+                            <p className="text-xs text-slate-400">Front</p>
                             <img src={images.front} className="rounded-lg w-full" />
                         </div>
                         <div className="space-y-2">
-                            <p className="text-xs text-slate-400">Mặt sau</p>
+                            <p className="text-xs text-slate-400">Back</p>
                             <img src={images.back} className="rounded-lg w-full" />
                         </div>
                         <div className="space-y-2">
-                            <p className="text-xs text-slate-400">Chân dung</p>
+                            <p className="text-xs text-slate-400">Portrait</p>
                             <img src={images.face} className="rounded-lg w-full" />
                         </div>
                     </div>
@@ -341,14 +341,14 @@ export const KycCamera: React.FC<KycCameraProps> = ({ onCapture, onCancel }) => 
                             onClick={handleRetake}
                             className="flex-1 h-14 rounded-full border border-white/20 font-bold"
                         >
-                            Chụp lại
+                            Retake
                         </button>
                         <button
                             disabled={isLoading}
                             onClick={handleFinish}
                             className="flex-1 h-14 rounded-full bg-yellow-500 text-black font-bold flex items-center justify-center"
                         >
-                            {isLoading ? <Loader2 className="animate-spin" /> : "Gửi hồ sơ"}
+                            {isLoading ? <Loader2 className="animate-spin" /> : "Submit profile"}
                         </button>
                     </div>
                 ) : step !== "face" ? (

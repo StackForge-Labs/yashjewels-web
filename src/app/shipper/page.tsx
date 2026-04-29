@@ -11,18 +11,18 @@ import toast from "react-hot-toast";
 
 // ─── Status Config ─────────────────────────────────────────────
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
-    SHIP_PENDING: { label: "Sẵn Sàng Giao", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
-    SHIPPED: { label: "Đang Giao", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
-    DELIVERED: { label: "Đã Giao", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
-    COMPLETED: { label: "Hoàn Thành", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
-    RETURN_REQUESTED: { label: "Có Cố Cáo", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300", dot: "bg-rose-500" },
-    RETURN_AUTHORIZED: { label: "Hỗ Trợ Thu Hồi (Chờ)", className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", dot: "bg-amber-500 animate-pulse" },
-    RETURN_IN_TRANSIT: { label: "Đang Đi Thu Hồi", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
-    RETURN_RECEIVED: { label: "Đã Bàn Giao Kho", className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400", dot: "bg-purple-500" },
-    RETURN_REJECTED: { label: "Bị Từ Chối (Giao Lại)", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400", dot: "bg-rose-500 animate-pulse" },
-    REDELIVERING: { label: "Đang Trả Hàng Khách", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
-    REDELIVERED: { label: "Đã Trả Hàng Cho Khách", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
-    REFUNDED: { label: "Đã Hoàn Tiền", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
+    SHIP_PENDING: { label: "Ready to Ship", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
+    SHIPPED: { label: "Shipping", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
+    DELIVERED: { label: "Delivered", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
+    COMPLETED: { label: "Completed", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
+    RETURN_REQUESTED: { label: "Return Requested", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300", dot: "bg-rose-500" },
+    RETURN_AUTHORIZED: { label: "Return Authorized (Pending)", className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", dot: "bg-amber-500 animate-pulse" },
+    RETURN_IN_TRANSIT: { label: "Return In Transit", className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300", dot: "bg-indigo-500 animate-pulse" },
+    RETURN_RECEIVED: { label: "Return Received", className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400", dot: "bg-purple-500" },
+    RETURN_REJECTED: { label: "Return Rejected (Redelivering)", className: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400", dot: "bg-rose-500 animate-pulse" },
+    REDELIVERING: { label: "Redelivering", className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300", dot: "bg-blue-500 animate-pulse" },
+    REDELIVERED: { label: "Redelivered", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
+    REFUNDED: { label: "Refunded", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300", dot: "bg-emerald-500" },
 };
 
 function formatUsd(n: number) {
@@ -63,7 +63,7 @@ function TripCard({
                         )}
                         {order.insuranceType === "Full" && (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
-                                BẢO HIỂM 100%
+                                100% INSURANCE
                             </span>
                         )}
                     </div>
@@ -79,14 +79,14 @@ function TripCard({
             <div className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
                 <div>
-                    <p className="font-plus-jakarta text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{order.shippingAddress || "Chưa cập nhật địa chỉ"}</p>
+                    <p className="font-plus-jakarta text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{order.shippingAddress || "Address not updated"}</p>
                 </div>
             </div>
 
             {/* Amount + actions */}
             <div className="flex items-center justify-between mt-1">
                 <div>
-                    <p className="font-plus-jakarta text-[10px] uppercase tracking-wider text-gray-400">Tổng Thu</p>
+                    <p className="font-plus-jakarta text-[10px] uppercase tracking-wider text-gray-400">Total Collect</p>
                     {/* For COD, show remaining amount. Else 0 */}
                     <p className="font-plus-jakarta text-base font-black text-gray-900 dark:text-white">
                         {order.isCod ? formatUsd(order.remainingAmount) : "0 $"}
@@ -112,7 +112,7 @@ function TripCard({
                             href={`/shipper/scanner?orderId=${order.orderId}`}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-teal-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-teal-700 ml-1"
                         >
-                            Giao hàng <ChevronRight className="h-3.5 w-3.5" />
+                            Deliver <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                     )}
                     {order.status === "REDELIVERING" && (
@@ -120,7 +120,7 @@ function TripCard({
                             href={`/shipper/scanner?orderId=${order.orderId}&mode=redelivery`}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-blue-700 ml-1"
                         >
-                            Trả hàng khách <ChevronRight className="h-3.5 w-3.5" />
+                            Redeliver <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                     )}
                     {order.status === "RETURN_AUTHORIZED" && (
@@ -128,7 +128,7 @@ function TripCard({
                             onClick={() => onAccept(order)}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-amber-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-amber-700 ml-1"
                         >
-                            Nhận Thu Hồi <ChevronRight className="h-3.5 w-3.5" />
+                            Accept Return <ChevronRight className="h-3.5 w-3.5" />
                         </button>
                     )}
                     {order.status === "RETURN_REJECTED" && (
@@ -136,7 +136,7 @@ function TripCard({
                             onClick={() => onAccept(order)}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-rose-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-rose-700 ml-1"
                         >
-                            Nhận Giao Lại <ChevronRight className="h-3.5 w-3.5" />
+                            Accept Redelivery <ChevronRight className="h-3.5 w-3.5" />
                         </button>
                     )}
                     {order.status === "RETURN_IN_TRANSIT" && (!order.qrUsed ? (
@@ -144,19 +144,19 @@ function TripCard({
                             href={`/shipper/scanner?orderId=${order.orderId}&mode=return`}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-orange-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-orange-700 ml-1"
                         >
-                            Thu Hồi (Scan QR) <ChevronRight className="h-3.5 w-3.5" />
+                            Return (Scan QR) <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                     ) : (
                         <button
                             onClick={() => onDeliverReturn(order)}
                             className="flex h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 font-plus-jakarta text-xs font-bold text-white transition-all active:scale-95 hover:bg-indigo-700 ml-1"
                         >
-                            Bàn Giao Kho <ChevronRight className="h-3.5 w-3.5" />
+                            Handover to Store <ChevronRight className="h-3.5 w-3.5" />
                         </button>
                     ))}
                     {(order.status === "DELIVERED" || order.status === "COMPLETED" || order.status === "RETURN_RECEIVED" || order.status === "REFUNDED" || order.status === "REDELIVERED") ? (
                         <span className="flex h-10 items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-100 px-4 font-plus-jakarta text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-900 dark:text-emerald-400 ml-1">
-                            <CheckCircle2 className="h-4 w-4" /> Xong
+                            <CheckCircle2 className="h-4 w-4" /> Done
                         </span>
                     ) : null}
                 </div>
@@ -165,18 +165,18 @@ function TripCard({
             {/* Warning if QR is not active */}
             {order.status === "SHIPPED" && !order.qrActive && (
                 <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:border-rose-900 dark:text-rose-400 flex justify-between items-center">
-                    Mã QR khách hàng đã hết hạn (2h).
+                    Customer QR code expired (2h).
                     <button
                         onClick={() => {
                             toast.promise(shipperService.resendQrCode(order.orderId), {
-                                loading: "Gửi lại...",
-                                success: "Đã gửi mã mới cho khách!",
-                                error: "Gửi thất bại. Rate limit 3 lần/giờ."
+                                loading: "Resending...",
+                                success: "New code sent to customer!",
+                                error: "Failed to send. Rate limit 3/hour."
                             });
                         }}
                         className="text-[10px] bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 flex items-center gap-1 rounded"
                     >
-                        <RefreshCw className="w-3 h-3" /> Gửi lại
+                        <RefreshCw className="w-3 h-3" /> Resend
                     </button>
                 </div>
             )}
@@ -203,10 +203,10 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber, status }:
                         <Truck size={32} />
                     </div>
                     <h3 className="font-serif text-2xl text-gray-900 dark:text-white mb-2">
-                        {isReturnRedelivery ? "Nhận Giao Lại?" : isReturnPickup ? "Nhận Thu Hồi?" : "Nhận Đơn Hàng?"}
+                        {isReturnRedelivery ? "Accept Redelivery?" : isReturnPickup ? "Accept Return?" : "Accept Order?"}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-                        Bạn có chắc chắn muốn nhận nhiệm vụ <span className={`font-bold ${isReturnRedelivery ? "text-rose-600" : "text-indigo-600"}`}>#{orderNumber}</span> không?
+                        Are you sure you want to accept task <span className={`font-bold ${isReturnRedelivery ? "text-rose-600" : "text-indigo-600"}`}>#{orderNumber}</span>?
                     </p>
 
                     <div className="flex w-full gap-3">
@@ -214,7 +214,7 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber, status }:
                             onClick={onClose}
                             className="flex-1 rounded-2xl border border-gray-200 py-4 text-xs font-bold uppercase tracking-widest text-gray-600 transition-all hover:bg-gray-50 dark:border-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-800"
                         >
-                            Hủy
+                            Cancel
                         </button>
                         <button
                             onClick={async () => {
@@ -228,11 +228,11 @@ function ConfirmAcceptModal({ isOpen, onClose, onConfirm, orderNumber, status }:
                             {isSubmitting ? (
                                 <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                             ) : isReturnRedelivery ? (
-                                "Xác nhận giao lại"
+                                "Confirm Redelivery"
                             ) : isReturnPickup ? (
-                                "Xác nhận lấy hàng"
+                                "Confirm Pickup"
                             ) : (
-                                "Xác nhận giao đơn"
+                                "Confirm Delivery"
                             )}
                         </button>
                     </div>
@@ -254,14 +254,14 @@ export default function ShipperHomePage() {
         try {
             const res = await shipperService.acceptOrder(orderId);
             if (res.success) {
-                toast.success("Nhận đơn thành công!");
+                toast.success("Order accepted!");
                 setAcceptModalOrder(null);
                 loadOrders();
             } else {
-                toast.error(res.message || "Lỗi khi nhận");
+                toast.error(res.message || "Accept failed");
             }
         } catch (error) {
-            toast.error("Lỗi ngoại lệ.");
+            toast.error("Exception occurred.");
         }
     };
 
@@ -269,13 +269,13 @@ export default function ShipperHomePage() {
         try {
             const res = await shipperService.deliverReturnToStore(orderId);
             if (res.success) {
-                toast.success("Đã bàn giao hàng về kho thành công!");
+                toast.success("Handed over to store successfully!");
                 loadOrders();
             } else {
-                toast.error(res.message || "Lỗi khi bàn giao");
+                toast.error(res.message || "Handover failed");
             }
         } catch (error) {
-            toast.error("Lỗi ngoại lệ.");
+            toast.error("Exception occurred.");
         }
     };
 
@@ -288,7 +288,7 @@ export default function ShipperHomePage() {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Lỗi khi tải danh sách đơn hàng.");
+            toast.error("Failed to load orders.");
         } finally {
             setIsLoading(false);
         }
@@ -321,27 +321,27 @@ export default function ShipperHomePage() {
             <div className="rounded-2xl bg-gradient-to-br from-teal-600 to-teal-800 p-5 text-white shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-20"><Truck className="w-24 h-24" /></div>
 
-                <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest opacity-80 relative z-10">Ca Của Bạn</p>
+                <p className="font-plus-jakarta text-xs font-bold uppercase tracking-widest opacity-80 relative z-10">Your Shift</p>
                 <div className="mt-2 flex items-end gap-3 relative z-10">
                     <span className="font-plus-jakarta text-6xl font-black leading-none">{pendingCount}</span>
-                    <span className="mb-2 font-plus-jakarta text-sm font-semibold opacity-80">đơn cần xử lý</span>
+                    <span className="mb-2 font-plus-jakarta text-sm font-semibold opacity-80">pending orders</span>
                 </div>
                 <div className="mt-4 flex items-center gap-4 border-t border-white/20 pt-4 relative z-10">
                     <div>
                         <p className="font-plus-jakarta text-2xl font-black">{deliveredCount}</p>
-                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Hoàn Tất</p>
+                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Completed</p>
                     </div>
                     <div className="h-8 w-px bg-white/20" />
                     <div>
                         <p className="font-plus-jakarta text-2xl font-black">{totalCount}</p>
-                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Tổng</p>
+                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Total</p>
                     </div>
                     <div className="h-8 w-px bg-white/20" />
                     <div>
                         <p className="font-plus-jakarta text-2xl font-black">
                             {totalCount > 0 ? Math.round((deliveredCount / totalCount) * 100) : 0}%
                         </p>
-                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Tỷ Lệ</p>
+                        <p className="font-plus-jakarta text-[10px] uppercase tracking-wider opacity-70">Rate</p>
                     </div>
                 </div>
             </div>
@@ -352,14 +352,14 @@ export default function ShipperHomePage() {
                 <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tìm tên KH, địa chỉ, mã đơn..."
+                    placeholder="Search name, address, order..."
                     className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 font-plus-jakarta text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-gray-700 dark:bg-[#111]"
                 />
             </div>
 
             {/* Filter Chips */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {([["ALL", "Tất Cả"], ["SHIPPED", "Đang Giao"], ["RETURN_JOBS", "Thu Hồi"], ["DELIVERED", "Đã Giao"]] as const).map(([val, label]) => (
+                {([["ALL", "All"], ["SHIPPED", "Shipping"], ["RETURN_JOBS", "Returns"], ["DELIVERED", "Delivered"]] as const).map(([val, label]) => (
                     <button
                         key={val}
                         onClick={() => setActiveFilter(val)}
@@ -379,7 +379,7 @@ export default function ShipperHomePage() {
                 ) : filtered.length === 0 ? (
                     <div className="py-16 text-center font-plus-jakarta text-sm text-gray-400 bg-white dark:bg-[#111] rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
                         <Package className="mx-auto h-12 w-12 text-gray-200 dark:text-gray-700 mb-3" />
-                        Không có đơn hàng nào
+                        No orders found
                     </div>
                 ) : (
                     filtered.map((order) => (

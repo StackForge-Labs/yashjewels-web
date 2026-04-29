@@ -15,9 +15,9 @@ export default function ShipperProfilePage() {
     };
 
     const stats = [
-        { label: "Đã Giao", value: "142", icon: Truck, color: "text-teal-600 bg-teal-50 dark:bg-teal-500/10" },
-        { label: "Đánh Giá", value: "4.9⭐", icon: Star, color: "text-amber-600 bg-amber-50 dark:bg-amber-500/10" },
-        { label: "Tỷ Lệ", value: "98%", icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" },
+        { label: "Delivered", value: "142", icon: Truck, color: "text-teal-600 bg-teal-50 dark:bg-teal-500/10" },
+        { label: "Rating", value: "4.9⭐", icon: Star, color: "text-amber-600 bg-amber-50 dark:bg-amber-500/10" },
+        { label: "Rate", value: "98%", icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" },
     ];
 
     return (
@@ -29,7 +29,7 @@ export default function ShipperProfilePage() {
                 </div>
                 <div className="text-center">
                     <h2 className="font-plus-jakarta text-xl font-black">{profile?.fullName ?? "Shipper"}</h2>
-                    <p className="font-plus-jakarta text-sm text-white/70">Nhân Viên Giao Hàng</p>
+                    <p className="font-plus-jakarta text-sm text-white/70">Delivery Staff</p>
                 </div>
             </div>
 
@@ -51,7 +51,7 @@ export default function ShipperProfilePage() {
 
             {/* Contact Info */}
             <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-[#111]">
-                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Thông Tin Liên Hệ</p>
+                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact Info</p>
                 <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-gray-400" />
                     <span className="font-plus-jakarta text-sm text-gray-700 dark:text-gray-300">{profile?.email ?? "—"}</span>
@@ -67,7 +67,7 @@ export default function ShipperProfilePage() {
                 onClick={handleLogout}
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border border-rose-100 bg-rose-50 py-4 font-plus-jakarta text-sm font-bold text-rose-700 transition-all active:scale-95 dark:border-rose-900/30 dark:bg-rose-500/10 dark:text-rose-400"
             >
-                <LogOut className="h-4 w-4" /> Đăng Xuất
+                <LogOut className="h-4 w-4" /> Logout
             </button>
         </div>
     );

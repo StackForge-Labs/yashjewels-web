@@ -11,9 +11,9 @@ import { useRouter } from "next/navigation";
 
 // ─── Bottom Navigation ───────────────────────────────────────
 const navItems = [
-    { href: "/shipper", label: "Đơn Hàng", icon: Package },
-    { href: "/shipper/scanner", label: "Quét Mã", icon: QrCode },
-    { href: "/shipper/profile", label: "Cá Nhân", icon: User },
+    { href: "/shipper", label: "Orders", icon: Package },
+    { href: "/shipper/scanner", label: "Scan QR", icon: QrCode },
+    { href: "/shipper/profile", label: "Profile", icon: User },
 ];
 
 function ShipperBottomNav() {
