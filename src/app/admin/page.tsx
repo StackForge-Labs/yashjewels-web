@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <div>
                             <p className="font-plus-jakarta text-3xl font-bold text-amber-700 dark:text-amber-500 mt-2">
-                                {goldRate ? goldRate.rate24kPerGram.toLocaleString() : "---"} 
+                                {goldRate ? goldRate.currentGoldRateUsd.toLocaleString() : "---"} 
                                 <span className="ml-1 text-lg text-amber-600/60">USD</span>
                             </p>
                             <p className="font-plus-jakarta text-xs font-medium text-amber-600/80">per gram (24K SJC)</p>
