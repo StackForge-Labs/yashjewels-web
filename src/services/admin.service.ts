@@ -269,6 +269,15 @@ export const adminService = {
         delete: (id: string) => apiClient.delete<ApiResponse<boolean>>(`/coupons/${id}`).then(r => r.data)
     },
 
+    campaigns: {
+        getAll: () => apiClient.get<ApiResponse<any[]>>("/marketing-campaigns").then(r => r.data),
+        create: (data: any) => apiClient.post<ApiResponse<string>>("/marketing-campaigns", data).then(r => r.data),
+        update: (id: string, data: any) => apiClient.put<ApiResponse<boolean>>(`/marketing-campaigns/${id}`, data).then(r => r.data),
+        delete: (id: string) => apiClient.delete<ApiResponse<boolean>>(`/marketing-campaigns/${id}`).then(r => r.data),
+        distribute: (id: string) => apiClient.post<ApiResponse<boolean>>(`/marketing-campaigns/${id}/distribute`).then(r => r.data),
+        revoke: (id: string) => apiClient.post<ApiResponse<boolean>>(`/marketing-campaigns/${id}/revoke`).then(r => r.data),
+    },
+
     inquiryLogs: {
         getAll: (params?: { vendorId?: string; action?: string; from?: string; to?: string }) => getInquiryLogsApi(params),
     }
