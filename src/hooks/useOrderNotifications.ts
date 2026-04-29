@@ -24,6 +24,12 @@ export function useOrderNotifications(userId?: string) {
             .build();
 
         setConnection(newConnection);
+
+        return () => {
+            if (newConnection && newConnection.state !== signalR.HubConnectionState.Disconnected) {
+                newConnection.stop();
+            }
+        };
     }, [userId]);
 
     useEffect(() => {
@@ -50,10 +56,12 @@ export function useOrderNotifications(userId?: string) {
                 .catch(err => console.error("--> SIGNALR CONNECTION ERROR:", err));
 
             return () => {
-                connection.stop();
+                if (connection.state !== signalR.HubConnectionState.Disconnected) {
+                    connection.stop();
+                }
             };
         }
-    }, [connection, queryClient]);
+    }, [connection, queryClient, userId]);
 
     return { connection };
 }

@@ -76,7 +76,7 @@ export const useInventorySync = () => {
         }
 
         return () => {
-            if (connection) {
+            if (connection && connection.state !== signalR.HubConnectionState.Disconnected) {
                 connection.stop();
             }
         };
