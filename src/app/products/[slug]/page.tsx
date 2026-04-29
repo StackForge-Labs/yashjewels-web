@@ -3,18 +3,20 @@
 import React, { useState, useEffect } from "react";
 import {
     ChevronRight, Heart, ShieldCheck, Truck, RotateCcw, Star, Plus, Minus,
-    Diamond, Award, Sparkles, Calendar, ArrowRight,
+    Diamond, Award, Sparkles, Calendar, ArrowRight, Ruler
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ProductCard from "@/app/(home)/_components/ProductCard";
+import { formatCurrency } from "@/lib/utils";
 
 import { productService } from "@/services/product.service";
 import { Product } from "@/types/product.types";
-import { catalogService, CatalogItem as RefItem } from "@/services/catalog.service";
+import { catalogService } from "@/services/catalog.service";
 import { categoryService } from "@/services/category.service";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
+import { SizeGuideContent } from "@/app/_components/SizeGuideContent";
 
 const ProductDetailPage = () => {
     const { slug } = useParams();
@@ -153,10 +155,10 @@ const ProductDetailPage = () => {
                                 </div>
                                 <div className="relative z-10 flex items-baseline gap-5">
                                     <span className="text-gold text-4xl font-light tracking-tight italic">
-                                        {finalPrice.toLocaleString()} đ
+                                        {formatCurrency(finalPrice)}
                                     </span>
                                     <span className="text-lg font-medium text-gray-300 line-through decoration-gray-400 dark:text-gray-600">
-                                        {basePrice.toLocaleString()} đ
+                                        {formatCurrency(basePrice)}
                                     </span>
                                     <div className="rounded-sm bg-red-500 px-3 py-1 text-[10px] font-bold text-white shadow-lg shadow-red-500/20">
                                         -15% EXCLUSIVE
@@ -244,8 +246,8 @@ const ProductDetailPage = () => {
 
                             {/* Condensed Tabs/Specifications */}
                             <div className="mt-8 space-y-6 border-t border-gray-50 pt-8 dark:border-white/5">
-                                <div className="flex gap-10">
-                                    {["specifications", "description", "delivery"].map((tab) => (
+                                <div className="flex flex-wrap gap-x-10 gap-y-4">
+                                    {["specifications", "description", "size guide", "delivery"].map((tab) => (
                                         <button
                                             key={tab}
                                             onClick={() => setActiveTab(tab)}
@@ -279,6 +281,11 @@ const ProductDetailPage = () => {
                                         </p>
                                     </div>
                                 )}
+                                {activeTab === "size guide" && (
+                                    <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-8 dark:border-white/5 dark:bg-white/1">
+                                        <SizeGuideContent />
+                                    </div>
+                                )}
                                 {activeTab === "delivery" && (
                                     <div className="from-gold/5 border-gold/10 space-y-4 rounded-2xl border bg-linear-to-r to-transparent p-6">
                                         <div className="flex items-center gap-3">
@@ -297,6 +304,19 @@ const ProductDetailPage = () => {
                     </div>
                 </div>
             </div>
+            {/* Direct Size Guide Section */}
+            <section className="mt-20 border-t border-gray-50 py-24 dark:border-white/5">
+                <div className="container mx-auto px-4 lg:px-12">
+                    <div className="mb-16 text-center">
+                        <h2 className="mb-4 font-serif text-4xl text-gray-900 dark:text-white">The Perfect Fit</h2>
+                        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                            Our jewelry is designed to be cherished for a lifetime. Use our comprehensive guide to ensure your chosen masterpiece fits flawlessly.
+                        </p>
+                    </div>
+                    <SizeGuideContent />
+                </div>
+            </section>
+
             {/* Fine Bottom Texture */}
             <div className="via-gold/20 mt-20 h-1 bg-linear-to-r from-transparent to-transparent" />
         </main>

@@ -17,6 +17,7 @@ import {
     Briefcase,
     ArrowRight,
     Loader2,
+    ArrowUpRight,
 } from "lucide-react";
 import { categoryService } from "@/services/category.service";
 import { Category } from "@/types/category.types";
@@ -119,65 +120,65 @@ function HighJewelryMenu({ categories, loading }: { categories: Category[]; load
     };
 
     return (
-        <div className="invisible absolute top-full left-0 z-[60] w-full border-t border-gray-100 bg-white/98 opacity-0 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-all duration-300 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#050505]/98">
-            <div className="mx-auto flex max-w-[1400px] gap-0 px-10 py-12">
+        <div className="invisible absolute top-full left-0 right-0 z-[60] border-t border-gray-100 bg-white/98 opacity-0 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] backdrop-blur-2xl transition-all duration-500 group-hover:visible group-hover:opacity-100 dark:border-white/5 dark:bg-[#050505]/98">
+            <div className="mx-auto flex max-w-[1400px] gap-12 px-12 py-16">
 
                 {/* Col 1: Dynamic Categories */}
-                <div className="w-[18%] pr-8 border-r border-gray-100 dark:border-white/5">
-                    <h4 className="mb-6 text-[9px] font-bold tracking-[0.35em] text-gray-400 uppercase">Shop By Category</h4>
+                <div className="w-1/5 min-w-[200px]">
+                    <h4 className="mb-8 text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase">Shop By Category</h4>
                     {loading ? (
-                        <div className="space-y-3">
-                            {[...Array(5)].map((_, i) => (
+                        <div className="space-y-4">
+                            {[...Array(6)].map((_, i) => (
                                 <div key={i} className="h-4 w-4/5 animate-pulse rounded bg-gray-100 dark:bg-white/5" />
                             ))}
                         </div>
                     ) : (
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                             {categories.map((cat) => (
                                 <li key={cat.id}>
                                     <Link
                                         href={`/collections/${cat.slug}`}
-                                        className="group/link flex items-center justify-between rounded-lg px-3 py-2.5 text-[11px] font-semibold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
+                                        className="group/link flex items-center justify-between rounded-xl px-4 py-3 text-[12px] font-medium text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
                                     >
                                         {cat.name}
-                                        <ChevronRight size={12} className="-translate-x-1 opacity-0 transition-all group-hover/link:translate-x-0 group-hover/link:opacity-100" />
+                                        <ChevronRight size={14} className="-translate-x-2 opacity-0 transition-all group-hover/link:translate-x-0 group-hover/link:opacity-100" />
                                     </Link>
                                 </li>
                             ))}
-                            <li className="pt-2 border-t border-gray-100 dark:border-white/5">
-                                <Link href="/collections" className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold tracking-widest text-gold uppercase hover:underline">
-                                    All Collections <ArrowRight size={11} />
+                            <li className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                                <Link href="/collections" className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold tracking-widest text-gold uppercase hover:gap-3 transition-all">
+                                    View All <ArrowRight size={12} />
                                 </Link>
                             </li>
                         </ul>
                     )}
                 </div>
 
-                {/* Col 2: Gold Filter */}
-                <div className="w-[17%] px-8 border-r border-gray-100 dark:border-white/5">
-                    <h4 className="mb-6 text-[9px] font-bold tracking-[0.35em] text-gray-400 uppercase">Filter By Metal</h4>
-                    <ul className="space-y-2">
+                {/* Col 2: Filters & Quick Links */}
+                <div className="w-1/5 min-w-[200px] border-x border-gray-100 px-12 dark:border-white/5">
+                    <h4 className="mb-8 text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase">Filter By Metal</h4>
+                    <ul className="space-y-3">
                         {GOLD_FILTERS.map((g) => (
                             <li key={g.label}>
                                 <button
                                     onClick={() => handleQuickFilter(g.label)}
-                                    className="group/g flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[11px] font-semibold text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
+                                    className="group/g flex w-full items-center gap-4 rounded-xl px-4 py-3 text-[12px] font-medium text-gray-600 transition-all hover:bg-gold/5 hover:text-gold dark:text-gray-400"
                                 >
-                                    <span className={`h-4 w-4 shrink-0 rounded-full shadow-sm ${g.color}`} />
+                                    <span className={`h-5 w-5 shrink-0 rounded-full shadow-inner ${g.color}`} />
                                     {g.label}
                                 </button>
                             </li>
                         ))}
                     </ul>
 
-                    <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
-                        <h4 className="mb-4 text-[9px] font-bold tracking-[0.35em] text-gray-400 uppercase">Quick Filters</h4>
-                        <div className="flex flex-wrap gap-1.5">
+                    <div className="mt-10 pt-10 border-t border-gray-100 dark:border-white/5">
+                        <h4 className="mb-6 text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase">Quick Filters</h4>
+                        <div className="flex flex-wrap gap-2">
                             {["In Stock", "New Arrivals", "On Sale", "Under $500"].map((tag) => (
                                 <button
                                     key={tag}
                                     onClick={() => router.push(`/collections/all?q=${encodeURIComponent(tag)}`)}
-                                    className="rounded-full border border-gray-200 px-2.5 py-1 text-[9px] font-bold tracking-wider text-gray-500 uppercase transition-all hover:border-gold hover:text-gold dark:border-white/10 dark:text-gray-500"
+                                    className="rounded-lg border border-gray-200 px-3.5 py-1.5 text-[9px] font-bold tracking-widest text-gray-500 uppercase transition-all hover:border-gold hover:bg-gold hover:text-white dark:border-white/10 dark:text-gray-400"
                                 >
                                     {tag}
                                 </button>
@@ -186,42 +187,48 @@ function HighJewelryMenu({ categories, loading }: { categories: Category[]; load
                     </div>
                 </div>
 
-                {/* Col 3: Editorial Image Cards */}
-                <div className="flex-1 pl-8">
-                    <h4 className="mb-6 text-[9px] font-bold tracking-[0.35em] text-gray-400 uppercase">Featured Editorials</h4>
-                    <div className="grid grid-cols-2 gap-4">
+                {/* Col 3: Editorial & Collections Grid */}
+                <div className="flex-1">
+                    <div className="flex items-center justify-between mb-8">
+                        <h4 className="text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase">Featured Editorials</h4>
+                        <Link href="/collections" className="text-[10px] font-bold tracking-widest text-gold uppercase hover:underline">Discover More</Link>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
                         {FEATURED_EDITORIALS.map((ed) => (
-                            <Link key={ed.label} href={ed.href} className="group/img relative overflow-hidden rounded-2xl shadow-lg">
+                            <Link key={ed.label} href={ed.href} className="group/img relative aspect-[16/9] overflow-hidden rounded-2xl shadow-2xl">
                                 <img
                                     src={ed.img}
                                     alt={ed.label}
-                                    className="h-56 w-full object-cover transition-transform duration-[1.8s] group-hover/img:scale-110"
+                                    className="h-full w-full object-cover transition-transform duration-[2.5s] ease-out group-hover/img:scale-110"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                                <div className="absolute bottom-0 left-0 p-5">
-                                    <span className="text-gold mb-1.5 block text-[9px] font-bold tracking-[0.3em] uppercase">{ed.label}</span>
-                                    <p className="font-serif text-lg leading-tight text-white">{ed.caption}</p>
-                                </div>
-                                <div className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover/img:opacity-100">
-                                    <ArrowRight size={13} className="text-white" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                <div className="absolute bottom-0 left-0 p-8">
+                                    <span className="text-gold mb-2 block text-[10px] font-bold tracking-[0.4em] uppercase">{ed.label}</span>
+                                    <p className="font-serif text-2xl leading-tight text-white">{ed.caption}</p>
+                                    <div className="mt-4 flex items-center gap-2 text-[10px] font-bold tracking-widest text-white/70 uppercase group-hover/img:text-gold transition-colors">
+                                        Shop Now <ArrowUpRight size={12} />
+                                    </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
 
-                    {/* Category image strip */}
-                    <div className="mt-4 grid grid-cols-4 gap-3">
+                    {/* Bottom strip: Popular Categories */}
+                    <div className="mt-8 grid grid-cols-4 gap-4">
                         {categories.slice(0, 4).map((cat, i) => (
-                            <Link key={cat.id} href={`/collections/${cat.slug}`} className="group/strip relative overflow-hidden rounded-xl">
+                            <Link key={cat.id} href={`/collections/${cat.slug}`} className="group/strip relative h-24 overflow-hidden rounded-2xl">
                                 <img
                                     src={cat.iconUrl ?? CATEGORY_IMAGES[`default${i}`] ?? CATEGORY_IMAGES.default0}
                                     alt={cat.name}
-                                    className="h-20 w-full object-cover transition-transform duration-700 group-hover/strip:scale-110"
+                                    className="h-full w-full object-cover transition-transform duration-1000 group-hover/strip:scale-125"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                <span className="absolute bottom-2 left-0 right-0 text-center text-[9px] font-bold tracking-wider text-white uppercase">
-                                    {cat.name}
-                                </span>
+                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-[10px] font-bold tracking-[0.2em] text-white uppercase drop-shadow-md">
+                                        {cat.name}
+                                    </span>
+                                </div>
                             </Link>
                         ))}
                     </div>
@@ -417,9 +424,9 @@ export function MegaMenu() {
     }
 
     return (
-        <nav className="flex h-[100px] items-center gap-6">
+        <nav className="flex h-[100px] items-center gap-8">
             {/* ── High Jewelry — Full Mega ── */}
-            <div className="group relative flex h-full items-center">
+            <div className="group flex h-full items-center">
                 <Link href="/collections" className={navLinkCls}>
                     <span className="flex items-center gap-1">
                         High Jewelry
