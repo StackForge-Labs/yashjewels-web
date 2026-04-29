@@ -18,18 +18,49 @@ import {
     Filter,
     ArrowUpRight,
     ShoppingBag,
-    Coins
+    Coins,
+    Eye, ShieldCheck, FileText, Download, FileBox
 } from "lucide-react";
 import { vendorService } from "@/services/vendor.service";
 import { adminService } from "@/services/admin.service";
 import toast from "react-hot-toast";
+import { format } from "date-fns";
+import { Drawer } from "@/app/admin/_components/ui/Drawer";
+import { Modal } from "@/app/admin/_components/ui/Modal";
+import { StatusBadge } from "@/app/admin/_components/ui/StatusBadge";
+import { OrderDetailDto, OrderTimelineDto } from "@/services/order.service";
+
+function OrderTimeline({ timeline }: { timeline: OrderTimelineDto[] }) {
+    if (!timeline?.length) return null;
+
+    return (
+        <div className="flex flex-col gap-4 py-2">
+            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Fulfillment Timeline</p>
+            <div className="relative flex flex-col gap-6 pl-4 border-l-2 border-gray-100 dark:border-gray-800 ml-2">
+                {timeline.map((step, idx) => (
+                    <div key={idx} className="relative">
+                        <div className={`absolute -left-[25px] top-1 h-3 w-3 rounded-full border-2 border-white bg-amber-500 shadow-sm dark:border-[#111]`} title={step.status} />
+                        <div className="flex flex-col">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="font-plus-jakarta text-xs font-bold text-gray-900 dark:text-gray-100">{step.status.replace(/_/g, ' ')}</span>
+                                <span className="font-plus-jakarta text-[10px] text-gray-400">{format(new Date(step.changedAt), "MMM dd, HH:mm")}</span>
+                            </div>
+                            {step.note && <p className="mt-1 font-plus-jakarta text-[11px] text-gray-500 italic">"{step.note}"</p>}
+                            <p className="font-plus-jakarta text-[9px] font-bold text-gray-400 uppercase tracking-tighter">— {step.actorType}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 // ─── Types ───────────────────────────────────────────────
 type OrderStatus = "DEPOSIT_PAID" | "CONFIRMED" | "PREPARING" | "SHIP_PENDING";
 
 const columns: { status: OrderStatus; label: string; icon: typeof Clock; color: string; badgeColor: string }[] = [
     { status: "DEPOSIT_PAID", label: "Awaiting Approval", icon: Clock, color: "border-amber-200 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10", badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" },
-    { status: "CONFIRMED", label: "Confirmed", icon: CheckCircle2, color: "border-blue-200 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-900/10", badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300" },
+    { status: "CONFIRMED", label: "Confirmed", icon: CheckCircle2, color: "border-amber-200 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10", badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300" },
     { status: "PREPARING", label: "Preparing", icon: Package, color: "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800/30 dark:bg-indigo-900/10", badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300" },
     { status: "SHIP_PENDING", label: "Awaiting Pickup", icon: Truck, color: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-900/10", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300" },
 ];
@@ -406,7 +437,7 @@ function OrderCard({
                 </div>
             )}
             {["CONFIRMED", "AWAITING_FULL_PAYMENT", "FULLY_PAID"].includes(order.status) && (
-                <div className="flex w-full items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-blue-700 dark:border-blue-800/30 dark:bg-blue-500/10 dark:text-blue-300">
+                <div className="flex w-full items-center justify-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-amber-700 dark:border-amber-800/30 dark:bg-amber-500/10 dark:text-amber-300">
                     {order.status === "CONFIRMED" ? "Confirmed (Awaiting system routing)" :
                         order.status === "AWAITING_FULL_PAYMENT" ? "Awaiting Customer Final Payment" :
                             "Fully Paid"}
@@ -415,7 +446,7 @@ function OrderCard({
             {order.status === "PREPARING" && (
                 <button
                     onClick={() => onPrepare(order.orderId)}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-indigo-700 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-800/30 dark:bg-indigo-500/10 dark:text-indigo-300"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 font-plus-jakarta text-xs font-bold text-amber-700 transition-all hover:bg-amber-100 active:scale-95 dark:border-amber-800/30 dark:bg-amber-500/10 dark:text-amber-300"
                 >
                     <Upload className="h-3.5 w-3.5" />
                     Upload Photo
@@ -443,21 +474,59 @@ export default function VendorOrdersPage() {
     const [assignOrderId, setAssignOrderId] = useState<string | null>(null);
     const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
     const [processingAction, setProcessingAction] = useState<"confirm" | "reject" | null>(null);
-    const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
     const [searchQuery, setSearchQuery] = useState("");
+
+    const [allOrders, setAllOrders] = useState<any[]>([]);
+    const [isAllOrdersLoading, setIsAllOrdersLoading] = useState(true);
+    
+    // Detail & PDF Modals
+    const [detail, setDetail] = useState<OrderDetailDto | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewTitle, setPreviewTitle] = useState("");
+
+    const handleViewDetail = async (id: string) => {
+        setIsDetailOpen(true);
+        setDetailLoading(true);
+        try {
+            const res = await adminService.getOrderDetailApi(id);
+            if (res.success) setDetail(res.data);
+        } catch (error) {
+            toast.error("Could not fetch order details");
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
+    const handlePreviewDoc = (url: string, title: string) => {
+        setPreviewUrl(url);
+        setPreviewTitle(title);
+        setIsPreviewModalOpen(true);
+    };
 
     const loadOrders = async () => {
         try {
             setIsLoading(true);
-            const res = await vendorService.getOrders();
-            if (res.success && res.data) {
-                setOrders(res.data);
+            setIsAllOrdersLoading(true);
+            const [resVendor, resAdmin] = await Promise.all([
+                vendorService.getOrders(),
+                adminService.getOrdersApi()
+            ]);
+            
+            if (resVendor.success && resVendor.data) {
+                setOrders(resVendor.data);
+            }
+            if (resAdmin.success && resAdmin.data) {
+                setAllOrders(resAdmin.data);
             }
         } catch (error) {
             console.error("Failed to load orders", error);
             toast.error("Failed to load orders");
         } finally {
             setIsLoading(false);
+            setIsAllOrdersLoading(false);
         }
     };
 
@@ -572,7 +641,7 @@ export default function VendorOrdersPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {[
                         { label: "Pending Approval", value: stats.pendingApproval, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-                        { label: "In Preparation", value: stats.processing, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
+                        { label: "In Preparation", value: stats.processing, icon: Package, color: "text-amber-600", bg: "bg-amber-50" },
                         { label: "Ready to Ship", value: stats.readyToShip, icon: Truck, color: "text-emerald-600", bg: "bg-emerald-50" },
                         { label: "Total Volume", value: formatUsd(stats.totalValue), icon: Coins, color: "text-indigo-600", bg: "bg-indigo-50" }
                     ].map((card, i) => (
@@ -608,23 +677,6 @@ export default function VendorOrdersPage() {
                         className="w-full rounded-xl border border-gray-100 bg-white/70 py-2.5 pl-11 pr-4 font-plus-jakarta text-sm backdrop-blur-md focus:border-amber-500 focus:outline-none dark:border-gray-800/50 dark:bg-[#111]/70"
                     />
                 </div>
-
-                <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white/50 p-1 dark:border-gray-800/50 dark:bg-[#111]/50">
-                    <button
-                        onClick={() => setViewMode("kanban")}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 font-plus-jakarta text-xs font-bold transition-all ${viewMode === "kanban" ? "bg-amber-600 text-white shadow-md shadow-amber-200" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-                    >
-                        <LayoutGrid className="h-3.5 w-3.5" />
-                        Kanban
-                    </button>
-                    <button
-                        onClick={() => setViewMode("table")}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 font-plus-jakarta text-xs font-bold transition-all ${viewMode === "table" ? "bg-amber-600 text-white shadow-md shadow-amber-200" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-                    >
-                        <List className="h-3.5 w-3.5" />
-                        Table
-                    </button>
-                </div>
             </div>
 
             {/* Main Content Area */}
@@ -637,8 +689,7 @@ export default function VendorOrdersPage() {
                 </div>
             ) : (
                 <div className="transition-all duration-300">
-                    {viewMode === "kanban" ? (
-                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-4 lg:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-4 lg:grid-cols-2">
                             {columns.map((col) => {
                                 const colOrders = orders.filter((o) => {
                                     const matchesSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -695,68 +746,84 @@ export default function VendorOrdersPage() {
                                 );
                             })}
                         </div>
-                    ) : (
-                        /* Table View Implementation */
-                        <div className="rounded-2xl border border-gray-100 bg-white/70 shadow-sm backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full whitespace-nowrap text-left text-sm">
-                                    <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
-                                        <tr>
-                                            {["Order Details", "Client", "Fulfillment Status", "Financials", "Created At", ""].map((h) => (
-                                                <th key={h} className="px-8 py-5 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-                                        {orders.filter(o =>
-                                            o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            o.customerName.toLowerCase().includes(searchQuery.toLowerCase())
-                                        ).map((order) => (
-                                            <tr key={order.orderId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                                <td className="px-8 py-5">
-                                                    <p className="font-plus-jakarta text-sm font-bold text-amber-600">{order.orderNumber}</p>
-                                                    <p className="mt-1 font-plus-jakarta text-xs text-gray-400">
-                                                        {order.items?.length || 0} items in order
-                                                    </p>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{order.customerName}</p>
-                                                    <p className="mt-1 font-plus-jakarta text-xs text-gray-500">{order.shippingPhone}</p>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    {/* Using the same status logic as Kanban but in table format */}
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`h-2 w-2 rounded-full ${order.status === "DEPOSIT_PAID" ? "bg-amber-500" :
-                                                            order.status === "SHIP_PENDING" ? "bg-emerald-500" : "bg-blue-500"
-                                                            } animate-pulse`} />
-                                                        <span className="font-plus-jakarta text-xs font-bold text-gray-700 dark:text-gray-300">{order.status}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatUsd(order.totalAmount)}</p>
-                                                    <p className="mt-1 font-plus-jakarta text-[10px] text-gray-400 uppercase tracking-wider">Total Value</p>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <p className="font-plus-jakarta text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
-                                                    <p className="mt-1 font-plus-jakarta text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                                </td>
-                                                <td className="px-8 py-5 text-right">
-                                                    <button
-                                                        onClick={() => { /* Detail view link */ }}
-                                                        className="rounded-lg p-2 text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 transition-all"
-                                                    >
-                                                        <ChevronRight className="h-5 w-5" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
+
+            {/* All Orders Table */}
+            <div className="mt-12 flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                    <h2 className="font-plus-jakarta text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        Complete Order History
+                    </h2>
+                    <p className="font-plus-jakarta text-sm text-gray-500 dark:text-gray-400">
+                        View all historical and active orders across the system
+                    </p>
+                </div>
+
+                <div className="rounded-2xl border border-gray-100 bg-white/70 shadow-sm backdrop-blur-md dark:border-gray-800/50 dark:bg-[#111]/70 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full whitespace-nowrap text-left text-sm">
+                            <thead className="border-b border-gray-100 bg-gray-50/50 dark:border-gray-800/50 dark:bg-[#1a1a1a]/50">
+                                <tr>
+                                    {["Order Identity", "Customer", "Financials", "Status", "Actions"].map((h) => (
+                                        <th key={h} className="px-6 py-4 font-plus-jakarta text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
+                                {isAllOrdersLoading ? (
+                                    <tr><td colSpan={5} className="px-6 py-20 text-center font-plus-jakarta text-gray-400 animate-pulse">Loading order history...</td></tr>
+                                ) : allOrders.filter(o => 
+                                    o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    o.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+                                ).length === 0 ? (
+                                    <tr><td colSpan={5} className="px-6 py-20 text-center font-plus-jakarta text-gray-400">No matching orders found.</td></tr>
+                                ) : allOrders.filter(o => 
+                                    o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    o.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+                                ).map((order) => (
+                                    <tr key={order.orderId} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                                        <td className="px-6 py-6">
+                                            <div className="flex flex-col">
+                                                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">#{order.orderNumber}</span>
+                                                <span className="font-plus-jakarta text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">{format(new Date(order.createdAt), "MMM dd, yyyy")}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-8 w-8 rounded-full bg-amber-50 flex items-center justify-center font-black text-amber-600 text-xs dark:bg-amber-900/20">
+                                                    {order.customerName.charAt(0)}
+                                                </div>
+                                                <span className="font-plus-jakarta text-sm font-semibold text-gray-700 dark:text-gray-300">{order.customerName}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatUsd(order.totalAmount)}</span>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <span className="font-plus-jakarta text-[10px] font-bold text-amber-500 uppercase">{order.depositPct}% Dep.</span>
+                                                    {order.isCod && <span className="bg-amber-50 text-amber-600 text-[8px] font-bold uppercase border border-amber-100 rounded px-1">COD</span>}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <StatusBadge status={order.status.toLowerCase()} />
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button 
+                                                onClick={() => handleViewDetail(order.orderId)}
+                                                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 font-plus-jakarta text-xs font-bold text-white transition-all hover:bg-amber-700 hover:shadow-lg hover:shadow-amber-500/20 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-500"
+                                            >
+                                                <Eye className="h-3.5 w-3.5" /> View Detail
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             {/* Legend & Modals */}
             <div className="flex flex-wrap gap-4 mt-4 px-2">
@@ -795,6 +862,222 @@ export default function VendorOrdersPage() {
                 onClose={() => setAssignOrderId(null)}
                 onConfirm={handleAssignShipperSubmit}
             />
+
+            {/* Selection Drawer for Detail View */}
+            <Drawer
+                isOpen={isDetailOpen}
+                onClose={() => setIsDetailOpen(false)}
+                title={detail ? `Order #${detail.orderNumber}` : "Loading Order..."}
+                subtitle={detail ? `Tracking timeline for ${detail.customerName}` : ""}
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <button onClick={() => setIsDetailOpen(false)} className="flex-1 rounded-xl bg-amber-600 py-3 font-plus-jakarta text-sm font-bold text-white hover:bg-amber-700 shadow-lg shadow-amber-500/20">Close Panel</button>
+                    </div>
+                }
+            >
+                {detailLoading ? (
+                    <div className="flex flex-col gap-4 animate-pulse p-4">
+                        {[1,2,3,4].map(i => <div key={i} className="h-20 bg-gray-50 dark:bg-gray-800/50 rounded-2xl" />)}
+                    </div>
+                ) : detail && (
+                    <div className="flex flex-col gap-8 pb-10">
+                        {/* Highlights Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+                                <p className="text-[10px] font-bold uppercase text-gray-400">Settlement Status</p>
+                                <p className="mt-1 font-plus-jakarta text-lg font-bold text-gray-900 dark:text-white">{detail.depositPct}% Paid</p>
+                                <p className="text-[10px] font-semibold text-amber-500">{formatUsd(detail.totalAmount - detail.depositAmount)} Remaining</p>
+                            </div>
+                            <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
+                                <p className="text-[10px] font-bold uppercase text-gray-400">Shipping Mode</p>
+                                <p className="mt-1 font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white capitalize">{detail.isCod ? "Cash on Delivery" : "Pre-paid Fulfillment"}</p>
+                            </div>
+                        </div>
+
+                        {/* Order Timeline */}
+                        <OrderTimeline timeline={detail.timeline} />
+
+                        {/* Order Items & Docs Integration */}
+                        <div className="flex flex-col gap-4">
+                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Items & Certifications</p>
+                            {detail.items.map((item) => (
+                                <div key={item.orderItemId} className="group relative flex flex-col gap-3 rounded-2xl border border-gray-100 p-4 transition-all hover:border-amber-100 dark:border-gray-800">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <p className="font-plus-jakarta text-sm font-black text-gray-900 dark:text-white">{item.productName}</p>
+                                            <p className="font-plus-jakarta text-[11px] text-gray-400 uppercase tracking-widest leading-none mt-1">{item.styleCode} x {item.quantity}</p>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white">{formatUsd(item.unitPrice)}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 pt-3 border-t border-gray-50 dark:border-gray-800/50">
+                                        {item.certificationUrl ? (
+                                            <div className="flex items-center gap-3 w-full">
+                                                <div 
+                                                    onClick={() => handlePreviewDoc(item.certificationUrl!, "Jewel Certification")}
+                                                    className="relative h-16 w-12 rounded-lg border border-gray-100 bg-white overflow-hidden cursor-pointer hover:ring-2 hover:ring-amber-500 transition-all dark:bg-gray-800 dark:border-gray-700"
+                                                >
+                                                    {item.certificationThumbnailUrl ? (
+                                                        <img src={item.certificationThumbnailUrl} className="h-full w-full object-cover" alt="Cert" />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center bg-gray-50 dark:bg-gray-800">
+                                                            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                        <Eye className="h-3 w-3 text-white" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Certification</span>
+                                                    <button 
+                                                        onClick={() => handlePreviewDoc(item.certificationUrl!, "Jewel Certification")}
+                                                        className="text-[11px] font-bold text-amber-600 hover:underline text-left"
+                                                    >
+                                                        Click to View GIA/IGI
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                                <AlertCircle className="h-3 w-3 text-amber-500" />
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase">Awaiting Gen</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Order-Level Docs */}
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Final Documentation</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square overflow-hidden transition-all ${detail.invoiceUrl ? 'border-emerald-100 bg-white shadow-sm ring-1 ring-emerald-50' : 'border-dashed border-gray-200 bg-gray-50/30'}`}>
+                                    {detail.invoiceUrl ? (
+                                        <>
+                                            <div onClick={() => handlePreviewDoc(detail.invoiceUrl!, "Sales Invoice")} className="relative w-full h-full cursor-pointer group">
+                                                {detail.invoiceThumbnailUrl ? (
+                                                    <img src={detail.invoiceThumbnailUrl} className="h-full w-full object-cover" alt="Invoice" />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center bg-emerald-50/50">
+                                                        <FileText className="h-8 w-8 text-emerald-500" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Eye className="h-6 w-6 text-white mb-1" />
+                                                    <span className="text-[10px] font-bold text-white uppercase">Preview</span>
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-2 flex items-center justify-between border-t border-gray-100">
+                                                <span className="text-[10px] font-bold text-gray-500 truncate">Invoice.pdf</span>
+                                                <a href={detail.invoiceUrl} download target="_blank" rel="noreferrer" className="p-1 px-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"><Download className="h-3 w-3" /></a>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FileText className="h-8 w-8 text-gray-200" />
+                                            <span className="text-[10px] font-bold uppercase text-gray-400">No Invoice</span>
+                                        </>
+                                    )}
+                                </div>
+
+                                <div className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border aspect-square overflow-hidden transition-all ${detail.insuranceUrl ? 'border-amber-100 bg-white shadow-sm ring-1 ring-amber-50' : 'border-dashed border-gray-200 bg-gray-50/30'}`}>
+                                    {detail.insuranceUrl ? (
+                                        <>
+                                            <div onClick={() => handlePreviewDoc(detail.insuranceUrl!, "Insurance Policy")} className="relative w-full h-full cursor-pointer group">
+                                                {detail.insuranceThumbnailUrl ? (
+                                                    <img src={detail.insuranceThumbnailUrl} className="h-full w-full object-cover" alt="Insurance" />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center bg-amber-50/50">
+                                                        <ShieldCheck className="h-8 w-8 text-amber-500" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Eye className="h-6 w-6 text-white mb-1" />
+                                                    <span className="text-[10px] font-bold text-white uppercase">Preview</span>
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-2 flex items-center justify-between border-t border-gray-100">
+                                                <span className="text-[10px] font-bold text-gray-500 truncate">Insurance.pdf</span>
+                                                <a href={detail.insuranceUrl} download target="_blank" rel="noreferrer" className="p-1 px-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white"><Download className="h-3 w-3" /></a>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 opacity-50">
+                                            <ShieldCheck className="h-8 w-8 text-gray-200" />
+                                            <span className="text-[10px] font-bold uppercase text-gray-400">Pending Policy</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Customer & Shipping */}
+                        <div className="flex flex-col gap-4">
+                            <p className="font-plus-jakarta text-[10px] font-bold uppercase tracking-widest text-gray-400">Logistics Detail</p>
+                            <div className="rounded-2xl border border-gray-100 p-5 dark:border-gray-800">
+                                <div className="flex items-center justify-between gap-4 mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600"><Truck className="h-5 w-5" /></div>
+                                        <div>
+                                            <p className="font-plus-jakarta text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{detail.shippingName}</p>
+                                            <p className="font-plus-jakarta text-xs text-gray-500">{detail.shippingPhone}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800/60">
+                                    <p className="font-plus-jakarta text-[10px] font-bold uppercase text-gray-400 mb-1">Destiny Address</p>
+                                    <p className="font-plus-jakarta text-xs font-semibold text-gray-700 dark:text-gray-300 leading-relaxed">{detail.shippingAddress}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Drawer>
+
+            {/* PDF Preview Modal */}
+            <Modal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title={previewTitle}
+                size="lg"
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <button onClick={() => setIsPreviewModalOpen(false)} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 hover:bg-gray-50">Close Preview</button>
+                        {previewUrl && (
+                            <a 
+                                href={previewUrl} 
+                                download 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm hover:bg-amber-700 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                            >
+                                <Download className="h-4 w-4" /> Download Official PDF
+                            </a>
+                        )}
+                    </div>
+                }
+            >
+                <div className="w-full aspect-[1/1.4] bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
+                    {previewUrl ? (
+                        <iframe 
+                            src={`${previewUrl}#toolbar=0`} 
+                            className="w-full h-full border-none"
+                            title="PDF Preview"
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-4">
+                            <FileBox className="h-12 w-12 text-gray-300 animate-bounce" />
+                            <p className="font-plus-jakarta text-sm font-bold text-gray-400">Loading document vault...</p>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

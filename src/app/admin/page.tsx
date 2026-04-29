@@ -106,8 +106,8 @@ export default function AdminDashboardPage() {
             {/* Core Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <StatCard title="Total Revenue" value={formatCurrency(s.totalRevenue)} icon={DollarSign} trend={{ value: s.revenueTrend, isPositive: s.revenueTrend > 0 }} />
-                <StatCard title="New Signups" value={s.newUsers.toLocaleString()} icon={Users} trend={{ value: s.usersTrend, isPositive: s.usersTrend > 0 }} />
-                <StatCard title="Orders Placed" value={s.totalOrders.toLocaleString()} icon={CreditCard} trend={{ value: s.ordersTrend, isPositive: s.ordersTrend > 0 }} />
+                <StatCard title="New Signups" value={(s?.newUsers ?? 0).toLocaleString()} icon={Users} trend={{ value: s.usersTrend, isPositive: s.usersTrend > 0 }} />
+                <StatCard title="Orders Placed" value={(s?.totalOrders ?? 0).toLocaleString()} icon={CreditCard} trend={{ value: s.ordersTrend, isPositive: s.ordersTrend > 0 }} />
                 <StatCard title="Avg. Order Value" value={formatCurrency(s.avgOrderValue)} icon={ArrowUpRight} trend={{ value: s.aovTrend, isPositive: s.aovTrend > 0 }} />
             </div>
 
@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <div>
                             <p className="font-plus-jakarta text-3xl font-bold text-amber-700 dark:text-amber-500 mt-2">
-                                {goldRate ? goldRate.rate24kPerGram.toLocaleString() : "---"} 
+                                {goldRate?.rate24kPerGram ? goldRate.rate24kPerGram.toLocaleString() : "---"} 
                                 <span className="ml-1 text-lg text-amber-600/60">USD</span>
                             </p>
                             <p className="font-plus-jakarta text-xs font-medium text-amber-600/80">per gram (24K SJC)</p>
