@@ -2,6 +2,8 @@
 
 ### Tech Stack: Next.js · Bun · .NET 8.0 | Đề tài: Yash Gems & Jewelleries
 
+Link API repository: https://github.com/StackForge-Labs/yashjewels-api
+
 ---
 
 ## 🎭 ROLES TRONG HỆ THỐNG
